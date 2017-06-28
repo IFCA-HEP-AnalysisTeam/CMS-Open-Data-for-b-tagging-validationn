@@ -18,6 +18,10 @@
 <use   name="CondFormats/L1TObjects"/>
 <use   name="CondFormats/DataRecord"/>
 <use   name="CondFormats/JetMETObjects"/>
+<use   name="clhep"/>
+<use   name="DataFormats/BTauReco"/>
+<use   name="SimDataFormats/JetMatching"/>
+<use   name="rootmath"/>
 <use   name="2011-jet-inclusivecrosssection-ntupleproduction-optimized/AnalysisFW"/>
 <flags   EDM_PLUGIN="1"/>
 </library>

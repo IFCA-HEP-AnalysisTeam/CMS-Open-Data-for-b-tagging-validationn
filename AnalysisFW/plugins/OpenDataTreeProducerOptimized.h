@@ -13,6 +13,10 @@
 #include "DataFormats/PatCandidates/interface/JetCorrFactors.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
+// Discriminator test
+#include "DataFormats/BTauReco/interface/JetTag.h"
+#include "DataFormats/BTauReco/interface/JetTagInfo.h"
+//////////////
 
 using namespace edm;
 using namespace reco;
@@ -50,7 +54,12 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     edm::InputTag   mPFak5JetsName;
     edm::InputTag   mPFak7JetsName;
 
-    
+    // Test flavour 
+    edm::InputTag jetFlavourInfos_;
+    // Test SV
+    edm::InputTag secondaryVertexTagInfos_;   
+    edm::InputTag impactParameterTagInfos_; 
+
     // ---- PF Jet input tags ----- //
     edm::InputTag   mGenJetsName;
     edm::InputTag   mSrcPFRho;
@@ -74,6 +83,8 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     static const UInt_t kMaxNjet = 64;
     static const UInt_t kMaxNtrg = 32;
 
+
+
     // PF jets
     UInt_t njet;
     Float_t jet_pt[kMaxNjet];
@@ -84,6 +95,28 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     Float_t jet_area[kMaxNjet];
     Float_t jet_jes[kMaxNjet];
     Int_t jet_igen[kMaxNjet];
+
+    // b discriminants
+    /////////////////////////// 
+    Float_t jet_CSV[kMaxNjet];
+    Float_t jet_JBP[kMaxNjet];
+    Float_t jet_TCHP[kMaxNjet];
+    //////////////////////////
+
+    // Test Flavour
+    /////////////////////////// 
+    Float_t ptF       [kMaxNjet];   
+    Float_t etaF      [kMaxNjet];   
+    Float_t phiF      [kMaxNjet];  
+    Float_t HadronF   [kMaxNjet];   
+    Float_t PartonF   [kMaxNjet];  
+    Float_t nBHadrons [kMaxNjet];  
+    ///////////////////////////
+
+    // Secondary Vertex
+    ///////////////////////////
+    UInt_t  nSVertex;
+    ///////////////////////////
 
     // PF jets
     UInt_t njet_ak7;
@@ -124,6 +157,10 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     UInt_t run;
     UInt_t lumi;
     ULong64_t event;
+
+    // Test to get the N generated in MC, N processed in data
+    //     mTree->Branch("nevent", nevent,"nevent/i");
+    UInt_t nevent = 0; 
 
     // Triggers
     UInt_t ntrg;

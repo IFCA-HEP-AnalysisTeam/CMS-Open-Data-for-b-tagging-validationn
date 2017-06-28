@@ -17,7 +17,14 @@
 <use   name="CondFormats/L1TObjects"/>
 <use   name="CondFormats/DataRecord"/>
 <use   name="CondFormats/JetMETObjects"/>
+<use   name="clhep"/>
+<use   name="DataFormats/BTauReco"/>
+<use   name="SimDataFormats/JetMatching"/>
+<use   name="rootmath"/>
 <use   name="RecoJets/JetAssociationProducers"/>
+<use   name="DataFormats/BTauReco"/>
+<use   name="RecoBTag/SecondaryVertex"/>
+<use   name="RecoBTag/ImpactParameter"/>
 <export>
   <lib   name="1"/>
 </export>

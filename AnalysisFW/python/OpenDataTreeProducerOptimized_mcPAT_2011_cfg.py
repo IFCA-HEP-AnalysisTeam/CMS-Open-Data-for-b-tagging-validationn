@@ -7,17 +7,48 @@
 
 ## Skeleton process
 from PhysicsTools.PatAlgos.patTemplate_cfg import *
+from PhysicsTools.JetMCAlgos.HadronAndPartonSelector_cfi import selectedHadronsAndPartons
 import FWCore.Utilities.FileUtils as FileUtils
+
+####
+# test flavour
+from PhysicsTools.JetMCAlgos.HadronAndPartonSelector_cfi import selectedHadronsAndPartons
+process.selectedHadronsAndPartons = selectedHadronsAndPartons.clone()
+
+from PhysicsTools.JetMCAlgos.AK5PFJetsMCFlavourInfos_cfi import ak5JetFlavourInfos
+process.jetFlavourInfosAK5PFJets = ak5JetFlavourInfos.clone()
+
+# To print Jets info using class printJetFlavourInfo in 5_3_X release cmssw/PhysicsTools/JetExamples/test/
+#process.printEventAK5PFJets = cms.EDAnalyzer("printJetFlavourInfo",
+#    jetFlavourInfos = cms.InputTag("jetFlavourInfosAK5PFJets")
+#)
+####
+# test SV
+# Impact Parameter Tag Collection Info
+from RecoBTag.ImpactParameter.impactParameter_cfi import impactParameterTagInfos
+process.impactParameterTagInfosV2 = impactParameterTagInfos.clone()
+# Secondary Vertes Tag Collection Info
+from RecoBTag.SecondaryVertex.secondaryVertexTagInfos_cfi import secondaryVertexTagInfos
+process.secondaryVertexTagInfosV2 = secondaryVertexTagInfos.clone()
+#process.secondaryVertexTagInfosV2.trackSelection.qualityClass = cms.string('any')
+process.secondaryVertexTagInfosV2.trackIPTagInfos = cms.InputTag("impactParameterTagInfosV2")
+#process.SecondaryVertexTagInfosV2.trackIPTagInfos = "newImpactParameterTagInfos"
 
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 # True : when running in OpenData virtual machine
 # False: when runing in lxplus 
-runOnVM = True
+runOnVM = False
+#runOnVM = True
 
 # Local input
-fileList = FileUtils.loadListFromFile('CMS_MonteCarlo2011_Summer11LegDR_QCD_Pt-80to120_TuneZ2_7TeV_pythia6_AODSIM_PU_S13_START53_LV6-v1_00000_file_index.txt')
+######################################################
+# run with the bash script Full dataset
+fileList = FileUtils.loadListFromFile(NAMEOFINPUTFILE)
+#####################################################
+#run partial dataset
+#fileList = FileUtils.loadListFromFile('CMS_MonteCarlo2011_Summer11LegDR_QCD_Pt-80to120_TuneZ2_7TeV_pythia6_AODSIM_PU_S13_START53_LV6-v1_00000_file_index.txt')
 process.source.fileNames = cms.untracked.vstring(*fileList)
 
 if runOnVM:
@@ -72,13 +103,19 @@ process.ak5ak7 = cms.EDAnalyzer('OpenDataTreeProducerOptimized',
     processName     = cms.string('HLT'),
     triggerNames    = cms.vstring(
                                 'HLT_Jet30', 'HLT_Jet60', 'HLT_Jet80', 'HLT_Jet110', 
-                                'HLT_Jet150','HLT_Jet190','HLT_Jet240','HLT_Jet370',
+                                'HLT_Jet150','HLT_Jet190','HLT_Jet240', 'HLT_Jet300 ','HLT_Jet370', # HLT_Jet300 added
                                 ),
     triggerResults  = cms.InputTag("TriggerResults","","HLT"),
     triggerEvent    = cms.InputTag("hltTriggerSummaryAOD","","HLT"),
     ## jet energy correction labels ##############
     jetCorr_ak5      = cms.string('ak5PFL1FastL2L3Residual'),
     jetCorr_ak7      = cms.string('ak7PFL1FastL2L3Residual'),
+    
+    ##Test flavour
+    jetFlavourInfos = cms.InputTag("jetFlavourInfosAK5PFJets"),
+    ##Test SV
+    impactParameterTagInfos = cms.InputTag("impactParameterTagInfosV2"),  
+    secondaryVertexTagInfos = cms.InputTag("secondaryVertexTagInfosV2")
 )
 
 ############# hlt filter #########################
@@ -91,25 +128,33 @@ process.hltFilter = cms.EDFilter('HLTHighLevel',
 )
 
 
+
 # Let it run
 process.p = cms.Path(
+    process.impactParameterTagInfosV2*    ### Test CSV  
+    process.secondaryVertexTagInfosV2*  ### Test CSV
     process.goodOfflinePrimaryVertices*
     process.hltFilter *
     process.trackingFailureFilter *
-    process.ak5ak7
+    process.selectedHadronsAndPartons*  ### Test flavour
+    process.jetFlavourInfosAK5PFJets*   ### Test flavour
+    process.ak5ak7   
+   
 )
-
 
 # Approximate processing time on VM (Intel Core i5-5300U 2.3GHz laptop):
 # 50000 events per 1 hour (both for DATA and MC)
 
 # Change number of events here:
-process.maxEvents.input = 50000
 
-process.MessageLogger.cerr.FwkReport.reportEvery = 500
+process.maxEvents.input = -1
+
+process.MessageLogger.cerr.FwkReport.reportEvery = 5000
 
 # Output file
-process.TFileService = cms.Service("TFileService", fileName = cms.string('OpenDataTree_mc.root'))
+#######################################################################################################################################
+process.TFileService = cms.Service("TFileService", fileName = cms.string("/eos/user/b/bchazinq/QCDPt80to120/" + NAMEROOTOFOUTPUTROOT ))
+#######################################################################################################################################
 
 # To suppress long output at the end of the job
 #process.options.wantSummary = False   

@@ -31,25 +31,39 @@
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/JetReco/interface/Jet.h"
+#include "DataFormats/JetReco/interface/JetCollection.h"
 #include "DataFormats/JetReco/interface/PFJet.h"
 #include "DataFormats/JetReco/interface/PFJetCollection.h"
 #include "DataFormats/JetReco/interface/GenJet.h"
 #include "DataFormats/JetReco/interface/GenJetCollection.h"
 #include "DataFormats/JetReco/interface/JetExtendedAssociation.h"
+#include "DataFormats/JetReco/interface/JetFloatAssociation.h"
 #include "DataFormats/JetReco/interface/JetID.h"
 #include "DataFormats/METReco/interface/PFMET.h"
 #include "DataFormats/METReco/interface/PFMETCollection.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
+#include "DataFormats/JetReco/interface/Jet.h"
+#include "DataFormats/BTauReco/interface/JetTag.h"
+#include "DataFormats/BTauReco/interface/JetTagInfo.h"
+#include "DataFormats/BTauReco/interface/SecondaryVertexTagInfo.h"
 
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenRunInfoProduct.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
+#include "SimDataFormats/JetMatching/interface/JetFlavour.h"
+#include "SimDataFormats/JetMatching/interface/JetFlavourMatching.h"
+#include "SimDataFormats/JetMatching/interface/MatchedPartons.h"
+#include "SimDataFormats/JetMatching/interface/JetMatchedPartons.h"
+#include "SimDataFormats/JetMatching/interface/JetFlavourInfo.h"
+#include "SimDataFormats/JetMatching/interface/JetFlavourInfoMatching.h"
 
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
 #include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
-
 #include "RecoJets/JetAssociationProducers/src/JetTracksAssociatorAtVertex.h"
+
+//https://github.com/cms-sw/cmssw/blob/CMSSW_5_3_X/PhysicsTools/JetExamples/test/printJetFlavourInfo.py
+//https://github.com/cms-sw/cmssw/blob/CMSSW_5_3_X/PhysicsTools/JetExamples/test/printJetFlavourInfo.cc
 
 OpenDataTreeProducerOptimized::OpenDataTreeProducerOptimized(edm::ParameterSet const &cfg) {
   mMinPFPt           = cfg.getParameter<double>                    ("minPFPt");
@@ -73,6 +87,12 @@ OpenDataTreeProducerOptimized::OpenDataTreeProducerOptimized(edm::ParameterSet c
   triggerResultsTag_ = cfg.getParameter<edm::InputTag>             ("triggerResults");
   mJetCorr_ak5       = cfg.getParameter<std::string>               ("jetCorr_ak5");
   mJetCorr_ak7       = cfg.getParameter<std::string>               ("jetCorr_ak7");
+
+  // test flavour
+  if (mIsMCarlo){jetFlavourInfos_ = cfg.getParameter<edm::InputTag>("jetFlavourInfos");}
+  // test SV
+  impactParameterTagInfos_  = cfg.getParameter<edm::InputTag>("impactParameterTagInfos");
+  secondaryVertexTagInfos_  = cfg.getParameter<edm::InputTag>("secondaryVertexTagInfos"); 
 }
 
 void OpenDataTreeProducerOptimized::beginJob() {
@@ -88,6 +108,10 @@ void OpenDataTreeProducerOptimized::beginJob() {
     mTree->Branch("jet_area", jet_area, "jet_area[njet]/F");
     mTree->Branch("jet_jes", jet_jes, "jet_jes[njet]/F");
     mTree->Branch("jet_igen", jet_igen, "jet_igen[njet]/I");
+    // b discriminant
+    mTree->Branch("jet_CSV", jet_CSV, "jet_CSV[njet]/F");
+    mTree->Branch("jet_JBP", jet_JBP, "jet_JBP[njet]/F");
+    mTree->Branch("jet_TCHP", jet_TCHP, "jet_TCHP[njet]/F");
 
     // AK7 variables
     mTree->Branch("njet_ak7", &njet_ak7, "njet_ak7/i");
@@ -134,7 +158,22 @@ void OpenDataTreeProducerOptimized::beginJob() {
     mTree->Branch("mum", mum, "mum[njet]/i");
     mTree->Branch("beta", beta, "beta[njet]/F");   
     mTree->Branch("bstar", bstar, "bstar[njet]/F");
+ 
+ 
+    // Test flavour  
+    mTree->Branch("ptF",     ptF,    "ptF[njet]/F");    
+    mTree->Branch("etaF",    etaF,   "etaF[njet]/F");    
+    mTree->Branch("phiF",    phiF,   "phiF[njet]/F");    
+    mTree->Branch("HadronF", HadronF,"HadronF[njet]/F");    
+    mTree->Branch("PartonF", PartonF,"PartonF[njet]/F");    
+    mTree->Branch("nBHadrons", nBHadrons,"nBHadrons[njet]/F");   
+    // Test to get the N generated in MC, N processed in data
+    mTree->Branch("nevent", &nevent,"nevent/i");   
     
+ 
+    // Test number of Secondary Vertex
+    mTree->Branch("nSVertex",     &nSVertex,    "nSVertex/i");    
+ 
 }
 
 void OpenDataTreeProducerOptimized::endJob() {
@@ -196,6 +235,62 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     run = event_obj.id().run();
     lumi = event_obj.luminosityBlock();
     event = event_obj.id().event();
+    // Test to get the N generated in MC, N processed in data
+    nevent =+ nevent;
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
+    // Test Discriminant 
+    //---------------------------- Jet CSV discriminantor -----------------------
+    edm::Handle<reco::JetTagCollection> tagHandle_CSV;
+    event_obj.getByLabel("combinedSecondaryVertexBJetTags", tagHandle_CSV);
+    const reco::JetTagCollection & tag_CSV = *(tagHandle_CSV.product());
+    
+    //---------------------------- Jet JBP tag discriminantor -------------------
+    edm::Handle<reco::JetTagCollection> tagHandle_JBP;
+    event_obj.getByLabel("jetBProbabilityBJetTags", tagHandle_JBP); 
+    const reco::JetTagCollection & tag_JBP = *(tagHandle_JBP.product());
+
+    //---------------------------- Jet TCHP discriminator -----------------------
+    edm::Handle<reco::JetTagCollection> tagHandle_TCHP;
+    event_obj.getByLabel("trackCountingHighPurBJetTags", tagHandle_TCHP); 
+    const reco::JetTagCollection & tag_TCHP = *(tagHandle_TCHP.product());
+    
+    // Print out the info
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//    std::cout << "event " << event << std::endl;  
+//    std::cout << "-----------------------------------------------------------------------" << std::endl;    
+//    std::cout << "tag_CSV.size()    " << tag_CSV.size() << std::endl; 
+//    std::cout << "-----------------------------------------------------------------------" << std::endl;    
+//    std::cout << "tag_JBP.size()    " << tag_JBP.size() << std::endl; 
+//
+//    std::cout <<      "---------------------------- Jet CSV tag Info -------------------" << std::endl;  
+//    for (int i = 0; i != (int)tag_CSV.size(); i++)
+//     {
+//     std::cout << "ptCSV   " << tag_CSV[i].first -> pt() << "    etaCSV   " << tag_CSV[i].first -> eta() << "   phiCSV   " << tag_CSV[i].first -> phi() << std::endl;   
+//     } 
+//    std::cout <<      "---------------------------- Jet JBP tag Info -------------------" << std::endl; 
+//    for (int i = 0; i != (int)tag_JBP.size(); i++)
+//    { 
+//      std::cout << "ptJBP   " << tag_JBP[i].first -> pt() << "  etaJBP    " << tag_JBP[i].first -> eta() << "    phiJBP   " << tag_JBP[i].first -> phi() << std::endl;   
+//    }
+//  //////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
+   
+    // Test Flavour
+    //if (mIsMCarlo){
+    //edm::Handle<reco::JetFlavourInfoMatchingCollection> theJetFlavourInfos;
+    //event_obj.getByLabel(jetFlavourInfos_, theJetFlavourInfos );
+    //}
+    // Print out the info
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // for ( reco::JetFlavourInfoMatchingCollection::const_iterator j  = theJetFlavourInfos->begin();
+    //                                  j != theJetFlavourInfos->end();
+    //                                  ++j ) {
+    //      std::cout << "-------------------- Jet Flavour Info --------------------" << std::endl;
+    //      reco::JetFlavourInfo aInfo = (*j).second;
+    //      // ----------------------- Hadrons -------------------------------
+    //      std::cout << "                      Hadron-based flavour: " << aInfo.getHadronFlavour() << std::endl;
+    // }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Triggers
     edm::Handle<edm::TriggerResults>   triggerResultsHandle_;
@@ -272,6 +367,26 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         ngen = gen_index;
     }
 
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
+    // Secondary Vertex Info
+    edm::Handle<reco::SecondaryVertexTagInfoCollection> tagInfosHandle;
+    event_obj.getByLabel(secondaryVertexTagInfos_, tagInfosHandle);
+    //event_obj.getByLabel("secondaryVertexTagInfos", tagInfosHandle);
+    const reco::SecondaryVertexTagInfoCollection & tagInfoColl = *(tagInfosHandle.product());
+   
+    // Print out the info
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    for(reco::SecondaryVertexTagInfoCollection::const_iterator iter = tagInfoColl.begin(); iter != tagInfoColl.end(); ++iter) 
+    {
+      // if there are reconstructed vertices in this jet
+                     nSVertex = iter->nVertices();  
+                   // if(iter->nVertices() >=1 ) {
+                   //  std::cout<<"found secondary vertex with a flight distance of " << iter->flightDistance(0).value() << " cm"<< std::endl;
+                   // }
+    }
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
+    
+    
     // Vertex Info
     Handle<reco::VertexCollection> recVtxs;
     event_obj.getByLabel(mOfflineVertices, recVtxs);
@@ -282,6 +397,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     edm::Handle<reco::PFJetCollection> ak5_handle;
     event_obj.getByLabel(mPFak5JetsName, ak5_handle);
     const JetCorrector* corrector_ak5 = JetCorrector::getJetCorrector(mJetCorr_ak5, iSetup);
+
 
     // Jet Track Association (JTA)
     edm::Handle <reco::TrackCollection> tracks_h;
@@ -458,9 +574,147 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
                 }
             }
         }
-        
+       
+    //Test Flavour
+    if (mIsMCarlo){
+      
+      edm::Handle<reco::JetFlavourInfoMatchingCollection> theJetFlavourInfos;
+      event_obj.getByLabel(jetFlavourInfos_, theJetFlavourInfos );
+      
+      HadronF[ak5_index] = -999; PartonF[ak5_index] = -999; nBHadrons [ak5_index] = -999;
+      for ( reco::JetFlavourInfoMatchingCollection::const_iterator j  = theJetFlavourInfos->begin();
+                                     j != theJetFlavourInfos->end();
+                                     ++j ) {
+
+          const reco::Jet *aJet = (*j).first.get();
+          double deltaR2 = reco::deltaR2( jet_eta[ak5_index],
+                                          jet_phi[ak5_index],
+                                          aJet->eta(),
+                                          aJet->phi()); 
+
+ 
+         //---------------------------- Jet Flavour Info -------------------
+         if ( deltaR2 < 0.01) // check the value of the deltaR2
+         {
+            reco::JetFlavourInfo aInfo = (*j).second;
+            // ----------------------- Hadrons-based flavour -------------------------------
+            HadronF[ak5_index] = aInfo.getHadronFlavour();
+            // ----------------------- Parton-based flavour  -------------------------------
+            PartonF[ak5_index] = aInfo.getPartonFlavour();
+            //------------------------ # of clustered b-hadrons ----------------------------
+            const reco::GenParticleRefVector & bHadrons = aInfo.getbHadrons();
+
+            nBHadrons [ak5_index] = bHadrons.size();          
+            std::cout << " nBHadrons " << ak5_index << " =  " << nBHadrons [ak5_index]  << std::endl;  
+
+            /*if (bHadrons.size()== 2){std::cout << "                      # of clustered b hadrons: " << bHadrons.size() << std::endl;
+            nBHadrons [ak5_index] = bHadrons.size();          
+            }
+            *///Checking info
+               etaF [ak5_index] = aJet->eta();
+               phiF [ak5_index] = aJet->phi();
+          
+            //break;
+          }
+      }
+    }
+    // Test Discriminant 
+    // Get the discriminant info for the ak5 selected jet
+    //---------------------------- Jet CSV tag Info -------------------
+ //   edm::Handle<reco::JetTagCollection> tagHandle_CSV;
+ //   event_obj.getByLabel("combinedSecondaryVertexBJetTags", tagHandle_CSV);
+ //   const reco::JetTagCollection & tag_CSV = *(tagHandle_CSV.product());
+ //   
+ //   //---------------------------- Jet JBP tag Info -------------------
+ //   edm::Handle<reco::JetTagCollection> tagHandle_JBP;
+ //   event_obj.getByLabel("jetBProbabilityBJetTags", tagHandle_JBP); 
+ //   const reco::JetTagCollection & tag_JBP = *(tagHandle_JBP.product()); 
+
+    // Loop over JetTagCollection  matching with ak5 selected jets
+    // Index of the tagged jet collection matching this PFjet 
+    jet_CSV[ak5_index]  = -999;// is -1 if no matching jet
+    jet_JBP [ak5_index] = -999;// is -1 if no matching jet
+    jet_TCHP[ak5_index] = -999;// is -1 if no matching jet 
+    //for (int i = 0; i != 10; i++)
+    for (int i = 0; i != (int)tag_CSV.size(); i++)
+     {
+        double deltaR2_Tag1 = reco::deltaR2( jet_eta[ak5_index],
+                                             jet_phi[ak5_index],
+                                             tag_CSV[i].first -> eta(),
+                                             tag_CSV[i].first -> phi() 
+                                           );
+      if ( (deltaR2_Tag1) < 0.01) // check the value of the deltaR2 
+      {
+        jet_CSV [ak5_index] = tag_CSV[i].second;
+        jet_JBP [ak5_index] = tag_JBP[i].second;
+        jet_TCHP[ak5_index] = tag_TCHP[i].second;
+       // std::cout << "---------------------Matching--------------------------------------------------" << std::endl;    
+     //std::cout << "ptCSV   " << tag_CSV[i].first -> pt() << "    etaCSV   " << tag_CSV[i].first -> eta() << "   phiCSV   " << tag_CSV[i].first -> phi() << std::endl;   
+        //std::cout << "-----------------------------------------------------------------------" << std::endl;    
+        break;
+       }
+
+    } 
+
+    //---------------------------- Jet JBP tag Info -------------------
+  /*  edm::Handle<reco::JetTagCollection> tagHandle_JBP;
+    event_obj.getByLabel("jetBProbabilityBJetTags", tagHandle_JBP); 
+    const reco::JetTagCollection & tag_JBP = *(tagHandle_JBP.product()); 
+    //for (int i = 0; i != 10; i++)
+    for (int i = 0; i != (int)tag_JBP.size(); i++)
+    { 
+      double deltaR2_Tag2 = reco::deltaR2( jet_eta[ak5_index],
+                                             jet_phi[ak5_index],
+                                             tag_JBP[i].first -> eta(),
+                                             tag_JBP[i].first -> phi()
+                                           );
+       if ( abs(deltaR2_Tag2) < 0.01)
+      {
+      jet_JBP [ak5_index] = tag_JBP[i].second;
+      break;
+      }
+
+    }
+  */
+   //This does not work 
+   //const reco::JetTagCollection & tagColl_CSV = *(tagHandle_CSV.product());
+  // for (JetTagCollection::const_iterator tagI = tagColl_CSV.begin();
+  //           tagI != tagColl_CSV.end(); ++tagI)
+  //  
+  //  { double etaT = tagI->first()->eta(); double phiT = tagI->first()->phi();
+  //   double deltaR2_Tag1 = reco::deltaR2( jet_eta[ak5_index],
+  //                                        jet_phi[ak5_index],
+  //                                        etaT,
+  //                                        phiT);
+  //  //---------------------------- Jet CSV tag Info -------------------
+  //    if ( deltaR2_Tag1 < 0.1)
+  //    {
+  //     jet_CSV [ak5_index] = tagI->second;
+  //     break;
+  //    }
+  //  }
+
+   // Test JBP discriminant 
+ //  const reco::JetTagCollection & tagColl_JBP = *(tagHandle_JBP.product());
+ //  for (JetTagCollection::const_iterator tagII = tagColl_JBP.begin();
+ //            tagII != tagColl_JBP.end(); ++tagII)
+ //   {
+ //   double deltaR2_Tag2 = reco::deltaR2( jet_eta[ak5_index],
+ //                                         jet_phi[ak5_index],
+ //                                         tagII->first()->eta(),
+ //                                         tagII->first()->phi());   
+
+ //   //---------------------------- Jet CSV tag Info -------------------
+ //   if ( deltaR2_Tag2 < 0.1)
+ //     {
+ //      jet_JBP [ak5_index] = tagII->second;
+ //     }
+ //   }
+
+
     ak5_index++;
     }  
+
     // Number of selected jets in the event
     njet = ak5_index;    
 
