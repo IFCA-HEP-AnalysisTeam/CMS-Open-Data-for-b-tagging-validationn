@@ -29,9 +29,14 @@
 
 
 
-void Analyzer( )
+void Analyzer(TString filename, TString ptRange, bool _ismc)
+//void Analyzer()
 {
-TString filename = "OpenDataTree_mc.root";
+//TString filename = "/eos/user/b/bchazinq/QCDPt30to50/tuples_MC30-50.root";
+//TString ptRange = "_pthat30to50";
+//TString filename = "/eos/user/b/bchazinq/Data/tuples_Data.root";
+//TString filename = "OpenDataTree_mc.root";
+//bool _ismc   = true;
 
 /////////////////////////////////////////////////////////////////////////////////
 //                                                                             //
@@ -42,94 +47,120 @@ TString filename = "OpenDataTree_mc.root";
 //                                                                             //
 /////////////////////////////////////////////////////////////////////////////////
 
+// Open  input file
+// ----------------
+TFile* infile  = new TFile( filename, "read" );
+// Get the tree
+TTree* mytree = (TTree*) infile -> Get( "ak5ak7/OpenDataTree");
+
 // Name of branches to read
-const int nvar = 5;
-TString bname [nvar]= {  "jet_pt", 
-                         "jet_CSV", 
-                         "jet_JBP",
-                         "jet_TCHP",
-                         "nSVertex"
+// ------------------------
+const int nvar = 1;
+TString bname [nvar]= { "pthat"
+                        // "jet_pt", 
+                        // "jet_eta", 
+                        // "jet_phi",
+                         
                       };
 // Name of the output file
-TString ofname [nvar]= { "Histo_" + bname[0],  
-                         "Histo_" + bname[1],
-                         "Histo_" + bname[2],
-                         "Histo_" + bname[3],
-                         "Histo_" + bname[4]
+TString hname [nvar]= { "Histo_" + bname[0] + ptRange,  
+                        //"Histo_" + bname[1] + ptRange,
+                        //"Histo_" + bname[2] + ptRange,
+                        //"Histo_" + bname[3] + ptRange,
                        };
 // Set the #of bins, x-axix limits in the histo
-TString hdimension[nvar] = { "(250, 0, 250)",
-                             "(50, 0,   1)",
-			     "(50, 0,   8)",
-                             "(50,  0,   30)",
-                             "(  5, 0,   5)"
+TString hdimension[nvar] = { "(130, 0, 650)"
+                             //"(100, 0, 250)",
+                             //"( 50,-5,   5)",
+			     //"( 50,-4,   4)",
                            };
 
-std::cout << "1" << std::endl; 
 
-// Open  input file
-TFile* ifile  = new TFile( filename, "read" );
-// Get the tree
-TTree* mytree = (TTree*) ifile -> Get( "ak5ak7/OpenDataTree");
 
 // Flavour selection
-const int ncut = 5;  
-TCut Flavour [ncut] = { "PartonF == 5", 
-                        "PartonF == 4", 
-                        "PartonF != 5 && PartonF != 4",
-                        "PartonF == 5 && nBHadrons == 2",
-                        ""};
+// -----------------
+const int ncut = 1;  
+TCut Flavour [ncut] = {// "fabs(PartonF) == 5", 
+                       // "fabs(PartonF) == 4", 
+                       // "fabs(PartonF) != 5 && fabs(PartonF) != 4",
+                       // "fabs(PartonF) == 5 && nBHadrons == 2",
+                        "1>0"};
                      
-// Trigger selection
-TCut triggerCut0 = "triggernames == \"jt30\"";
-TCut triggerCut1 = "triggers";
-
- 
-// MC Weigth
-float  cross_section = 784265000; // fb
-int    Ngen = 100000;
-float  Lumi = 2.33; // /fb
-float eventW = (cross_section * Lumi )/ Ngen;
-
 // Name of histograms to save
-TString hnameMC [ncut]= { "b_quark",
-                          "c_quark",
-		          "lgluon",
-                          "b_gsplitting",
+TString hnameMC [ncut]= {// "b_quark",
+                         // "c_quark",
+		         // "lgluon",
+                         // "b_gsplitting",
                           "allFlavours"
                         };
+// cut selection
+// -----------------
+TCut triggerName = "triggernames == \"jt30\"";
+TCut triggerPass = "triggers";
+TCut minimumPt   = "jet_pt >30";
+TCut maximumEta  = "jet_eta <2.4";
+TCut minimumEta  = "jet_eta >-2.4";
+//TCut flavour     = "fabs(PartonF) == 5 || fabs(PartonF) == 4 || fabs(PartonF) != 5 && fabs(PartonF) != 4 || fabs(PartonF) == 5 && nBHadrons == 2";
+//TCut flavourb    = "fabs(PartonF) == 5";
+//TCut flavourc    = "fabs(PartonF) == 4";
+//TCut flavourlg   = "fabs(PartonF) != 5 && fabs(PartonF) != 4";
+//TCut flavourb_gsplit = "fabs(PartonF) == 5 && nBHadrons == 2";
+//TCut mainCut     = triggerName && triggerPass && minimumPt && (flavourb || flavourc || flavourlg || flavourb_gsplit) ; 
+//TCut mainCut     = triggerName && triggerPass && minimumPt && (flavourb || flavourc || flavourlg || flavourb_gsplit) ; 
+TCut mainCut = triggerName && triggerPass && minimumPt; 
 
+//Values to normalize the mc
+//---------------------------
+//float eventw = (mcweight * lumi )/ ngen;
+//float mcweight;
+//luminosity value for 2011 runA JSON file 
+//float  lumi = 2.33; // /fb
+//number of generated events
+TString ngen;
+if (filename.Contains("15to30"))   ngen = "9978850"; //http://opendata.cern.ch/record/1366
+if (filename.Contains("30to50"))   ngen = "5837856"; //http://opendata.cern.ch/record/1539
+if (filename.Contains("50to80"))   ngen = "5766430"; //http://opendata.cern.ch/record/1555
+if (filename.Contains("80to120"))  ngen = "5867864"; //http://opendata.cern.ch/record/1562
+if (filename.Contains("120to170")) ngen = "5963264"; //http://opendata.cern.ch/record/1348 
+if (filename.Contains("170to300")) ngen = "5975592"; //http://opendata.cern.ch/record/1369 
+if (filename.Contains("300to470")) ngen = "5975016"; //http://opendata.cern.ch/record/1469 
+if (filename.Contains("470to600")) ngen = "3967154"; //http://opendata.cern.ch/record/1553 
+//For data: http://opendata.cern.ch/record/21
 
-//TCanvas* c1 = new TCanvas ("c1", "c1");
-std::cout << "2" << std::endl;
-
-// Create the out put file 
+// Create the out put file
+// ----------------------- 
 // Make the loop over nvar
 for (int i = 0; i < nvar; i++) { 
   
-   TFile* ofile;
-    
-   if (filename.Contains("mc")){
-     ofile  = new TFile( ofname [i]+ "_MC.root", "recreate" );
+   TFile* outfile;
+   if (_ismc)  
+   {
+     outfile  = new TFile( hname [i]+ "_MC.root", "recreate" );
 
      // Make the loop over ncut 
      for (int j = 0; j < ncut; j++){
-       TH1F* myhisto = new TH1F();  
-       mytree -> Draw(bname[i] + ">>" + hnameMC[j] + hdimension[i], ( triggerCut0 && triggerCut1 && Flavour[j] && "jet_pt >30"));
-       myhisto = (TH1F*) gDirectory -> Get(hnameMC[j]);
+       TH1D* myhisto = new TH1D();  
+       mytree -> Draw( bname[i] +">>" + hnameMC[j] + hdimension[i], "mcweight *2.33/" + ngen); // To check the pthat
+       //mytree -> Draw( bname[i] +">>" + hnameMC[j] + hdimension[i], (triggerName+triggerPass+minimumPt+maximumEta+minimumEta) * ("mcweight *2.33/" + ngen));
+       //mytree -> Draw( bname[i] +">>" + hnameMC[j] + hdimension[i], (triggerCut0 && triggerCut1 && Flavour[j] && "jet_pt >30") * ("mcweight *2.33/" + ngen));
+       //std::cout<< "the total cut is:   " <<"("<< triggerCut0 << " && " <<  triggerCut1 << " && " << Flavour[j] << " && " << "jet_pt >30) * (mcweight *2.33/" << ngen << ")" <<std::endl;
+       myhisto = (TH1D*) gDirectory -> Get(hnameMC[j]);
+       std::cout<< bname[i] << " Integral: " << myhisto -> Integral() << std::endl;   
        // Move the over flow
        int nbins = myhisto -> GetNbinsX ();     
-       myhisto -> SetBinContent(nbins, myhisto -> GetBinContent(nbins+1) +  myhisto -> GetBinContent(nbins));   
+       myhisto -> SetBinContent(nbins, myhisto -> GetBinContent(nbins+1) +  myhisto -> GetBinContent(nbins)); 
        // Save the histogram 
        myhisto -> Write();
-      }
+       }
+      
     }
-
-   else  if ( filename.Contains("data")){
-     ofile  = new TFile( ofname [i]+ "_Data.root", "recreate" );
-     TH1F* myhisto = new TH1F();  
-     mytree -> Draw(bname[i] + ">>" + "data" + hdimension[i], triggerCut0 && triggerCut1 && "jet_pt > 30");
-     myhisto = (TH1F*) gDirectory -> Get("data");
+   else
+    {
+     outfile  = new TFile( hname [i]+ "_Data.root", "recreate" );
+     TH1D* myhisto = new TH1D();  
+     mytree -> Draw(bname[i] + ">>" + "data" + hdimension[i], triggerName+triggerPass+minimumPt+maximumEta+minimumEta);
+     ////mytree -> Draw(bname[i] + ">>" + "data" + hdimension[i], triggerCut0 && triggerCut1 && "jet_pt > 30");
+     myhisto = (TH1D*) gDirectory -> Get("data");
      // Move the over flow
      int nbins = myhisto -> GetNbinsX ();
      myhisto -> SetBinContent(nbins, myhisto -> GetBinContent(nbins+1) +  myhisto -> GetBinContent(nbins));
@@ -137,13 +168,46 @@ for (int i = 0; i < nvar; i++) {
      myhisto -> Write();
     }
 
-    ofile -> Close(); 
+    outfile -> Close(); 
 }
-std::cout << "3" << std::endl; 
 //c1-> Destructor();
-ifile -> Close();
-std::cout << "4" << std::endl; 
+infile -> Close();
 }
 
 
+void runAnalyzer()
+{
+  bool _ismc; 
+  _ismc = true;
+  TString filename0 = "/eos/user/b/bchazinq/QCDPt15to30/tuples_MC15-30.root";
+  TString ptRange0 = "_pthat15to30";
+  TString filename1 = "/eos/user/b/bchazinq/QCDPt30to50/tuples_MC30-50.root";
+  TString ptRange1 = "_pthat30to50";
+  TString filename2 = "/eos/user/b/bchazinq/QCDPt50to80/tuples_MC50-80.root";
+  TString ptRange2 = "_pthat50to80";
+  TString filename3 = "/eos/user/b/bchazinq/QCDPt80to120/tuples_MC80-120.root";
+  TString ptRange3 = "_pthat80to120";
+  TString filename4 = "/eos/user/b/bchazinq/QCDPt120to170/tuples_MC120-170.root";
+  TString ptRange4 = "_pthat120to170";
+  TString filename5 = "/eos/user/b/bchazinq/QCDPt170to300/tuples_MC170-300.root";
+  TString ptRange5 = "_pthat170to300";
+  TString filename6 = "/eos/user/b/bchazinq/QCDPt300to470/tuples_MC300-470.root";
+  TString ptRange6 = "_pthat300to470";
+  TString filename7 = "/eos/user/b/bchazinq/QCDPt470to600/tuples_MC470-600.root";
+  TString ptRange7 = "_pthat470to600";
+  Analyzer (filename0,ptRange0,_ismc); 
+  Analyzer (filename1,ptRange1,_ismc); 
+  Analyzer (filename2,ptRange2,_ismc); 
+  Analyzer (filename3,ptRange3,_ismc); 
+  Analyzer (filename4,ptRange4,_ismc); 
+  Analyzer (filename5,ptRange5,_ismc); 
+  Analyzer (filename6,ptRange6,_ismc);
+  Analyzer (filename7,ptRange7,_ismc);
+
+ /*  _ismc   = false;
+  TString filenameData = "/eos/user/b/bchazinq/Data/tuples_Data.root";
+  TString ptRange = "";
+  Analyzer (filenameData,ptRange,_ismc);
+  */ 
+}
  

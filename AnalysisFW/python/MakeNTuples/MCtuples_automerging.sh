@@ -1,6 +1,5 @@
-
 # Helper script to merge tuples 
-
+#### To testing !!!!!! ##
 cwd=$(pwd)
 
 # Environment
@@ -44,29 +43,3 @@ do
         hadd -f $d/MCtuples_${REGEX}.root $FILES &
     fi
 done
-
-
-
-
-cd /eos/user/b/bchazinq/QCDPt30to50
-cd /eos/user/b/bchazinq/QCDPt50to80
-cd /eos/user/b/bchazinq/QCDPt80to120
-cd /eos/user/b/bchazinq/QCDPt120to170
-cd /eos/user/b/bchazinq/QCDPt170to300
-cd /eos/user/b/bchazinq/QCDPt300to470
-
-# Merge files
-MC=output_*.root
-#DATA=OpenDataTree_data_*.root
-NUM=$(ls -l $MC | wc -l)
-echo "Merging $NUM files..." 
-
-hadd -f tuples_MC30-50.root $MC
-hadd -f tuples_MC50-80.root $MC
-hadd -f tuples_MC80-120.root $MC
-hadd -f tuples_MC120-170.root $MC
-hadd -f tuples_MC170-300.root $MC
-hadd -f tuples_MC300-470.root $MC
-
-cd $cwd
-#eosumount eos/

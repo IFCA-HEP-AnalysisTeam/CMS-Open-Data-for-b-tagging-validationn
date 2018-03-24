@@ -153,7 +153,7 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 5000
 
 # Output file
 #######################################################################################################################################
-process.TFileService = cms.Service("TFileService", fileName = cms.string("/eos/user/b/bchazinq/QCDPt80to120/" + NAMEROOTOFOUTPUTROOT ))
+process.TFileService = cms.Service("TFileService", fileName = cms.string("/eos/user/b/bchazinq/QCDPt470to600/" + NAMEROOTOFOUTPUTROOT ))
 #######################################################################################################################################
 
 # To suppress long output at the end of the job

@@ -1,0 +1,60 @@
+#########################################################
+#Intructions to run the ED Analyzer over the AOD samples
+#########################################################
+
+# 1) The number of scripts to run on the AOD samples = 3
+
+	prepare_jobs.py && bashscript.sh && (OpenDataTreeProducerOptimized_dataPAT_2011_cfg.py || OpenDataTreeProducerOptimized_mcPAT_2011_cfg.py)
+
+	type:  python prepare_jobs.py -> generates the job folders with the content to submit and the run.sh file
+        print out: [JOB_MANAGER] Usage: python prepare_jobs.py name_of_the_template name_of_the_bash_template name_of_the_samplefile number_of_jobs queue
+       
+        	name_of_the_template      == OpenDataTreeProducerOptimized_*_2011_cfg.py 
+                name_of_the_bash_template == bashscript.sh
+                name_of_the_samplefile    == samplefile.txt (Ex:CMS_MonteCarlo2011_Summer11LegDR_QCD_Pt-15to30_TuneZ2_7TeV_pythia6_AODSIM_PU_S13_START53_LV6-v1_00000_file_index.txt)
+                number_of_jobs            == number of jobs to subdivide the sample (Ex: 100 -> build up 100 jobs filled with x samples in samplefile.txt)
+                                                             number_of_jobs =< number of samples in samplefile.txt  
+		queue                     == bsub queue -- 8nm (8 minutes), 1nh (1 hour), 8nh, 1nd (1day), 2nd, 1nw (1 week), 2nw 
+         
+                print out: source run.sh
+
+         "Example:  python prepare_jobs.py OpenDataTreeProducerOptimized_mcPAT_2011_cfg.py bashscript.sh CMS_MonteCarlo2011_Summer11LegDR_QCD_Pt-15to30_TuneZ2_7TeV_pythia6_AODSIM_PU_S13_START53_LV6-v1_010002_file_index.txt 100 8nh"
+
+
+         note: you should change the output folder name in line containing: NAMEROOTOFOUTPUTROOT in OpenDataTreeProducerOptimized_*_2011_cfg.py
+
+# 2) The number of scripts to run on the AOD samples = 1
+	
+	submitJobs.py 
+
+        type:  python submitJobs.py -> to test!!!
+                **Follow instructions in the script  
+
+#########################################################
+#Intructions to check the output N-tuples
+#########################################################
+
+# 3) Check the jobs
+
+	type: ./check-jobs.sh
+        print out: 
+
+              Check the status of the jobs
+ 
+		   ./check-jobs.sh 0
+ 
+                   Print the list of failed files and creates samples_to_resubmit.txt on your current directory
+ 
+             Remove the bad jobs
+ 
+   		   ./check-jobs.sh 1
+ 
+             Move the bad jobs to a new folder Badjobs
+ 
+                   ./check-jobs.sh 2
+ 
+         **Follow the instructions 
+
+# 4) Check if there is any root file zoombie
+
+	type: python checkHisto.py -d directionOfRootFile
