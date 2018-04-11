@@ -53,20 +53,21 @@ void Plotter()
    // set the xvalue from which you want to draw your histo
    float lowerXlimit = 0; float upperXlimit = 0; //This is applied on FindFirstBinAbove, FindLastBinAbove functions which return the first/last bin above lowerXlimit/upperXlimit  
   // Number of variables to plot
-  const int nplot = 4;
+  const int nplot =3;
   // Name of variables to plot
-  TString vname [nplot] = { "pthat"//,"jet_pt", "jet_phi", "jet_eta"
+  TString vname [nplot] = { "jet_pt", "jet_phi", "jet_eta"
                             //"jet_CSV",
                             //"jet_JBP",
                             //"jet_TCHP",
-                            //"nSVertex" 
+                            //"nSVertex",
+                            //"pthat" 
                           };
 
-  TString xname [nplot] = {"#bf{pthat}"//,"#bf{jet p_{T}}", "#bf{jet #phi}", "#bf{jet #eta}" 
-                            //,"CSV discriminator", "JBP discriminator", "TCHP discriminator", "nSVertex"
+  TString xname [nplot] = {"#bf{jet p_{T}}", "#bf{jet #phi}", "#bf{jet #eta}" 
+                            //,"CSV discriminator", "JBP discriminator", "TCHP discriminator", "nSVertex","#bf{pthat}"
                            };
-  TString units [nplot] = {"#bf{[GeV/c]}"//, "#bf{[GeV/c]}","#bf{[rad]}",     ""
-                            //,                  "",                  "",                   "",         ""
+  TString units [nplot] = { "#bf{[GeV/c]}","#bf{[rad]}",     ""
+                            //,                  "",                  "",                   "",         "", "#bf{[GeV/c]}"
                            }; 
   // Name of saved MC histograms to plot from each file
   const int nhistoMC = 1;
@@ -80,7 +81,7 @@ void Plotter()
   TString hnameData = "data";
 
   // Loop over nplot
-  for (int i = 0; i < 1/*nplot*/; i++) { 
+  for (int i = 1; i < nplot /*nplot*/; i++) { 
      
      TFile* infileData = new TFile ("Histo_" + vname[i] + "_Data.root", "read");
      TH1D* myHistoData = (TH1D*) infileData -> Get (hnameData);
@@ -112,11 +113,11 @@ void Plotter()
      gSystem->mkdir("plots/", kTRUE);
      
      // Define the canvas
-     TCanvas* currentcanvas = NULL;
+     TCanvas* currentCanvas = NULL;
      TPad* pad1 = NULL;
      TPad* pad2 = NULL;
      
-     TCanvas* currentCanvas = new TCanvas ("Histo_" + vname[i], "", 900,600);
+      currentCanvas = new TCanvas ("Histo_" + vname[i], "", 900,600);
      //currentCanvas -> SetTitle("public 2011 run A    2.33/fb (7 TeV)");
      pad1 = new TPad();
      pad1 = new TPad("pad1", "pad1", 0, 0.3, 1, 1.0);
@@ -208,7 +209,7 @@ void Plotter()
      // draw header
      DrawLatex(61, 0.165, 0.945, 0.050, 11,  "CMS 2011");
      DrawLatex(52, 0.282, 0.945, 0.030, 11, "Public Data");
-     DrawLatex(42, 0.895, 0.945, 0.050, 31, Form("%.2f fb^{-1} (7TeV)", 2.3));
+     DrawLatex(42, 0.895, 0.945, 0.050, 31, Form("%.2f fb^{-1} (7TeV)", 2.33));
      std::cout << "3" <<std::endl;   
      
      //--------------------------------------------------------------------------
