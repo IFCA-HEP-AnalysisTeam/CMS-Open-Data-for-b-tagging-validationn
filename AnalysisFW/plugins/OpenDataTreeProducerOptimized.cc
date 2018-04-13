@@ -158,7 +158,13 @@ void OpenDataTreeProducerOptimized::beginJob() {
     mTree->Branch("mum", mum, "mum[njet]/i");
     mTree->Branch("beta", beta, "beta[njet]/F");   
     mTree->Branch("bstar", bstar, "bstar[njet]/F");
- 
+    
+    //loose WP for commisionning
+    mTree->Branch("nhfJet", nhfJet, "nhfJet[njet]/F");
+    mTree->Branch("nemfJet", nemfJet, "nemfJet[njet]/F");
+    mTree->Branch("chemfJet", chemfJet, "chemfJet[njet]/F");
+    mTree->Branch("chmJet", chmJet, "chmJet[njet]/i"); 
+    mTree->Branch("jet_looseID", jet_looseID, "jet_looseID[njet]/O");
  
     // Test flavour  
     mTree->Branch("ptF",     ptF,    "ptF[njet]/F");    
@@ -193,11 +199,17 @@ void OpenDataTreeProducerOptimized::beginRun(edm::Run const &iRun,
         triggernames.clear();
 
         // Iterate over all active triggers of the AOD file
+    
+	int iTrigger=0;
+	int jTrigger=0;
+
         auto name_list = hltConfig_.triggerNames();
         for (std::string name_to_search: triggerNames_) {
-
             // Find the version of jet trigger that is active in this run 
             for (std::string name_candidate: name_list) {
+
+	        //printf(" Mi trigger %i: %s y el trigger de la coleccion %i: %s\n", iTrigger++, triggerNames_, jTrigger++, name_list);
+		//printf(" Mi trigger %i: %s y el trigger de la coleccion %i: %s\n", iTrigger++, name_to_search, jTrigger++, name_candidate);
 
                 // Match the prefix to the full name (eg. HLT_Jet30 to HLT_Jet30_v10)
                 if ( name_candidate.find(name_to_search + "_v") != std::string::npos ) {
@@ -430,6 +442,20 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     // value (std::pair<PFJet*, double>) is pair of original jet iterator and corresponding JEC factor
     std::map<double, std::pair<reco::PFJetCollection::const_iterator, double> > sortedJets;
     for (auto i_ak5jet_orig = ak5_handle->begin(); i_ak5jet_orig != ak5_handle->end(); ++i_ak5jet_orig) {
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        // Para chequear la correccion 
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        printf( "\nmi jet sin corregir\n");
+        printf("  pt = %f\n",i_ak5jet_orig->pt());
+        printf("  chargedHadronEnergyFraction  = %f\n", i_ak5jet_orig->chargedHadronEnergyFraction());
+        printf("  muonEnergyFraction  = %f\n",          i_ak5jet_orig->muonEnergyFraction());
+        printf("  neutralHadronMultiplicity = %i\n",    i_ak5jet_orig->neutralHadronMultiplicity());
+        printf("  chargedHadronMultiplicity = %i\n",    i_ak5jet_orig->chargedHadronMultiplicity());
+        printf("  chargedMultiplicity       = %i\n",    i_ak5jet_orig->chargedMultiplicity());
+        printf("  neutralMultiplicity       = %i\n",    i_ak5jet_orig->chargedHadronMultiplicity());
+        ////////////////////////////////////////////////////////////////////////////////////////////
+
         // take jet energy correction and get corrected pT
         jec = corrector_ak5->correction(*i_ak5jet_orig, event_obj, iSetup);
         // Multiply pT by -1 in order to have largest pT jet first (sorted in ascending order by default)
@@ -448,6 +474,18 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         corjet.scaleEnergy(jec);
         // pointer for further use
         const PFJet* i_ak5jet = &corjet;
+
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        // Para chequear la correccion 
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        printf( "\nmi jet sin corregido\n");
+        printf("  pt = %f\n",i_ak5jet->pt());
+        printf("  chargedHadronEnergyFraction  = %f\n", i_ak5jet->chargedHadronEnergyFraction());
+        printf("  muonEnergyFraction  = %f\n",          i_ak5jet->muonEnergyFraction());
+        printf("  neutralHadronMultiplicity = %i\n",    i_ak5jet->neutralHadronMultiplicity());
+        printf("  chargedHadronMultiplicity = %i\n",    i_ak5jet->chargedHadronMultiplicity());
+        printf("  chargedMultiplicity       = %i\n",    i_ak5jet->chargedMultiplicity());
+        printf("  neutralMultiplicity       = %i\n",    i_ak5jet->chargedHadronMultiplicity());
 
         // Skip the current iteration if jet is not selected
         if (fabs(i_ak5jet->y()) > mMaxY || 
@@ -526,7 +564,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         phm[ak5_index]     = i_ak5jet->photonMultiplicity();
         elm[ak5_index]     = i_ak5jet->electronMultiplicity();
         mum[ak5_index]     = i_ak5jet->muonMultiplicity();
-        
+    
         int npr      = i_ak5jet->chargedMultiplicity() + i_ak5jet->neutralMultiplicity();
 
         bool isHighEta = fabs(i_ak5jet->eta()) > 2.4;
@@ -541,7 +579,17 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
                         nhf[ak5_index] < 0.99 &&
                         (isLowEta || isHighEta);
 
-
+        // Jet ID requirement for btagging commisioning plots 2011 collected from twiki: 
+        // https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetID#Recommendations_for_7_TeV_data_a
+        nhfJet[ak5_index]   = i_ak5jet->neutralHadronEnergyFraction() * jec; 
+        nemfJet[ak5_index]  = i_ak5jet->neutralEmEnergyFraction() * jec;
+        chemfJet[ak5_index] = i_ak5jet->chargedEmEnergyFraction() * jec;
+        chmJet[ak5_index]   = i_ak5jet->chargedMultiplicity (); 
+        // Loose WP
+        bool looseID = i_ak5jet->pt() > 10.0 && fabs(i_ak5jet->eta()) < 2.4 && chf[ak5_index] > 0.0 &&  nhfJet[ak5_index] < 0.99 && chmJet[ak5_index] > 0.0 && nemfJet[ak5_index] < 0.99 &&  chemfJet[ak5_index] < 0.99 && npr > 1; 
+        jet_looseID[ak5_index] = looseID; 
+        
+ 
         // Variables of the tuple
         jet_tightID[ak5_index] = tightID;
         jet_area[ak5_index] = i_ak5jet->jetArea();
