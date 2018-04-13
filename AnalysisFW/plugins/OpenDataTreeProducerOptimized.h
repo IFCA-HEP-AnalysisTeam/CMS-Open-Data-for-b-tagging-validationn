@@ -58,7 +58,9 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     edm::InputTag jetFlavourInfos_;
     // Test SV
     edm::InputTag secondaryVertexTagInfos_;   
+    // Test Tracks IP
     edm::InputTag impactParameterTagInfos_; 
+    edm::InputTag m_ipassoc;
 
     // ---- PF Jet input tags ----- //
     edm::InputTag   mGenJetsName;
@@ -72,7 +74,9 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     std::vector<unsigned int>   triggerIndex_;
     edm::InputTag               triggerResultsTag_;
     HLTConfigProvider           hltConfig_;
-    
+   
+   
+ 
     // Output variables
     edm::Service<TFileService>  fs;
     TTree                       *mTree;
@@ -95,6 +99,26 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     Float_t jet_area[kMaxNjet];
     Float_t jet_jes[kMaxNjet];
     Int_t jet_igen[kMaxNjet];
+
+    // tracks
+    UInt_t  ntrack;                      // number of tracks in the jet
+    Int_t   ntracks         [kMaxNjet];  // track multiplicity in the jet
+    Float_t track_pt        [kMaxNjet];  // pt of tracks in the jet
+    Int_t track_nValidPixelHits   [kMaxNjet]; 
+    Int_t track_nValidTrackerHits [kMaxNjet]; 
+    Float_t track_IPz       [kMaxNjet];  // longitudinal Impact parameter
+    Float_t track_IP2D      [kMaxNjet];
+    Float_t track_IP2Ds     [kMaxNjet];
+    Float_t track_IP3D      [kMaxNjet];
+    Float_t track_IP3Ds     [kMaxNjet];
+    Float_t track_distToJetaxis [kMaxNjet];
+    // ..... chi2 normalized
+    // ..... decay length
+
+    // loose WP for commisionnig
+    ////////////////////////////
+    Bool_t jet_looseID[kMaxNjet];
+    ////////////////////////////
 
     // b discriminants
     /////////////////////////// 
@@ -145,6 +169,15 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
    	Int_t mum[kMaxNjet];   
     Float_t beta[kMaxNjet];   
     Float_t bstar[kMaxNjet];
+   
+        // for loose WP commisioning plots
+        //////////////////////////////////
+        Float_t nhfJet[kMaxNjet];  
+        Float_t nemfJet[kMaxNjet]; 
+        Float_t chemfJet[kMaxNjet];
+        Float_t chmJet[kMaxNjet];  
+        //////////////////////////////////
+
 
     // Generated jets
     UInt_t ngen;

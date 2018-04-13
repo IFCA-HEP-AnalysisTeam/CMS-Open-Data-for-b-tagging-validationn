@@ -55,12 +55,13 @@ process.goodOfflinePrimaryVertices = cms.EDFilter(
 
 # Impact Parameter Tag Collection Info
 from RecoBTag.ImpactParameter.impactParameter_cfi import impactParameterTagInfos
-process.impactParameterTagInfosV2 = impactParameterTagInfos.clone()
+process.impactParameterTagInfo_track = impactParameterTagInfos.clone()
+#process.impactParameterTagInfosV2 = impactParameterTagInfos.clone()
 
 # Select the number of Secondary Vertex
 from RecoBTag.SecondaryVertex.secondaryVertexTagInfos_cfi import secondaryVertexTagInfos
 process.secondaryVertexTagInfosV2 = secondaryVertexTagInfos.clone()
-process.secondaryVertexTagInfosV2.trackIPTagInfos = cms.InputTag("impactParameterTagInfosV2")
+#process.secondaryVertexTagInfosV2.trackIPTagInfos = cms.InputTag("impactParameterTagInfosV2")
 ############################################################
 
 
@@ -107,10 +108,13 @@ process.ak5ak7 = cms.EDAnalyzer('OpenDataTreeProducerOptimized',
    
     ##Test flavour
     #jetFlavourInfos = cms.InputTag("jetFlavourInfosAK5PFJets"),
-    ##Test SV
-    impactParameterTagInfos = cms.InputTag("impactParameterTagInfosV2"),
+   
+     ##Test SV
+    #impactParameterTagInfos = cms.InputTag("impactParameterTagInfosV2"),
     secondaryVertexTagInfos = cms.InputTag("secondaryVertexTagInfosV2"),
 
+    ##track IP 
+    ipassociation = cms.InputTag("impactParameterTagInfo_track")
 )
 
 # HLT filter
@@ -124,7 +128,8 @@ process.hltFilter = cms.EDFilter('HLTHighLevel',
 
 # Run everything
 process.p = cms.Path(
-    process.impactParameterTagInfosV2*    ### Test CSV  
+   # process.impactParameterTagInfosV2*    ### Test CSV  
+    process.impactParameterTagInfo_track*  ## IP for tracks
     process.secondaryVertexTagInfosV2*  ### Test CSV
     process.goodOfflinePrimaryVertices*
     process.hltFilter *
