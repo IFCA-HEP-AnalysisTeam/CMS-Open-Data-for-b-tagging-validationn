@@ -27,7 +27,7 @@ process.jetFlavourInfosAK5PFJets = ak5JetFlavourInfos.clone()
 
 # Impact Parameter Tag Collection Info
 from RecoBTag.ImpactParameter.impactParameter_cfi import impactParameterTagInfos
-process.impactParameterTagInfo_track = impactParameterTagInfos.clone()
+process.impactParameterTagInfoTrack = impactParameterTagInfos.clone()
 #process.impactParameterTagInfosV2 = impactParameterTagInfos.clone()
 
 # Secondary Vertes Tag Collection Info
@@ -48,10 +48,10 @@ runOnVM = False
 # Local input
 ######################################################
 # run with the bash script Full dataset
-fileList = FileUtils.loadListFromFile(NAMEOFINPUTFILE)
+#fileList = FileUtils.loadListFromFile(NAMEOFINPUTFILE)
 #####################################################
 #run partial dataset
-#fileList = FileUtils.loadListFromFile('CMS_MonteCarlo2011_Summer11LegDR_QCD_Pt-80to120_TuneZ2_7TeV_pythia6_AODSIM_PU_S13_START53_LV6-v1_00000_file_index.txt')
+fileList = FileUtils.loadListFromFile('CMS_MonteCarlo2011_Summer11LegDR_QCD_Pt-120to170_TuneZ2_7TeV_pythia6_AODSIM_PU_S13_START53_LV6-v1_00000_file_index.txt')
 process.source.fileNames = cms.untracked.vstring(*fileList)
 
 if runOnVM:
@@ -121,7 +121,7 @@ process.ak5ak7 = cms.EDAnalyzer('OpenDataTreeProducerOptimized',
     secondaryVertexTagInfos = cms.InputTag("secondaryVertexTagInfosV2"),
 
     ##track IP 
-    ipassociation = cms.InputTag("impactParameterTagInfo_track") 
+    ipassociation = cms.InputTag("impactParameterTagInfoTrack") 
 )
 
 ############# hlt filter #########################
@@ -138,7 +138,7 @@ process.hltFilter = cms.EDFilter('HLTHighLevel',
 # Let it run
 process.p = cms.Path(
     #process.impactParameterTagInfosV2*    ### Test CSV  
-    process.impactParameterTagInfo_track*  ## IP for tracks
+    process.impactParameterTagInfoTrack*  ## IP for tracks
     process.secondaryVertexTagInfosV2*  ### Test CSV
     process.goodOfflinePrimaryVertices*
     process.hltFilter *
@@ -160,7 +160,8 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 5000
 
 # Output file
 #######################################################################################################################################
-process.TFileService = cms.Service("TFileService", fileName = cms.string("/eos/user/b/bchazinq/QCDPt470to600/" + NAMEROOTOFOUTPUTROOT ))
+process.TFileService = cms.Service("TFileService", fileName = cms.string("variablesTest/QCD_Pt-120to170"))
+#process.TFileService = cms.Service("TFileService", fileName = cms.string("/eos/user/b/bchazinq/QCDPt470to600/" + NAMEROOTOFOUTPUTROOT ))
 #######################################################################################################################################
 
 # To suppress long output at the end of the job

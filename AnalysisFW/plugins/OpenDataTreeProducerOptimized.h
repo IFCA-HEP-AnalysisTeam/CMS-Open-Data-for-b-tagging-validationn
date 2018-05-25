@@ -59,7 +59,7 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     // Test SV
     edm::InputTag secondaryVertexTagInfos_;   
     // Test Tracks IP
-    edm::InputTag impactParameterTagInfos_; 
+   // edm::InputTag impactParameterTagInfos_; 
     edm::InputTag m_ipassoc;
 
     // ---- PF Jet input tags ----- //

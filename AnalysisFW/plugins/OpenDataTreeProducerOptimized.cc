@@ -69,6 +69,12 @@
 #include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
 #include "RecoJets/JetAssociationProducers/src/JetTracksAssociatorAtVertex.h"
 
+// track IP info
+#include "DataFormats/BTauReco/interface/TrackIPTagInfo.h"
+#include "DataFormats/BTauReco/interface/TrackProbabilityTagInfo.h"
+#include "RecoBTag/ImpactParameter/interface/TrackCountingComputer.h"
+
+
 //https://github.com/cms-sw/cmssw/blob/CMSSW_5_3_X/PhysicsTools/JetExamples/test/printJetFlavourInfo.py
 //https://github.com/cms-sw/cmssw/blob/CMSSW_5_3_X/PhysicsTools/JetExamples/test/printJetFlavourInfo.cc
 
@@ -98,7 +104,7 @@ OpenDataTreeProducerOptimized::OpenDataTreeProducerOptimized(edm::ParameterSet c
   // test flavour
   if (mIsMCarlo){jetFlavourInfos_ = cfg.getParameter<edm::InputTag>("jetFlavourInfos");}
   // test SV
-  impactParameterTagInfos_  = cfg.getParameter<edm::InputTag>("impactParameterTagInfos");
+//  impactParameterTagInfoTrack_  = cfg.getParameter<edm::InputTag>("impactParameterTagInfoTrack");
   secondaryVertexTagInfos_  = cfg.getParameter<edm::InputTag>("secondaryVertexTagInfos"); 
   // test track IP
   m_ipassoc = cfg.getParameter<edm::InputTag>("ipassociation");
