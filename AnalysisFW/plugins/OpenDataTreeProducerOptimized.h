@@ -59,7 +59,7 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     // Test SV
     edm::InputTag secondaryVertexTagInfos_;   
     // Test Tracks IP
-   // edm::InputTag impactParameterTagInfos_; 
+    edm::InputTag impactParameterTagInfos_; 
     edm::InputTag m_ipassoc;
 
     // ---- PF Jet input tags ----- //
@@ -101,16 +101,16 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     Int_t jet_igen[kMaxNjet];
 
     // tracks
-    UInt_t  ntrack;                      // number of tracks in the jet
+    UInt_t  trackIndex;                      // number of tracks in the jet
     Int_t   ntracks         [kMaxNjet];  // track multiplicity in the jet
     Float_t track_pt        [kMaxNjet];  // pt of tracks in the jet
     Int_t track_nValidPixelHits   [kMaxNjet]; 
     Int_t track_nValidTrackerHits [kMaxNjet]; 
-    Float_t track_IPz       [kMaxNjet];  // longitudinal Impact parameter
-    Float_t track_IP2D      [kMaxNjet];
-    Float_t track_IP2Ds     [kMaxNjet];
-    Float_t track_IP3D      [kMaxNjet];
-    Float_t track_IP3Ds     [kMaxNjet];
+    Float_t track_IPz         [kMaxNjet];  // longitudinal Impact parameter
+    Float_t track_IP2D        [kMaxNjet];
+    Float_t track_IP2Dsig     [kMaxNjet];
+    Float_t track_IP3D        [kMaxNjet];
+    Float_t track_IP3Dsig     [kMaxNjet];
     Float_t track_distToJetaxis [kMaxNjet];
     // ..... chi2 normalized
     // ..... decay length

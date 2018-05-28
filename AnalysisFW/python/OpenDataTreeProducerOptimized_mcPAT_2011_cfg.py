@@ -28,13 +28,13 @@ process.jetFlavourInfosAK5PFJets = ak5JetFlavourInfos.clone()
 # Impact Parameter Tag Collection Info
 from RecoBTag.ImpactParameter.impactParameter_cfi import impactParameterTagInfos
 process.impactParameterTagInfoTrack = impactParameterTagInfos.clone()
-#process.impactParameterTagInfosV2 = impactParameterTagInfos.clone()
+process.impactParameterTagInfosV2 = impactParameterTagInfos.clone()
 
 # Secondary Vertes Tag Collection Info
 from RecoBTag.SecondaryVertex.secondaryVertexTagInfos_cfi import secondaryVertexTagInfos
 process.secondaryVertexTagInfosV2 = secondaryVertexTagInfos.clone()
 #process.secondaryVertexTagInfosV2.trackSelection.qualityClass = cms.string('any')
-#process.secondaryVertexTagInfosV2.trackIPTagInfos = cms.InputTag("impactParameterTagInfosV2")
+process.secondaryVertexTagInfosV2.trackIPTagInfos = cms.InputTag("impactParameterTagInfosV2")
 #process.SecondaryVertexTagInfosV2.trackIPTagInfos = "newImpactParameterTagInfos"
 
 process.load('Configuration.StandardSequences.Services_cff')
@@ -117,7 +117,7 @@ process.ak5ak7 = cms.EDAnalyzer('OpenDataTreeProducerOptimized',
     ##Test flavour
     jetFlavourInfos = cms.InputTag("jetFlavourInfosAK5PFJets"),
     ##Test SV
-    #impactParameterTagInfos = cms.InputTag("impactParameterTagInfosV2"),  
+    impactParameterTagInfos = cms.InputTag("impactParameterTagInfosV2"),  
     secondaryVertexTagInfos = cms.InputTag("secondaryVertexTagInfosV2"),
 
     ##track IP 
@@ -137,7 +137,7 @@ process.hltFilter = cms.EDFilter('HLTHighLevel',
 
 # Let it run
 process.p = cms.Path(
-    #process.impactParameterTagInfosV2*    ### Test CSV  
+    process.impactParameterTagInfosV2*    ### Test CSV  
     process.impactParameterTagInfoTrack*  ## IP for tracks
     process.secondaryVertexTagInfosV2*  ### Test CSV
     process.goodOfflinePrimaryVertices*
@@ -154,13 +154,15 @@ process.p = cms.Path(
 
 # Change number of events here:
 
-process.maxEvents.input = -1
+process.maxEvents.input = 1000
+#process.maxEvents.input = -1
 
-process.MessageLogger.cerr.FwkReport.reportEvery = 5000
+process.MessageLogger.cerr.FwkReport.reportEvery = 500
+#process.MessageLogger.cerr.FwkReport.reportEvery = 5000
 
 # Output file
 #######################################################################################################################################
-process.TFileService = cms.Service("TFileService", fileName = cms.string("variablesTest/QCD_Pt-120to170"))
+process.TFileService = cms.Service("TFileService", fileName = cms.string("variablesTest/QCD_Pt-120to170.root"))
 #process.TFileService = cms.Service("TFileService", fileName = cms.string("/eos/user/b/bchazinq/QCDPt470to600/" + NAMEROOTOFOUTPUTROOT ))
 #######################################################################################################################################
 

@@ -193,8 +193,19 @@ void OpenDataTreeProducerOptimized::beginJob() {
     // Test number of Secondary Vertex
     mTree->Branch("nSVertex",     &nSVertex,    "nSVertex/i");    
     // track multiplicity
-    mTree->Branch("ntrack", &ntrack, "ntrack/i");
+    mTree->Branch("trackIndex", &trackIndex, "trackIndex/i");
     mTree->Branch("ntracks", ntracks, "ntracks[njet]/i");
+    mTree->Branch("track_pt", track_pt, "track_pt[trackIndex]/F");
+    mTree->Branch("track_nValidPixelHits", "track_nValidPixelHits", "track_nValidPixelHits[trackIndex]/i");
+    mTree->Branch("track_nValidTrackerHits", "track_nValidTrackerHits", "track_nValidTrackerHits[trackIndex]/i");
+
+    mTree->Branch("track_IPz", "track_IPz", "track_IPz [trackIndex]/F");
+    mTree->Branch("track_IP2D", "track_IP2D", "track_IP2D [trackIndex]/F");
+    mTree->Branch("track_IP2Dsig", "track_IP2Dsig", "track_IP2Dsig [trackIndex]/F");
+    mTree->Branch("track_IP3D", "track_IP3D", "track_IP3D [trackIndex]/F");
+    mTree->Branch("track_IP3Dsig", "track_IP3Dsig", "track_IP3Dsig [trackIndex]/F");
+    mTree->Branch("track_distToJetAxix", "track_distToJetAxix", "track_distToJetAxix [trackIndex]/F");
+
 
  
 }
@@ -207,6 +218,8 @@ void OpenDataTreeProducerOptimized::beginRun(edm::Run const &iRun,
                                      edm::EventSetup const &iSetup) {
 
     // Mapping trigger indices 
+    int iTrigger=0;//mi trigger***
+    int jTrigger=0; // trigger de la coleccion***
     bool changed(true);
     if (hltConfig_.init(iRun, iSetup, processName_, changed) && changed) {
 
@@ -216,22 +229,18 @@ void OpenDataTreeProducerOptimized::beginRun(edm::Run const &iRun,
         triggernames.clear();
 
         // Iterate over all active triggers of the AOD file
-    
-
-	int iTrigger=0;//mi trigger***
+        iTrigger++;
         auto name_list = hltConfig_.triggerNames();
         for (std::string name_to_search: triggerNames_) {
             // Find the version of jet trigger that is active in this run 
             
-            int jTrigger=0; // trigger de la coleccion***
             for (std::string name_candidate: name_list) {
 	   
+                jTrigger++
 	        //printf(" Mi trigger %i: %s y el trigger de la coleccion %i: %s\n", iTrigger++, triggerNames_, jTrigger++, name_list);
 		//printf(" Mi trigger %i: %s y el trigger de la coleccion %i: %s\n", iTrigger++, name_to_search, jTrigger++, name_candidate);
-                std::cout<< "Mi trigger  : " << iTrigger++ << "    name_to_search     " << name_to_search << std::endl; 
-                std::cout<< "el trigger de la coleccion  : " << jTrigger++ << "    name_candidate     " << name_candidate << std::endl; 
-                
-
+                std::cout<< "Mi trigger  : " << iTrigger << "    name_to_search     " << name_to_search << std::endl; 
+                std::cout<< "el trigger de la coleccion  : " << jTrigger << "    name_candidate     " << name_candidate << std::endl; 
 
                 // Match the prefix to the full name (eg. HLT_Jet30 to HLT_Jet30_v10)
                 if ( name_candidate.find(name_to_search + "_v") != std::string::npos ) {
@@ -268,6 +277,8 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     // Event info
     run = event_obj.id().run();
     lumi = event_obj.luminosityBlock();
+    std::cout << " run number    " << run <<std::endl; 
+    std::cout << " lumi = lumiosityBlock    " << lumi <<std::endl; 
     event = event_obj.id().event();
     /////////////////////////////////////////////////////////////////////////////////////////////////////////  
     // Test Discriminant 
@@ -528,23 +539,23 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 
         //Test track properties here
         //////////////////////////////////////////////////////////////////////////
-        // track multiplicity in the jet
+        // track multiplicity in the jet after PV matching 
           ntracks[ak5_index] = 0.0;
-        // Index of the track in the jet
-          int track_index = 0;
+        // Index of the track in the jet after PV matching  
+          int trackPV_index = 0;
  
         // Loop over tracks of the jet
         for(auto i_trk = tracks.begin(); i_trk != tracks.end(); i_trk++) {
 
             if (recVtxs->size() == 0) break;
 
-            track_pt [track_index] = (*i_trk)->pt();           
+             track_pt [trackPV_index] = (*i_trk)->pt();           
              // Hit pattern of the track
              const reco::HitPattern& p = (*i_trk)->hitPattern();
              // Loop over the hits of the track
              for (int i=0; i<p.numberOfHits(); i++) {
-              track_nValidPixelHits[track_index] = p.numberOfValidPixelHits() ;
-              track_nValidTrackerHits [track_index] = p.numberOfValidTrackerHits() ;
+              track_nValidPixelHits[trackPV_index] = p.numberOfValidPixelHits() ;
+              track_nValidTrackerHits [trackPV_index] = p.numberOfValidTrackerHits() ;
              }
              // Extract the Impact paramenter info for this track
              
@@ -554,7 +565,15 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
              TrackIPTagInfoCollection::const_iterator it = ip.begin();
              for(; it != ip.end(); it++)
               { 
-                TrackIPTagInfo::TrackIPData data = it->impactParameterData()[track_index];  
+                TrackIPTagInfo::TrackIPData data = it->impactParameterData()[trackPV_index];
+
+                track_IP2D [trackPV_index] = data.ip2d.value();  
+                track_IP2Dsig [trackPV_index] = data.ip2d.significance();  
+                track_IP3D [trackPV_index] = data.ip3d.value();  
+                track_IP3Dsig [trackPV_index] = data.ip3d.significance();
+                track_distToJetAxix [trackPV_index] = data.distanceToJetAxis.value();  
+                //track_IPz [trackPV_index] = ???;
+
              /*   cout << selTracks[j]->pt() << "\t";
                 cout << it->probabilities(0)[j] << "\t";
                 cout << it->probabilities(1)[j] << "\t";
@@ -603,21 +622,24 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
                         } 
                     } 
                     if(flagBreak)
+                      trackPV_index ++;
+                      /// guardaría la informacion del pt, eta, phi, nvalids hits .....
+ 
                       break;
                 } 
             } 
-        track_index ++; 
         }
-   
-       // Number of tracks in the jet 
-       ntrack = track_index;
-       ntracks[ak5_index] = ntrack; 
+        
+       // Number of matched tracks in the jet 
+       trackIndex = trackPV_index; 
+       ntracks[ak5_index] = trackPV_index; 
 
     
-        if (sumTrkPt > 0) {
+        if (sumTrkPt > 0) 
+          {
             beta[ak5_index]   = sumTrkPtBeta/sumTrkPt;
             bstar[ak5_index]  = sumTrkPtBetaStar/sumTrkPt;
-        } 
+          } 
 
 
         // Jet composition
