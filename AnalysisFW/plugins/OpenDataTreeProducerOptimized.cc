@@ -196,7 +196,7 @@ void OpenDataTreeProducerOptimized::beginJob() {
     mTree->Branch("trackIndex", &trackIndex, "trackIndex/i");
     mTree->Branch("ntracks", ntracks, "ntracks[njet]/i");
     mTree->Branch("track_pt", track_pt, "track_pt[trackIndex]/F");
-    mTree->Branch("track_nValidPixelHits", "track_nValidPixelHits", "track_nValidPixelHits[trackIndex]/i");
+    /*mTree->Branch("track_nValidPixelHits", "track_nValidPixelHits", "track_nValidPixelHits[trackIndex]/i");
     mTree->Branch("track_nValidTrackerHits", "track_nValidTrackerHits", "track_nValidTrackerHits[trackIndex]/i");
 
     mTree->Branch("track_IPz", "track_IPz", "track_IPz [trackIndex]/F");
@@ -205,7 +205,7 @@ void OpenDataTreeProducerOptimized::beginJob() {
     mTree->Branch("track_IP3D", "track_IP3D", "track_IP3D [trackIndex]/F");
     mTree->Branch("track_IP3Dsig", "track_IP3Dsig", "track_IP3Dsig [trackIndex]/F");
     mTree->Branch("track_distToJetAxix", "track_distToJetAxix", "track_distToJetAxix [trackIndex]/F");
-
+*/
 
  
 }
@@ -236,11 +236,11 @@ void OpenDataTreeProducerOptimized::beginRun(edm::Run const &iRun,
             
             for (std::string name_candidate: name_list) {
 	   
-                jTrigger++
+                jTrigger++;
 	        //printf(" Mi trigger %i: %s y el trigger de la coleccion %i: %s\n", iTrigger++, triggerNames_, jTrigger++, name_list);
 		//printf(" Mi trigger %i: %s y el trigger de la coleccion %i: %s\n", iTrigger++, name_to_search, jTrigger++, name_candidate);
-                std::cout<< "Mi trigger  : " << iTrigger << "    name_to_search     " << name_to_search << std::endl; 
-                std::cout<< "el trigger de la coleccion  : " << jTrigger << "    name_candidate     " << name_candidate << std::endl; 
+//                std::cout<< "Mi trigger  : " << iTrigger << "    name_to_search     " << name_to_search << std::endl; 
+//                std::cout<< "el trigger de la coleccion  : " << jTrigger << "    name_candidate     " << name_candidate << std::endl; 
 
                 // Match the prefix to the full name (eg. HLT_Jet30 to HLT_Jet30_v10)
                 if ( name_candidate.find(name_to_search + "_v") != std::string::npos ) {
@@ -277,9 +277,11 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     // Event info
     run = event_obj.id().run();
     lumi = event_obj.luminosityBlock();
-    std::cout << " run number    " << run <<std::endl; 
-    std::cout << " lumi = lumiosityBlock    " << lumi <<std::endl; 
     event = event_obj.id().event();
+    cout << " ##########################################################################################  " << endl; 
+    std::cout << " run number: " << run <<std::endl; 
+    std::cout << " lumi = lumiosityBlock: " << lumi <<std::endl; 
+    cout << " event number: " << event << endl; 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////  
     // Test Discriminant 
     //---------------------------- Jet CSV discriminantor -----------------------
@@ -474,14 +476,19 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     // Jets will be unsorted in pT after applying JEC,  
     // therefore store corrected jets in a new collection (map): key (double) is pT * -1 (key), 
     // value (std::pair<PFJet*, double>) is pair of original jet iterator and corresponding JEC factor
+    
+    int njetNoCORR =0;
+ 
     std::map<double, std::pair<reco::PFJetCollection::const_iterator, double> > sortedJets;
     for (auto i_ak5jet_orig = ak5_handle->begin(); i_ak5jet_orig != ak5_handle->end(); ++i_ak5jet_orig) {
         
         /////////////////////////////////////////////////////////////////////////////////////////////
         // Para chequear la correccion 
         /////////////////////////////////////////////////////////////////////////////////////////////
-        printf( "\nmi jet sin corregir\n");
+        printf( "\nmi jet sin corregir %i\n", njetNoCORR);
         printf("  pt = %f\n",                           i_ak5jet_orig->pt());
+        printf("  eta = %f\n",                           i_ak5jet_orig->eta());
+        printf("  phi = %f\n",                           i_ak5jet_orig->phi());
         printf("  chargedHadronEnergyFraction  = %f\n", i_ak5jet_orig->chargedHadronEnergyFraction());
         printf("  muonEnergyFraction  = %f\n",          i_ak5jet_orig->muonEnergyFraction());
         printf("  neutralHadronMultiplicity = %i\n",    i_ak5jet_orig->neutralHadronMultiplicity());
@@ -494,7 +501,13 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         jec = corrector_ak5->correction(*i_ak5jet_orig, event_obj, iSetup);
         // Multiply pT by -1 in order to have largest pT jet first (sorted in ascending order by default)
         sortedJets.insert(std::pair<double, std::pair<reco::PFJetCollection::const_iterator, double> >(-1 * i_ak5jet_orig->pt() * jec, std::pair<reco::PFJetCollection::const_iterator, double>(i_ak5jet_orig, jec)));
-    }
+      
+      njetNoCORR ++;
+
+     }
+    
+    cout << "the number of NON corrected PF Jets in the event is: " << njetNoCORR << endl; 
+    int njetCORR =0;
 
     // Iterate over the jets (sorted in pT) of the event
     for (auto i_ak5jet_orig = sortedJets.begin(); i_ak5jet_orig != sortedJets.end(); ++i_ak5jet_orig) {
@@ -512,15 +525,18 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         /////////////////////////////////////////////////////////////////////////////////////////////
         // Para chequear la correccion 
         /////////////////////////////////////////////////////////////////////////////////////////////
-        printf( "\nmi jet  corregido\n");
+        printf("\nmi jet  corregido %i\n", njetCORR);
         printf("  pt = %f\n",i_ak5jet->pt());
+        printf("  eta = %f\n",i_ak5jet->eta());
+        printf("  phi = %f\n",i_ak5jet->phi());
         printf("  chargedHadronEnergyFraction  = %f\n", i_ak5jet->chargedHadronEnergyFraction());
         printf("  muonEnergyFraction  = %f\n",          i_ak5jet->muonEnergyFraction());
         printf("  neutralHadronMultiplicity = %i\n",    i_ak5jet->neutralHadronMultiplicity());
         printf("  chargedHadronMultiplicity = %i\n",    i_ak5jet->chargedHadronMultiplicity());
         printf("  chargedMultiplicity       = %i\n",    i_ak5jet->chargedMultiplicity());
         printf("  neutralMultiplicity       = %i\n",    i_ak5jet->chargedHadronMultiplicity());
-
+        njetCORR ++;
+        
         // Skip the current iteration if jet is not selected
         if (fabs(i_ak5jet->y()) > mMaxY || 
             (i_ak5jet->pt()) < mMinPFPt) {
@@ -559,7 +575,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
              }
              // Extract the Impact paramenter info for this track
              
-             Handle<TrackIPTagInfoCollection> ipHandle;
+             /*Handle<TrackIPTagInfoCollection> ipHandle;
              event_obj.getByLabel(m_ipassoc, ipHandle);
              const TrackIPTagInfoCollection & ip = *(ipHandle.product());
              TrackIPTagInfoCollection::const_iterator it = ip.begin();
@@ -574,7 +590,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
                 track_distToJetAxix [trackPV_index] = data.distanceToJetAxis.value();  
                 //track_IPz [trackPV_index] = ???;
 
-             /*   cout << selTracks[j]->pt() << "\t";
+                cout << selTracks[j]->pt() << "\t";
                 cout << it->probabilities(0)[j] << "\t";
                 cout << it->probabilities(1)[j] << "\t";
                 cout << data.ip3d.value() << "\t";
@@ -589,8 +605,8 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
                 cout << (data.closestToGhostTrack - pv).mag() << "\t";
                 cout << data.ip2d.value() << "\t";
                 cout << data.ip2d.significance() <<  endl;     
-           */   }
-           
+             }
+           */
             // Sum pT
             sumTrkPt += (*i_trk)->pt();
             
@@ -622,12 +638,13 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
                         } 
                     } 
                     if(flagBreak)
-                      trackPV_index ++;
+              //        trackPV_index ++;
                       /// guardaría la informacion del pt, eta, phi, nvalids hits .....
  
                       break;
                 } 
             } 
+          trackPV_index ++;
         }
         
        // Number of matched tracks in the jet 
@@ -747,7 +764,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
             const reco::GenParticleRefVector & bHadrons = aInfo.getbHadrons();
 
             nBHadrons [ak5_index] = bHadrons.size();          
-            std::cout << " nBHadrons " << ak5_index << " =  " << nBHadrons [ak5_index]  << std::endl;  
+//            std::cout << " nBHadrons " << ak5_index << " =  " << nBHadrons [ak5_index]  << std::endl;  
 
             /*if (bHadrons.size()== 2){std::cout << "                      # of clustered b hadrons: " << bHadrons.size() << std::endl;
             nBHadrons [ak5_index] = bHadrons.size();          
@@ -854,11 +871,52 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
  //   }
 
 
+
+    //################################################################
+    // TEST TRACKS FROM TrackIPTagInfoCollection 
+     cout << " " << endl;
+     cout << "PFCollection Selected Jet number: "<< njetCORR-1 << endl;    
+     cout << "  Jet pt: "  << jet_pt[ak5_index]   << endl;
+     cout << "  Jet eta: " << jet_eta[ak5_index]  << endl;
+     cout << "  Jet phi: " << jet_phi[ak5_index]  << endl;
+     cout << " " << endl;
+    //################################################################
+    
     ak5_index++;
     }  
 
     // Number of selected jets in the event
     njet = ak5_index;    
+    cout << " " << endl; 
+    cout << "the number of CORRECTED PF Jets in the event is: " << njetCORR << endl; 
+    cout << "the number of selected PF Jets in the event is: "  << njet << endl; 
+    cout << " " << endl; 
+
+    //################################################################
+    // TEST TRACKS FROM TrackIPTagInfoCollection 
+     Handle<TrackIPTagInfoCollection> ipHandle;
+     event_obj.getByLabel(m_ipassoc, ipHandle);
+     const TrackIPTagInfoCollection & ip = *(ipHandle.product());
+     cout << " JETS FROM TrackIPTagInfoCollection " << endl; 
+     cout << " " << endl; 
+     cout << "Found " << ip.size() << " TagInfo" << endl;
+     cout << " " << endl; 
+     TrackIPTagInfoCollection::const_iterator it = ip.begin();
+
+     float TagInfoJet_index = 0.0; 
+
+     for(; it != ip.end(); it++)
+     {
+      cout << "TagInfoCollection Jet number: "<< TagInfoJet_index << endl;  
+      cout << "  Jet pt: "  << it->jet()->pt() << endl;
+      cout << "  Jet eta: " << it->jet()->eta() << endl;
+      cout << "  Jet phi: " << it->jet()->phi() << endl;
+      cout << " " << endl;  
+      TagInfoJet_index ++; 
+     
+     }
+     cout << "the number of TagInfoCollection Jets in the event is: " << TagInfoJet_index << endl; 
+    //#############################################################################################
 
 
     // Four leading AK7 Jets
