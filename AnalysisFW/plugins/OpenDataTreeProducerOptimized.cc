@@ -4,7 +4,7 @@
 // https://twiki.cern.ch/twiki/bin/viewauth/CMS/SMPJAnalysisFW
 // https://github.com/cms-smpj/SMPJ/tree/v1.0
 
-
+#include <typeinfo>
 #include <iostream>
 #include <sstream>
 #include <istream>
@@ -30,6 +30,8 @@
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/Common/interface/Handle.h"
+#include "DataFormats/Common/interface/View.h"
+#include "DataFormats/Common/interface/RefToBase.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/JetReco/interface/Jet.h"
 #include "DataFormats/JetReco/interface/JetCollection.h"
@@ -284,18 +286,16 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     cout << " event number: " << event << endl; 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////  
     // Test Discriminant 
-    //---------------------------- Jet CSV discriminantor -----------------------
-    /*edm::Handle<reco::JetTagCollection> tagHandle_CSV;
-    event_obj.getByLabel("combinedSecondaryVertexBJetTags", tagHandle_CSV);
-    const reco::JetTagCollection & tag_CSV = *(tagHandle_CSV.product());
-    */
     //---------------------------- Jet JBP tag discriminantor -------------------
     edm::Handle<reco::JetTagCollection> tagHandle_JBP;
     event_obj.getByLabel("jetBProbabilityBJetTags", tagHandle_JBP); 
-    const reco::JetTagCollection & tag_JBP = *(tagHandle_JBP.product());
-
+    //const reco::JetTagCollection & tag_JBP = *(tagHandle_JBP.product());
+    /*/---------------------------- Jet CSV discriminantor -----------------------
+    edm::Handle<reco::JetTagCollection> tagHandle_CSV;
+    event_obj.getByLabel("combinedSecondaryVertexBJetTags", tagHandle_CSV);
+    const reco::JetTagCollection & tag_CSV = *(tagHandle_CSV.product());
     //---------------------------- Jet TCHP discriminator -----------------------
-    /*edm::Handle<reco::JetTagCollection> tagHandle_TCHP;
+    edm::Handle<reco::JetTagCollection> tagHandle_TCHP;
     event_obj.getByLabel("trackCountingHighPurBJetTags", tagHandle_TCHP); 
     const reco::JetTagCollection & tag_TCHP = *(tagHandle_TCHP.product());
     *///cout << "Found " << ip.size() << " TagInfo" << endl;
@@ -442,10 +442,10 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     /////////////////////////////////////////////////////////////////////////////////////////////////////////  
     // Test Discriminant 
     //---------------------------- Jet CSV discriminantor -----------------------
-    edm::Handle<reco::JetTagCollection> tagHandle_CSV;
+    /*edm::Handle<reco::JetTagCollection> tagHandle_CSV;
     event_obj.getByLabel("combinedSecondaryVertexBJetTags", tagHandle_CSV);
     const reco::JetTagCollection & tag_CSV = *(tagHandle_CSV.product());
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
+    *//////////////////////////////////////////////////////////////////////////////////////////////////////////  
 
     // PF AK5 Jets
 
@@ -485,10 +485,25 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     // value (std::pair<PFJet*, double>) is pair of original jet iterator and corresponding JEC factor
     
     int njetNoCORR =0;
-    int ak5jet_orig_index =0;
 
-    std::map<double, int>  ak5_handle_index; 
+    std:: map<int, unsigned int> ak5_handle_index;
     std::map<double, std::pair<reco::PFJetCollection::const_iterator, double> > sortedJets;
+    unsigned int ak5jet_orig_index =0;
+
+
+    //######################################################
+    // My AK5 reco::Jets
+    //######################################################
+         edm::Handle<edm::View<reco::Jet> > myJets;
+         event_obj.getByLabel(mPFak5JetsName, myJets);
+    //######################################################
+    for (unsigned index = 0; index < myJets -> size(); ++index)
+     {
+       edm::RefToBase<reco::Jet> jetRef = myJets->refAt(index);
+       float disc = (*tagHandle_JBP)[allJets.at(jetRefIndex)];
+       std::cout << " disc2 = " << disc <<'\n'; 
+     }
+    
     for (auto i_ak5jet_orig = ak5_handle->begin(); i_ak5jet_orig != ak5_handle->end(); ++i_ak5jet_orig) {
         
         /////////////////////////////////////////////////////////////////////////////////////////////
@@ -513,16 +528,30 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         sortedJets.insert(std::pair<double, std::pair<reco::PFJetCollection::const_iterator, double> >(-1 * i_ak5jet_orig->pt() * jec, std::pair<reco::PFJetCollection::const_iterator, double>(i_ak5jet_orig, jec)));
         
 
-        ak5_handle_index.insert(std::pair<double, int>  (-1 * i_ak5jet_orig->pt() * jec, ak5jet_orig_index));  
-        cout << "  "  << endl; 
+        ak5_handle_index.insert(std::make_pair (int(-1000 * i_ak5jet_orig->pt() * jec), ak5jet_orig_index));  
+    /*    cout << "  "  << endl; 
         cout << " a of the sortedJets and ak5_handle_index maps " << -1 * i_ak5jet_orig->pt() * jec  << endl; 
         cout << "  "  << endl; 
-        
+        cout << " b of the ak5_handle_index map " << ak5jet_orig_index  << endl; 
+        cout << "  "  << endl; 
+      */  
+    //edm::RefToBase<reco::PFJetCollection> jetRefTag(edm::RefToBaseProd<reco::PFJetCollection> i_ak5jet_orig, ak5jet_orig_index );
         njetNoCORR ++;
         ak5jet_orig_index ++;
 
      }
-    
+   
+   /* for (std::map<double,int>::iterator it=ak5_handle_index.begin(); it!=ak5_handle_index.end(); ++it)
+    { std::cout << it->first << " => " << it->second << '\n'; 
+      std::cout <<  ak5_handle_index.at(it->first) << '\n';
+    }  
+     int kk = ak5_handle_index.find(-173.023);
+     std::cout << "ak5_handle_index[-173.023] = " <<  kk->second << '\n'; 
+     std::cout << "ak5_handle_index[-99.5405] = " << ak5_handle_index.find(-99.5405)->second << '\n'; 
+     std::cout << "ak5_handle_index[-75.85] = " << ak5_handle_index[-75.85] << '\n'; 
+     std::cout << "ak5_handle_index[-19.0065] = " << ak5_handle_index[-19.0065] << '\n'; 
+   */
+ 
     cout << "the number of NON corrected PF Jets in the event is: " << njetNoCORR << endl; 
     int njetCORR =0;
 
@@ -556,14 +585,18 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         /////////////////////////////////////////////////////////////////////////////////////////////
         
         cout << " ========== safety print ========== " << endl;
-        cout << " -1 *  corjet.pt() = " <<  -1 *  corjet.pt() << endl; 
-        double indexKey = -1 *  corjet.pt() ;
-        cout << " indexKey = " <<  indexKey  << endl; 
+        int indexKey = -1000 *  corjet.pt() ;
+        cout << " indexKey " <<  indexKey << endl; 
+       /* for (std::map<int,int>::iterator it=ak5_handle_index.begin(); it!=ak5_handle_index.end(); ++it)
+         {   std::cout << it->first << " " << indexKey << " " << it->first-indexKey <<'\n';
+           // std::cout << it->first << " => " << it->second << '\n'; 
+           std::cout <<  ak5_handle_index.at(it->first) << '\n';
+           std::cout <<  ak5_handle_index.at(indexKey) << '\n';
+         }  
+       */
          
-        int jetRefIndex = ak5_handle_index.at(indexKey);   
+        unsigned int jetRefIndex = ak5_handle_index.at(indexKey);   
         cout << " current jet index (JetRefIndex) = " << jetRefIndex << endl;
-        int jetRefIndex2 = ak5_handle_index[ -1 * ( i_ak5jet->pt() ) ];   
-        cout << " current jet index2 (JetRefIndex2) = " << jetRefIndex2 << endl; 
         cout << " ================================== " << endl;
  
         // Skip the current iteration if jet is not selected
@@ -813,20 +846,44 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     jet_CSV[ak5_index]  = -999;// is -1 if no matching jet
     jet_JBP [ak5_index] = -999;// is -1 if no matching jet
     jet_TCHP[ak5_index] = -999;// is -1 if no matching jet 
-    //size_t idx = (i_ak5jet_orig - sortedJets.begin());
-    /*cout << " ========== safety print ========== " << endl;
-    double indexKey = -1 * ( corjet.pt() ) *jec; 
-    int jetRefIndex = ak5_handle_index.at(indexKey);   
-    cout << " current jet index (JetRefIndex) = " << jetRefIndex << endl;
-    int jetRefIndex2 = ak5_handle_index[ -1 * ( corjet.pt() ) *jec ];   
-    cout << " current jet index2 (JetRefIndex2) = " << jetRefIndex2 << endl; 
-    cout << " ================================== " << endl;
-    */ 
     // Get the discriminant info for the ak5 selected jet
-    //ak5_handle_index.insert(std::pair<double, int> > (-1 * i_ak5jet_orig->pt() * jec, ak5jet_orig_index));
-    edm::RefToBase<reco::Jet> jetRefTag(edm::Ref<reco::PFJetCollection>(ak5_handle, jetRefIndex));
-    jet_JBP [ak5_index] = (*tagHandle_JBP)[jetRefTag];         
-    cout << " The PF Collection Jet index" << jetRefIndex << " or " << njetCORR << "    It is selected with the index = "<< ak5_index << " with pt = " << i_ak5jet->pt() << " has the discriminant JBP value of = " << jet_JBP [ak5_index] << endl;   
+    //size_t indexFinal = (size_t) jetRefIndex;
+    //edm::RefToBase<reco::PFJetCollection> jetRefTag(edm::RefToBaseProd<reco::PFJetCollection> ak5_handle, indexFinal );
+    //size_t kk = ak5_handle_index.at(indexKey);
+    //edm::RefToBase<reco::Jet> jetRefTag(edm::RefToBaseProd<reco::Jet> i_ak5jet);
+    //edm::RefToBase<reco::PFJetCollection> jetRefTag(edm::RefToBaseProd<reco::PFJetCollection> ak5_handle, jetRefIndex);
+    //edm::RefToBase<reco::Jet> jetRefTag(edm::RefToBaseProd<reco::PFJetCollection>(ak5_handle, jetRefIndex));
+    //jetRefIndex = 0; 
+    //jet_JBP [ak5_index] = (*tagHandle_JBP)[i_ak5jet];         
+    //jet_JBP [ak5_index] = (*tagHandle_JBP)[jetRefTag];
+    //std::cout << "allJets at " << jetRefIndex << " has the  pt = " << allJets.at(jetRefIndex)->pt() << "  ; eta =  " << allJets.at(jetRefIndex)->eta() << " ; phi =  " << allJets.at(jetRefIndex)->phi() << endl;
+     //cout << typeid( allJets.at(jetRefIndex)).name() << "   " ;
+    //for (unsigned index = 0; index < myJets -> size(); ++index)
+    // {
+    // float disc = (*tagHandle_JBP)[allJets.at(jetRefIndex)];
+    //      std::cout << " disc2 = " << disc <<'\n'; 
+    // for( edm::View<reco::Jet>::const_iterator jet = myJets->begin(); jet != myJets->end(); ++jet )
+    // {
+       //size_t idx = (jet - myJets->begin());
+    // cout << typeid(myJets -> refAt(index)).name() <<endl; 
+    //std::cout << "myJets at " << index << " has the  pt = " <<  myJets -> refAt(index)->pt() << "  ; eta =  " << myJets -> refAt(index)->eta() << " ; phi =  " << myJets -> refAt(index)->phi() << endl;
+     //edm::RefToBase<reco::Jet> jetRef = myJets->refAt(index);
+   
+//     edm::RefToBase<reco::Jet> jetRef = jet->refAt(idx);
+     //edm::RefToBase<reco::Jet> jetRef(edm::RefToBaseProd<reco::Jet> jet, idx );
+
+     //float disc = (*tagHandle_JBP)[jet];
+     //std::cout << " disc2 = " << disc << '\n'; 
+     //float disc = (*tagHandle_JBP)[myJets -> refAt(index)];
+      // Match the reco jet  to the jet from the sortedJets loop
+      /* if ( allJets.at(jetRefIndex)->eta() == myJets -> refAt(index)->eta())
+        {  
+          std::cout << " disc2 = " << disc << " with  eta = " <<'\n'; 
+          break; 
+        }
+      */
+    // }          
+    /*cout << " The PF Collection Jet index" << jetRefIndex << " or " << indexFinal << "   It is selected with the index = "<< ak5_index << " with pt = " << i_ak5jet->pt() << " has the discriminant JBP value of = " << jet_JBP [ak5_index] << endl;   
     cout << " " << endl;
     cout << "Tag Collection Jet "<< endl;
     cout << "  Jet pt = "  << tag_JBP[jetRefIndex].first->pt()   << endl;
@@ -834,7 +891,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     cout << "  Jet phi = " << tag_JBP[jetRefIndex].first->phi()  << endl;
 
     //for (int i = 0; i != 10; i++)
-    for (int i = 0; i != (int)tag_CSV.size(); i++)
+    for (int i = 0; i != (int)tag_JBP.size(); i++)
      {
         double deltaR2_Tag1 = reco::deltaR2( jet_eta[ak5_index],
                                              jet_phi[ak5_index],
@@ -843,23 +900,19 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
                                            );
       if ( (deltaR2_Tag1) < 0.01) // check the value of the deltaR2 
       {
-      //  jet_CSV [ak5_index] = tag_CSV[i].second;
         jet_JBP [ak5_index] = tag_JBP[i].second;
-    //    jet_TCHP[ak5_index] = tag_TCHP[i].second;
           std::cout << "---------------------Matching--------------------------------------------------" << std::endl;    
-          cout << "  Jet pt: "  << tag_JBP[i].first->pt()   << endl;
-          cout << "  Jet eta: " << tag_JBP[i].first->eta()  << endl;
-          cout << "  Jet phi: " << tag_JBP[i].first->phi()  << endl;
+          cout << "  Jet pt = "  << tag_JBP[i].first->pt()   << endl;
+          cout << "  Jet eta = " << tag_JBP[i].first->eta()  << endl;
+          cout << "  Jet phi = " << tag_JBP[i].first->phi()  << endl;
           cout << " Discriminant value " << tag_JBP[i].second << endl; 
           std::cout << "-----------------------------------------------------------------------" << std::endl;    
         break;
        }
 
      } 
-    
+    */
     //################################################################
-
-
     //################################################################
     // TEST TRACKS FROM TrackIPTagInfoCollection 
      cout << " " << endl;
@@ -872,6 +925,10 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     
     ak5_index++;
     }  
+  
+   
+
+
 
     // Number of selected jets in the event
     njet = ak5_index;    
