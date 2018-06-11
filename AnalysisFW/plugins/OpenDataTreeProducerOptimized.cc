@@ -130,6 +130,7 @@ void OpenDataTreeProducerOptimized::beginJob() {
     mTree->Branch("jet_CSV", jet_CSV, "jet_CSV[njet]/F");
     mTree->Branch("jet_JBP", jet_JBP, "jet_JBP[njet]/F");
     mTree->Branch("jet_TCHP", jet_TCHP, "jet_TCHP[njet]/F");
+    mTree->Branch("dR2min_matching", dR2min_matching, "dR2min_matching[njet]/F");
 
     // AK7 variables
     mTree->Branch("njet_ak7", &njet_ak7, "njet_ak7/i");
@@ -821,21 +822,24 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     
       //matching ak5CaloJets and ak5PFJets
       float dR2min = 999; 
+      unsigned indexmin = 999;
       for (unsigned index = 0; index < myJets -> size(); ++index)
       {
-        float dR2 = reco::deltaR2 (jet_eta[ak5_index], jet_phi[ak5_index], (*myJets)[index].eta(), (*myJets)[index].phi());   
-        if (dR2 < dR2min) 
-        { 
-         dR2min = dR2;
-         if (dR2min < 0.03) 
-         {
-          jet_JBP[ak5_index]  =  (*tagHandle_JBP)[myJets->refAt(index)];
-          jet_CSV[ak5_index]  =  (*tagHandle_CSV)[myJets->refAt(index)];
-         }else{
-          cout <<" Warning!! There is not matching between ak5CaloJets and ak5PFJets => No b-tagging info available for the original PFJet number =  " << jetRefIndex << endl;
-         } 
-        }
+       float dR2 = reco::deltaR2 (jet_eta[ak5_index], jet_phi[ak5_index], (*myJets)[index].eta(), (*myJets)[index].phi());   
+       if (dR2 < dR2min) 
+       { 
+        dR2min = dR2;
+        indexmin = index
+       }
       }
+      dR2min_matching[ak5_index] = dR2min;
+      if (sqrt(dR2min) < 0.1) 
+      {
+       jet_JBP[ak5_index]  =  (*tagHandle_JBP)[myJets->refAt(indexmin)];
+       jet_CSV[ak5_index]  =  (*tagHandle_CSV)[myJets->refAt(indexmin)];
+      } else {
+      cout <<" Warning!! There is not matching between ak5CaloJets and ak5PFJets => No b-tagging info available for the original PFJet number =  " << jetRefIndex << endl;
+      }        
     //################################################################
     //################################################################
     // TEST TRACKS FROM TrackIPTagInfoCollection 
