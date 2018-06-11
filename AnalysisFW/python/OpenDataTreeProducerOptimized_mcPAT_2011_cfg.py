@@ -81,6 +81,8 @@ process.ak5ak7 = cms.EDAnalyzer('OpenDataTreeProducerOptimized',
     ## jet collections ###########################
     pfak7jets       = cms.InputTag('ak7PFJets'),
     pfak5jets       = cms.InputTag('ak5PFJets'),
+    caloak5jets        = cms.InputTag('ak5CaloJets'),
+    
     ## MET collection ####
     pfmet           = cms.InputTag('pfMET7'),
     ## database entry for the uncertainties ######
@@ -154,7 +156,7 @@ process.p = cms.Path(
 
 # Change number of events here:
 
-process.maxEvents.input = 1000
+process.maxEvents.input = 2
 #process.maxEvents.input = -1
 
 process.MessageLogger.cerr.FwkReport.reportEvery = 500

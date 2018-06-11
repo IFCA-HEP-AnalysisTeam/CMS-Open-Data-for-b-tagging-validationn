@@ -53,6 +53,7 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     double          mGoodVtxZ; 
     edm::InputTag   mPFak5JetsName;
     edm::InputTag   mPFak7JetsName;
+    edm::InputTag   mCaloak5JetsName;
 
     // Test flavour 
     edm::InputTag jetFlavourInfos_;

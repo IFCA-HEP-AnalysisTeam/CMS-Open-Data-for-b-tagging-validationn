@@ -79,6 +79,7 @@ process.ak5ak7 = cms.EDAnalyzer('OpenDataTreeProducerOptimized',
     ## jet collections ###########################
     pfak7jets       = cms.InputTag('ak7PFJets'),
     pfak5jets       = cms.InputTag('ak5PFJets'),
+    caloak5jets     = cms.InputTag('ak5CaloJets'),
     ## MET collection ####
     pfmet           = cms.InputTag('pfMET5'),
     ## set the conditions for good Vtx counting ##
