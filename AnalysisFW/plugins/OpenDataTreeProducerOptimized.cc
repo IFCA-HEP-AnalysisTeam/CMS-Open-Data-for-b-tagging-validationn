@@ -103,14 +103,14 @@ OpenDataTreeProducerOptimized::OpenDataTreeProducerOptimized(edm::ParameterSet c
   triggerResultsTag_ = cfg.getParameter<edm::InputTag>             ("triggerResults");
   mJetCorr_ak5       = cfg.getParameter<std::string>               ("jetCorr_ak5");
   mJetCorr_ak7       = cfg.getParameter<std::string>               ("jetCorr_ak7");
+  // tracks IP
+  m_ipassoc = cfg.getParameter<edm::InputTag>("ipassociation");
 
   // test flavour
   if (mIsMCarlo){jetFlavourInfos_ = cfg.getParameter<edm::InputTag>("jetFlavourInfos");}
   // test SV
 //  impactParameterTagInfoTrack_  = cfg.getParameter<edm::InputTag>("impactParameterTagInfoTrack");
   secondaryVertexTagInfos_  = cfg.getParameter<edm::InputTag>("secondaryVertexTagInfos"); 
-  // test track IP
-  m_ipassoc = cfg.getParameter<edm::InputTag>("ipassociation");
 }
 
 void OpenDataTreeProducerOptimized::beginJob() {
@@ -128,9 +128,11 @@ void OpenDataTreeProducerOptimized::beginJob() {
     mTree->Branch("jet_igen", jet_igen, "jet_igen[njet]/I");
     // b discriminant
     mTree->Branch("jet_CSV", jet_CSV, "jet_CSV[njet]/F");
+    mTree->Branch("jet_JP", jet_JP, "jet_JP[njet]/F");
     mTree->Branch("jet_JBP", jet_JBP, "jet_JBP[njet]/F");
     mTree->Branch("jet_TCHP", jet_TCHP, "jet_TCHP[njet]/F");
-    mTree->Branch("dR2min_matching", dR2min_matching, "dR2min_matching[njet]/F");
+    mTree->Branch("jet_TCHE", jet_TCHE, "jet_TCHE[njet]/F");
+    mTree->Branch("dRmin_matching", dRmin_matching, "dRmin_matching[njet]/F");
 
     // AK7 variables
     mTree->Branch("njet_ak7", &njet_ak7, "njet_ak7/i");
@@ -197,19 +199,19 @@ void OpenDataTreeProducerOptimized::beginJob() {
     // Test number of Secondary Vertex
     mTree->Branch("nSVertex",     &nSVertex,    "nSVertex/i");    
     // track multiplicity
-    mTree->Branch("trackIndex", &trackIndex, "trackIndex/i");
-    mTree->Branch("ntracks", ntracks, "ntracks[njet]/i");
-    mTree->Branch("track_pt", track_pt, "track_pt[trackIndex]/F");
-    /*mTree->Branch("track_nValidPixelHits", "track_nValidPixelHits", "track_nValidPixelHits[trackIndex]/i");
-    mTree->Branch("track_nValidTrackerHits", "track_nValidTrackerHits", "track_nValidTrackerHits[trackIndex]/i");
+    mTree->Branch("jetTrackIndex", jetTrackIndex, "jetTrackIndex[njet]/i"); 
+    mTree->Branch("ntracksInEvent", &ntracksInEvent, "ntracksInEvent/i");
+    mTree->Branch("track_pt", track_pt, "track_pt[ntracksInEvent]/F");
+    mTree->Branch("track_nValidPixelHits", track_nValidPixelHits, "track_nValidPixelHits[ntracksInEvent]/I");
+    mTree->Branch("track_nValidTrackerHits", track_nValidTrackerHits, "track_nValidTrackerHits[ntracksInEvent]/I");
 
-    mTree->Branch("track_IPz", "track_IPz", "track_IPz [trackIndex]/F");
-    mTree->Branch("track_IP2D", "track_IP2D", "track_IP2D [trackIndex]/F");
-    mTree->Branch("track_IP2Dsig", "track_IP2Dsig", "track_IP2Dsig [trackIndex]/F");
-    mTree->Branch("track_IP3D", "track_IP3D", "track_IP3D [trackIndex]/F");
-    mTree->Branch("track_IP3Dsig", "track_IP3Dsig", "track_IP3Dsig [trackIndex]/F");
-    mTree->Branch("track_distToJetAxix", "track_distToJetAxix", "track_distToJetAxix [trackIndex]/F");
-*/
+//    mTree->Branch("track_IPz", "track_IPz", "track_IPz [ntracksInEvent]/F");
+    mTree->Branch("track_IP2D", track_IP2D, "track_IP2D [ntracksInEvent]/F");
+    mTree->Branch("track_IP2Dsig", track_IP2Dsig, "track_IP2Dsig [ntracksInEvent]/F");
+    mTree->Branch("track_IP3D", track_IP3D, "track_IP3D [ntracksInEvent]/F");
+    mTree->Branch("track_IP3Dsig", track_IP3Dsig, "track_IP3Dsig [ntracksInEvent]/F");
+    mTree->Branch("track_distToJetAxis", track_distToJetAxis, "track_distToJetAxis [ntracksInEvent]/F");
+
 
  
 }
@@ -288,21 +290,26 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     cout << " event number: " << event << endl; 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////  
     // Test Discriminant 
-    //---------------------------- Jet JBP tag discriminantor -------------------
-    edm::Handle<reco::JetTagCollection> tagHandle_JBP;
-    event_obj.getByLabel("jetBProbabilityBJetTags", tagHandle_JBP); 
-    //const reco::JetTagCollection & tag_JBP = *(tagHandle_JBP.product());
     //---------------------------- Jet CSV discriminantor -----------------------
     edm::Handle<reco::JetTagCollection> tagHandle_CSV;
     event_obj.getByLabel("combinedSecondaryVertexBJetTags", tagHandle_CSV);
     //const reco::JetTagCollection & tag_CSV = *(tagHandle_CSV.product());
-    /*//---------------------------- Jet TCHP discriminator -----------------------
+    //---------------------------- Jet JBP tag discriminantor -------------------
+    edm::Handle<reco::JetTagCollection> tagHandle_JBP;
+    event_obj.getByLabel("jetBProbabilityBJetTags", tagHandle_JBP); 
+    //const reco::JetTagCollection & tag_JBP = *(tagHandle_JBP.product());
+    //---------------------------- Jet JP tag discriminantor -------------------
+    edm::Handle<reco::JetTagCollection> tagHandle_JP;
+    event_obj.getByLabel("jetProbabilityBJetTags", tagHandle_JP); 
+    //const reco::JetTagCollection & tag_JP = *(tagHandle_JP.product());
+    //---------------------------- Jet TCHP discriminator -----------------------
     edm::Handle<reco::JetTagCollection> tagHandle_TCHP;
     event_obj.getByLabel("trackCountingHighPurBJetTags", tagHandle_TCHP); 
-    const reco::JetTagCollection & tag_TCHP = *(tagHandle_TCHP.product());
-    *///cout << "Found " << ip.size() << " TagInfo" << endl;
-
-    
+    //const reco::JetTagCollection & tag_TCHP = *(tagHandle_TCHP.product());
+    //---------------------------- Jet TCHE discriminator -----------------------
+    edm::Handle<reco::JetTagCollection> tagHandle_TCHE;
+    event_obj.getByLabel("trackCountingHighEffBJetTags", tagHandle_TCHE); 
+    //const reco::JetTagCollection & tag_TCHE = *(tagHandle_TCHE.product());
     
     // Print out the info
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -510,6 +517,18 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 //    std::cout <<      "---------------------------------------------------------------------------" << std::endl; 
     //######################################################
 
+
+    //################################################################
+    // B-tagging selected tracks from TrackIPTagInfoCollection 
+    //################################################################
+     Handle<TrackIPTagInfoCollection> ipHandle;
+     event_obj.getByLabel(m_ipassoc, ipHandle);
+     const TrackIPTagInfoCollection & ip = *(ipHandle.product());
+     //index for the selected track in the event
+     int ntracksInEvent_index =0;
+     //################################################################
+
+
     for (auto i_ak5jet_orig = ak5_handle->begin(); i_ak5jet_orig != ak5_handle->end(); ++i_ak5jet_orig) {
         
         /////////////////////////////////////////////////////////////////////////////////////////////
@@ -542,6 +561,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
    
     cout << "the number of NON corrected PF Jets in the event is: " << njetNoCORR << endl; 
     int njetCORR =0;
+
 
     // Iterate over the jets (sorted in pT) of the event
     for (auto i_ak5jet_orig = sortedJets.begin(); i_ak5jet_orig != sortedJets.end(); ++i_ak5jet_orig) {
@@ -592,61 +612,14 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         bstar[ak5_index] = 0.0;
 
 
-        //Test track properties here
-        //////////////////////////////////////////////////////////////////////////
-        // track multiplicity in the jet after PV matching 
-          ntracks[ak5_index] = 0.0;
-        // Index of the track in the jet after PV matching  
-          int trackPV_index = 0;
  
         // Loop over tracks of the jet
         for(auto i_trk = tracks.begin(); i_trk != tracks.end(); i_trk++) {
 
             if (recVtxs->size() == 0) break;
 
-             track_pt [trackPV_index] = (*i_trk)->pt();           
-             // Hit pattern of the track
-             const reco::HitPattern& p = (*i_trk)->hitPattern();
-             // Loop over the hits of the track
-             for (int i=0; i<p.numberOfHits(); i++) {
-              track_nValidPixelHits[trackPV_index] = p.numberOfValidPixelHits() ;
-              track_nValidTrackerHits [trackPV_index] = p.numberOfValidTrackerHits() ;
-             }
-             // Extract the Impact paramenter info for this track
              
-             /*Handle<TrackIPTagInfoCollection> ipHandle;
-             event_obj.getByLabel(m_ipassoc, ipHandle);
-             const TrackIPTagInfoCollection & ip = *(ipHandle.product());
-             TrackIPTagInfoCollection::const_iterator it = ip.begin();
-             for(; it != ip.end(); it++)
-              { 
-                TrackIPTagInfo::TrackIPData data = it->impactParameterData()[trackPV_index];
-
-                track_IP2D [trackPV_index] = data.ip2d.value();  
-                track_IP2Dsig [trackPV_index] = data.ip2d.significance();  
-                track_IP3D [trackPV_index] = data.ip3d.value();  
-                track_IP3Dsig [trackPV_index] = data.ip3d.significance();
-                track_distToJetAxix [trackPV_index] = data.distanceToJetAxis.value();  
-                //track_IPz [trackPV_index] = ???;
-
-                cout << selTracks[j]->pt() << "\t";
-                cout << it->probabilities(0)[j] << "\t";
-                cout << it->probabilities(1)[j] << "\t";
-                cout << data.ip3d.value() << "\t";
-                cout << data.ip3d.significance() << "\t";
-                cout << data.distanceToJetAxis.value() << "\t";
-                cout << data.distanceToJetAxis.significance() << "\t";
-                cout << data.distanceToGhostTrack.value() << "\t";
-                cout << data.distanceToGhostTrack.significance() << "\t";
-                cout << data.closestToJetAxis << "\t";
-                cout << (data.closestToJetAxis - pv).mag() << "\t";
-                cout << data.closestToGhostTrack << "\t";
-                cout << (data.closestToGhostTrack - pv).mag() << "\t";
-                cout << data.ip2d.value() << "\t";
-                cout << data.ip2d.significance() <<  endl;     
-             }
-           */
-            // Sum pT
+           // Sum pT
             sumTrkPt += (*i_trk)->pt();
             
             // Loop over vertices
@@ -680,13 +653,8 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
                       break;
                 } 
             } 
-          trackPV_index ++;
         }
         
-       // Number of matched tracks in the jet 
-       trackIndex = trackPV_index; 
-       ntracks[ak5_index] = trackPV_index; 
-
     
         if (sumTrkPt > 0) 
           {
@@ -814,11 +782,15 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
       }
     }
     //################################################################
-    // B-discriminants from  JetTagCollection 
+    // B-discriminants from JetTagCollection
+    //  negative vaules means not enough information 
+    //  for the tagger algorithm produces the discriminant value    
     //################################################################
-      jet_CSV[ak5_index]  = -999;// is -1 if no matching jet
-      jet_JBP [ak5_index] = -999;// is -1 if no matching jet
-      jet_TCHP[ak5_index] = -999;// is -1 if no matching jet 
+      jet_CSV[ak5_index]  = -999;
+      jet_JBP [ak5_index] = -999;
+      jet_JP [ak5_index]  = -999;
+      jet_TCHP[ak5_index] = -999; 
+      jet_TCHE[ak5_index] = -999; 
     
       //matching ak5CaloJets and ak5PFJets
       float dR2min = 999; 
@@ -829,35 +801,120 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
        if (dR2 < dR2min) 
        { 
         dR2min = dR2;
-        indexmin = index
+        indexmin = index;
        }
       }
-      dR2min_matching[ak5_index] = dR2min;
+      dRmin_matching[ak5_index] = sqrt(dR2min);
       if (sqrt(dR2min) < 0.1) 
       {
-       jet_JBP[ak5_index]  =  (*tagHandle_JBP)[myJets->refAt(indexmin)];
+       //cout <<" PFindex " << ak5_index << "  caloJet " << indexmin << endl; 
        jet_CSV[ak5_index]  =  (*tagHandle_CSV)[myJets->refAt(indexmin)];
-      } else {
-      cout <<" Warning!! There is not matching between ak5CaloJets and ak5PFJets => No b-tagging info available for the original PFJet number =  " << jetRefIndex << endl;
-      }        
+       jet_JBP[ak5_index]  =  (*tagHandle_JBP)[myJets->refAt(indexmin)];
+       jet_JP[ak5_index]   =  (*tagHandle_JP)[myJets->refAt(indexmin)];
+       //cout << "Jet_JP disc =  " << jet_JP[ak5_index]; 
+       jet_TCHP[ak5_index] =  (*tagHandle_TCHP)[myJets->refAt(indexmin)];
+       //cout << "Jet_TCHP disc =  " << jet_TCHP[ak5_index]; 
+       jet_TCHE[ak5_index] =  (*tagHandle_TCHE)[myJets->refAt(indexmin)];
+       //cout << "Jet_TCHE disc =  " << jet_TCHE[ak5_index] << endl; 
+      } else 
+        {
+         cout <<" Warning!! There is not matching between ak5CaloJets and ak5PFJets => No b-tagging info available for the original PFJet number =  " << jetRefIndex << endl;
+        }  
+
     //################################################################
+    // B-tagging selected tracks from TrackIPTagInfoCollection 
     //################################################################
-    // TEST TRACKS FROM TrackIPTagInfoCollection 
-     cout << " " << endl;
+     /*cout << " JETS FROM TrackIPTagInfoCollection " << endl; 
+     cout << " " << endl; 
+     cout << "Found " << ip.size() << " TagInfo" << endl;
+     cout << " " << endl; 
+     */
+     unsigned tagindex_test = 0; 
+     float dR2min_test = 999; 
+     unsigned indexmin_test = 999;
+     float tagindexmin = 999; 
+
+     TrackIPTagInfoCollection::const_iterator it = ip.begin();
+     for(; it != ip.end(); it++)
+     {
+       float dR2_test = reco::deltaR2 (jet_eta[ak5_index], jet_phi[ak5_index], it->jet()->eta(), it->jet()->phi());   
+       if (dR2_test < dR2min_test) 
+       { 
+        dR2min_test = dR2_test;
+        indexmin_test = tagindex_test;
+       }
+    /*cout << "TagInfoCollection Jet number: "<< TagInfoJet_index << endl;  
+      cout << "  pt = "  << it->jet()->pt() << endl;
+      cout << "  eta = : " << it->jet()->eta() << endl;
+      cout << "  phi =  " << it->jet()->phi() << endl;
+      cout << " " << endl;  
+      */
+      tagindex_test ++; 
+     }
+     if (sqrt(dR2min) < 0.1) 
+   
+      { tagindexmin = indexmin_test; 
+    
+        TrackRefVector selTracks = (*ipHandle)[tagindexmin].selectedTracks();
+        int n=selTracks.size();
+        for(int j=0;j< n;j++)
+        {
+         jetTrackIndex [ak5_index] = ak5_index;
+         cout << " track number in the event  " << ntracksInEvent_index << " associated to the selected jet number  " << jetTrackIndex [ak5_index] << " has : " << endl;  
+         cout << " pt = " << selTracks[j]->pt() << "\n";
+         track_pt [j] = selTracks[j]->pt();
+         // Extract the Impact paramenter info for this track
+         TrackIPTagInfo::TrackIPData data = (*ipHandle)[tagindexmin].impactParameterData()[j];  
+         // Hit pattern of the track
+         const reco::HitPattern& p = selTracks[j]->hitPattern();
+         //const reco::HitPattern& p = (*i_trk)->hitPattern();
+         // Loop over the hits of the track
+         //for (int i=0; i<p.numberOfHits(); i++) {
+         track_nValidPixelHits[j] = p.numberOfValidPixelHits() ;
+         track_nValidTrackerHits [j] = p.numberOfValidTrackerHits() ;
+         //}
+         cout << " numberOfValidPixelHits = "  << p.numberOfValidPixelHits() << "\n";    
+         cout << " numberOfValidTrackerHits = " << p.numberOfValidTrackerHits() << "\n";    
+         cout << " ip3d.value = " << data.ip3d.value() << "\n";
+         cout << " ip3d.significance = " << data.ip3d.significance() << "\n";
+         cout << " distanceToJetAxis.value = " << data.distanceToJetAxis.value() << "\n";
+         cout << " distanceToJetAxis.significance = " << data.distanceToJetAxis.significance() << "\n";
+        // cout << data.distanceToGhostTrack.value() << "\t";
+        // cout << data.distanceToGhostTrack.significance() << "\t";
+        // cout << data.closestToJetAxis << "\t";
+        // cout << (data.closestToJetAxis - pv).mag() << "\t";
+        // cout << data.closestToGhostTrack << "\t";
+        // cout << (data.closestToGhostTrack - pv).mag() << "\t";
+         cout <<  " ip2d.value = " << data.ip2d.value() << "\n";
+         cout <<  " ip2d.significance = " << data.ip2d.significance() <<  endl;     
+         track_IP2D [j] = data.ip2d.value();  
+         track_IP2Dsig [j] = data.ip2d.significance();  
+         track_IP3D [j] = data.ip3d.value();  
+         track_IP3Dsig [j] = data.ip3d.significance();
+         track_distToJetAxis [j] = data.distanceToJetAxis.value();  
+         //track_IPz [trackPV_index] = ???;
+         ntracksInEvent_index ++; 
+       }
+
+     }  
+     ntracksInEvent = ntracksInEvent_index;   
+     if (tagindexmin != indexmin) cout << " Recorcholis !! TagCollection Jets and TrackIPTagInfoCollection does not match one to one!! " << endl; 
+     
+ 
+     //cout << "the number of TagInfoCollection Jets in the event is: " << TagInfoJet_index << endl; 
+    //################################################################
+    /* cout << " " << endl;
      cout << "PFCollection Selected Jet number: "<< njetCORR-1 << endl;    
      cout << "  pt = "  << jet_pt[ak5_index]   << endl;
      cout << "  eta = " << jet_eta[ak5_index]  << endl;
      cout << "  phi = " << jet_phi[ak5_index]  << endl;
      cout << " " << endl;
-    //################################################################
+    *///################################################################
     
     ak5_index++;
     }  
   
    
-
-
-
     // Number of selected jets in the event
     njet = ak5_index;    
     cout << " " << endl; 
@@ -865,33 +922,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     cout << "the number of selected PF Jets in the event is: "  << njet << endl; 
     cout << " " << endl; 
 
-    //################################################################
-    // TEST TRACKS FROM TrackIPTagInfoCollection 
-     Handle<TrackIPTagInfoCollection> ipHandle;
-     event_obj.getByLabel(m_ipassoc, ipHandle);
-     const TrackIPTagInfoCollection & ip = *(ipHandle.product());
-     cout << " JETS FROM TrackIPTagInfoCollection " << endl; 
-     cout << " " << endl; 
-     cout << "Found " << ip.size() << " TagInfo" << endl;
-     cout << " " << endl; 
-     TrackIPTagInfoCollection::const_iterator it = ip.begin();
-
-     float TagInfoJet_index = 0.0; 
-
-     for(; it != ip.end(); it++)
-     {
-      cout << "TagInfoCollection Jet number: "<< TagInfoJet_index << endl;  
-      cout << "  pt = "  << it->jet()->pt() << endl;
-      cout << "  eta = : " << it->jet()->eta() << endl;
-      cout << "  phi =  " << it->jet()->phi() << endl;
-      cout << " " << endl;  
-      TagInfoJet_index ++; 
-     
-     }
-     cout << "the number of TagInfoCollection Jets in the event is: " << TagInfoJet_index << endl; 
-    //#############################################################################################
-
-
+    
     // Four leading AK7 Jets
 
     edm::Handle<reco::PFJetCollection> ak7_handle;

@@ -87,6 +87,7 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     
     static const UInt_t kMaxNjet = 64;
     static const UInt_t kMaxNtrg = 32;
+    static const UInt_t kMaxNtracks = 200;
 
 
 
@@ -102,17 +103,17 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     Int_t jet_igen[kMaxNjet];
 
     // tracks
-    UInt_t  trackIndex;                      // number of tracks in the jet
-    Int_t   ntracks         [kMaxNjet];  // track multiplicity in the jet
-    Float_t track_pt        [kMaxNjet];  // pt of tracks in the jet
-    Int_t track_nValidPixelHits   [kMaxNjet]; 
-    Int_t track_nValidTrackerHits [kMaxNjet]; 
-    Float_t track_IPz         [kMaxNjet];  // longitudinal Impact parameter
-    Float_t track_IP2D        [kMaxNjet];
-    Float_t track_IP2Dsig     [kMaxNjet];
-    Float_t track_IP3D        [kMaxNjet];
-    Float_t track_IP3Dsig     [kMaxNjet];
-    Float_t track_distToJetaxis [kMaxNjet];
+    UInt_t ntracksInEvent;// number of selected tracks in the event
+    Int_t  jetTrackIndex[kMaxNjet];// selected jet index associated to the track
+    Int_t track_nValidPixelHits   [kMaxNtracks]; 
+    Int_t track_nValidTrackerHits [kMaxNtracks]; 
+    Float_t track_pt              [kMaxNtracks]; 
+    Float_t track_IPz             [kMaxNtracks];
+    Float_t track_IP2D            [kMaxNtracks];
+    Float_t track_IP2Dsig         [kMaxNtracks];
+    Float_t track_IP3D            [kMaxNtracks];
+    Float_t track_IP3Dsig         [kMaxNtracks];
+    Float_t track_distToJetAxis   [kMaxNtracks];
     // ..... chi2 normalized
     // ..... decay length
 
@@ -124,8 +125,11 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     // b discriminants
     /////////////////////////// 
     Float_t jet_CSV[kMaxNjet];
+    Float_t jet_JP[kMaxNjet];
     Float_t jet_JBP[kMaxNjet];
     Float_t jet_TCHP[kMaxNjet];
+    Float_t jet_TCHE[kMaxNjet];
+    Float_t dRmin_matching[kMaxNjet];
     //////////////////////////
 
     // Test Flavour
