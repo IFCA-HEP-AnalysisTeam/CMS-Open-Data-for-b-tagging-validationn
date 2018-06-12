@@ -103,17 +103,17 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     Int_t jet_igen[kMaxNjet];
 
     // tracks
-    UInt_t ntracksInEvent;// number of selected tracks in the event
-    Int_t  jetTrackIndex[kMaxNjet];// selected jet index associated to the track
-    Int_t track_nValidPixelHits   [kMaxNtracks]; 
-    Int_t track_nValidTrackerHits [kMaxNtracks]; 
-    Float_t track_pt              [kMaxNtracks]; 
-    Float_t track_IPz             [kMaxNtracks];
-    Float_t track_IP2D            [kMaxNtracks];
-    Float_t track_IP2Dsig         [kMaxNtracks];
-    Float_t track_IP3D            [kMaxNtracks];
-    Float_t track_IP3Dsig         [kMaxNtracks];
-    Float_t track_distToJetAxis   [kMaxNtracks];
+    UInt_t seltracksInEvent;// number of selected tracks in the event
+    Int_t  jetTrackIndex          [kMaxNtracks];// selected jet index associated to the track
+    Int_t seltrack_nValidPixelHits   [kMaxNtracks]; 
+    Int_t seltrack_nValidTrackerHits [kMaxNtracks]; 
+    Float_t seltrack_pt              [kMaxNtracks]; 
+    Float_t seltrack_IPz             [kMaxNtracks];
+    Float_t seltrack_IP2D            [kMaxNtracks];
+    Float_t seltrack_IP2Dsig         [kMaxNtracks];
+    Float_t seltrack_IP3D            [kMaxNtracks];
+    Float_t seltrack_IP3Dsig         [kMaxNtracks];
+    Float_t seltrack_distToJetAxis   [kMaxNtracks];
     // ..... chi2 normalized
     // ..... decay length
 

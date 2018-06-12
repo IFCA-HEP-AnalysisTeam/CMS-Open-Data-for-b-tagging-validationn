@@ -27,6 +27,7 @@
 #include "FWCore/Common/interface/TriggerResultsByName.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 
+#include "DataFormats/GeometryCommonDetAlgo/interface/Measurement1D.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/Common/interface/Handle.h"
@@ -50,6 +51,7 @@
 #include "DataFormats/BTauReco/interface/JetTag.h"
 #include "DataFormats/BTauReco/interface/JetTagInfo.h"
 #include "DataFormats/BTauReco/interface/SecondaryVertexTagInfo.h"
+#include "DataFormats/BTauReco/interface/TaggingVariable.h"  
 
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenRunInfoProduct.h"
@@ -75,8 +77,12 @@
 #include "DataFormats/BTauReco/interface/TrackIPTagInfo.h"
 #include "DataFormats/BTauReco/interface/TrackProbabilityTagInfo.h"
 #include "RecoBTag/ImpactParameter/interface/TrackCountingComputer.h"
-
-
+#include "TrackingTools/IPTools/interface/IPTools.h"
+#include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
+#include "TrackingTools/Records/interface/TransientTrackRecord.h"
+#include "DataFormats/GeometryVector/interface/GlobalVector.h"
+#include "RecoVertex/VertexPrimitives/interface/ConvertToFromReco.h"
+#include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
 //https://github.com/cms-sw/cmssw/blob/CMSSW_5_3_X/PhysicsTools/JetExamples/test/printJetFlavourInfo.py
 //https://github.com/cms-sw/cmssw/blob/CMSSW_5_3_X/PhysicsTools/JetExamples/test/printJetFlavourInfo.cc
 
@@ -199,18 +205,17 @@ void OpenDataTreeProducerOptimized::beginJob() {
     // Test number of Secondary Vertex
     mTree->Branch("nSVertex",     &nSVertex,    "nSVertex/i");    
     // track multiplicity
-    mTree->Branch("jetTrackIndex", jetTrackIndex, "jetTrackIndex[njet]/i"); 
-    mTree->Branch("ntracksInEvent", &ntracksInEvent, "ntracksInEvent/i");
-    mTree->Branch("track_pt", track_pt, "track_pt[ntracksInEvent]/F");
-    mTree->Branch("track_nValidPixelHits", track_nValidPixelHits, "track_nValidPixelHits[ntracksInEvent]/I");
-    mTree->Branch("track_nValidTrackerHits", track_nValidTrackerHits, "track_nValidTrackerHits[ntracksInEvent]/I");
-
-//    mTree->Branch("track_IPz", "track_IPz", "track_IPz [ntracksInEvent]/F");
-    mTree->Branch("track_IP2D", track_IP2D, "track_IP2D [ntracksInEvent]/F");
-    mTree->Branch("track_IP2Dsig", track_IP2Dsig, "track_IP2Dsig [ntracksInEvent]/F");
-    mTree->Branch("track_IP3D", track_IP3D, "track_IP3D [ntracksInEvent]/F");
-    mTree->Branch("track_IP3Dsig", track_IP3Dsig, "track_IP3Dsig [ntracksInEvent]/F");
-    mTree->Branch("track_distToJetAxis", track_distToJetAxis, "track_distToJetAxis [ntracksInEvent]/F");
+    mTree->Branch("seltracksInEvent", &seltracksInEvent, "seltracksInEvent/i");
+    mTree->Branch("jetTrackIndex", jetTrackIndex, "jetTrackIndex[seltracksInEvent]/I"); 
+    mTree->Branch("seltrack_pt", seltrack_pt, "seltrack_pt[seltracksInEvent]/F");
+    mTree->Branch("seltrack_nValidPixelHits", seltrack_nValidPixelHits, "seltrack_nValidPixelHits[seltracksInEvent]/I");
+    mTree->Branch("seltrack_nValidTrackerHits", seltrack_nValidTrackerHits, "seltrack_nValidTrackerHits[seltracksInEvent]/I");
+    mTree->Branch("seltrack_IP2D", seltrack_IP2D, "seltrack_IP2D [seltracksInEvent]/F");
+    mTree->Branch("seltrack_IP2Dsig", seltrack_IP2Dsig, "seltrack_IP2Dsig [seltracksInEvent]/F");
+    mTree->Branch("seltrack_IP3D", seltrack_IP3D, "seltrack_IP3D [seltracksInEvent]/F");
+    mTree->Branch("seltrack_IP3Dsig", seltrack_IP3Dsig, "seltrack_IP3Dsig [seltracksInEvent]/F");
+    mTree->Branch("seltrack_distToJetAxis", seltrack_distToJetAxis, "seltrack_distToJetAxis [seltracksInEvent]/F");
+//  mTree->Branch("track_IPz", "track_IPz", "track_IPz [seltracksInEvent]/F");
 
 
  
@@ -442,12 +447,20 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
                    // }
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////  
+
+    // Transient track for IP calculation
+    edm::ESHandle<TransientTrackBuilder> builder;
+    iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", builder);
     
     
     // Vertex Info
     Handle<reco::VertexCollection> recVtxs;
     event_obj.getByLabel(mOfflineVertices, recVtxs);
-
+   // const VertexCollection & pv = *(ipHandle.product());
+    // use first pv of the collection
+    //   Vertex dummy;
+    //   const Vertex *pv = &dummy
+    const reco::Vertex *pv;
 
     // PF AK5 Jets
 
@@ -525,7 +538,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
      event_obj.getByLabel(m_ipassoc, ipHandle);
      const TrackIPTagInfoCollection & ip = *(ipHandle.product());
      //index for the selected track in the event
-     int ntracksInEvent_index =0;
+     int seltracksInEvent_index =0;
      //################################################################
 
 
@@ -612,13 +625,48 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         bstar[ak5_index] = 0.0;
 
 
- 
+        int trackInJet = 0; 
         // Loop over tracks of the jet
         for(auto i_trk = tracks.begin(); i_trk != tracks.end(); i_trk++) {
 
             if (recVtxs->size() == 0) break;
 
-             
+            cout << "The track number " << trackInJet << " in jet number  " << ak5_index << "  has : " << endl; 
+
+            cout << " pt = " << (*i_trk)->pt() << endl;              
+            cout << " normalized chi2 = " << (*i_trk)->normalizedChi2()<< endl;              
+            cout << " decay length = " << (*i_trk)->normalizedChi2()<< endl;              
+            cout << " numberOfValidPixelHits = "   << (*i_trk)->hitPattern().numberOfValidHits() << endl;    
+            cout << " numberOfValidTrackerHits = " << (*i_trk)->hitPattern().numberOfValidPixelHits() << endl;
+            //Extract the IP Info
+            // we always use the first vertex (at the moment)
+            //reco::Vertex pv = (*recVtxs)[0];
+            pv = &*recVtxs->begin();
+            //pvRef = edm::Ref<VertexCollection>(recVtxs, 0);
+            cout << " transverse impact parameter 2d (xy) = " << (*i_trk)->dxy(pv->position()) << endl; 
+            cout << " longitudinal impact parameter (z)   = " << (*i_trk)->dz(pv->position()) << endl; 
+            //TrackIPTagInfo::TrackIPData trackIP; 
+            //const TrackRef ptrackRef = *i_trk; 
+            //reco::TransientTrack transientTrack = builder->build(ptrackRef); 
+            const reco::TransientTrack transientTrack = builder->build(*i_trk); 
+            const GlobalVector direction(i_ak5jet->px(), i_ak5jet->py(), i_ak5jet->pz()); //!!!!!!!
+            Double_t distanceToJetAxis =  IPTools::jetTrackDistance(transientTrack, direction, *pv).second.value();
+            cout << " distance to the jet = " << distanceToJetAxis << endl; 
+            Double_t IP2d = -999;
+            bool ipPass = IPTools::signedTransverseImpactParameter(transientTrack, direction, *pv).first;
+            if (ipPass) 
+             {
+              IP2d = IPTools::signedTransverseImpactParameter(transientTrack, direction, *pv).second.value();
+              cout << " if there is 2d signed impact parameter for this track is = " << IP2d <<endl;       
+             }
+            Double_t decayLength= -999;
+            TrajectoryStateOnSurface closest = IPTools::closestApproachToJet(transientTrack.impactPointState(), *pv, direction,transientTrack.field());
+            if (closest.isValid()) 
+             {
+              decayLength = (closest.globalPosition() - RecoVertex::convertPos(pv->position())).mag();
+              cout << "  decay lenght = " << decayLength << endl; 
+             }
+ 
            // Sum pT
             sumTrkPt += (*i_trk)->pt();
             
@@ -652,7 +700,8 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
                     if(flagBreak)
                       break;
                 } 
-            } 
+            }
+         trackInJet ++; 
         }
         
     
@@ -851,53 +900,53 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
       */
       tagindex_test ++; 
      }
-     if (sqrt(dR2min) < 0.1) 
-   
-      { tagindexmin = indexmin_test; 
-    
-        TrackRefVector selTracks = (*ipHandle)[tagindexmin].selectedTracks();
-        int n=selTracks.size();
-        for(int j=0;j< n;j++)
+     if (sqrt(dR2min_test) < 0.1) 
+      { 
+       tagindexmin = indexmin_test; 
+       TrackRefVector selTracks = (*ipHandle)[tagindexmin].selectedTracks();
+       int n=selTracks.size();
+       if (n > 0)
         {
-         jetTrackIndex [ak5_index] = ak5_index;
-         cout << " track number in the event  " << ntracksInEvent_index << " associated to the selected jet number  " << jetTrackIndex [ak5_index] << " has : " << endl;  
-         cout << " pt = " << selTracks[j]->pt() << "\n";
-         track_pt [j] = selTracks[j]->pt();
-         // Extract the Impact paramenter info for this track
-         TrackIPTagInfo::TrackIPData data = (*ipHandle)[tagindexmin].impactParameterData()[j];  
-         // Hit pattern of the track
-         const reco::HitPattern& p = selTracks[j]->hitPattern();
-         //const reco::HitPattern& p = (*i_trk)->hitPattern();
-         // Loop over the hits of the track
-         //for (int i=0; i<p.numberOfHits(); i++) {
-         track_nValidPixelHits[j] = p.numberOfValidPixelHits() ;
-         track_nValidTrackerHits [j] = p.numberOfValidTrackerHits() ;
-         //}
-         cout << " numberOfValidPixelHits = "  << p.numberOfValidPixelHits() << "\n";    
-         cout << " numberOfValidTrackerHits = " << p.numberOfValidTrackerHits() << "\n";    
-         cout << " ip3d.value = " << data.ip3d.value() << "\n";
-         cout << " ip3d.significance = " << data.ip3d.significance() << "\n";
-         cout << " distanceToJetAxis.value = " << data.distanceToJetAxis.value() << "\n";
-         cout << " distanceToJetAxis.significance = " << data.distanceToJetAxis.significance() << "\n";
-        // cout << data.distanceToGhostTrack.value() << "\t";
-        // cout << data.distanceToGhostTrack.significance() << "\t";
-        // cout << data.closestToJetAxis << "\t";
-        // cout << (data.closestToJetAxis - pv).mag() << "\t";
-        // cout << data.closestToGhostTrack << "\t";
-        // cout << (data.closestToGhostTrack - pv).mag() << "\t";
-         cout <<  " ip2d.value = " << data.ip2d.value() << "\n";
-         cout <<  " ip2d.significance = " << data.ip2d.significance() <<  endl;     
-         track_IP2D [j] = data.ip2d.value();  
-         track_IP2Dsig [j] = data.ip2d.significance();  
-         track_IP3D [j] = data.ip3d.value();  
-         track_IP3Dsig [j] = data.ip3d.significance();
-         track_distToJetAxis [j] = data.distanceToJetAxis.value();  
-         //track_IPz [trackPV_index] = ???;
-         ntracksInEvent_index ++; 
-       }
-
-     }  
-     ntracksInEvent = ntracksInEvent_index;   
+         for(int j=0;j< n;j++)
+         {
+          jetTrackIndex [seltracksInEvent_index] = ak5_index;
+          cout << " track number in the event  " << seltracksInEvent_index << " associated to the selected jet number  " << jetTrackIndex [seltracksInEvent_index] << " has : " << endl;  
+          cout << " pt = " << selTracks[j]->pt() << "\n";
+          seltrack_pt [seltracksInEvent_index] = selTracks[j]->pt();
+          // Extract the Impact paramenter info for this track
+          TrackIPTagInfo::TrackIPData data = (*ipHandle)[tagindexmin].impactParameterData()[j];  
+          // Hit pattern of the track
+          const reco::HitPattern& p = selTracks[j]->hitPattern();
+          //const reco::HitPattern& p = (*i_trk)->hitPattern();
+          // Loop over the hits of the track
+          //for (int i=0; i<p.numberOfHits(); i++) {
+          seltrack_nValidPixelHits[seltracksInEvent_index] = p.numberOfValidPixelHits() ;
+          seltrack_nValidTrackerHits [seltracksInEvent_index] = p.numberOfValidTrackerHits() ;
+          //}
+          cout << " numberOfValidPixelHits = "  << p.numberOfValidPixelHits() << "\n";    
+          cout << " numberOfValidTrackerHits = " << p.numberOfValidTrackerHits() << "\n";    
+          cout << " ip3d.value = " << data.ip3d.value() << "\n";
+          cout << " ip3d.significance = " << data.ip3d.significance() << "\n";
+          cout << " distanceToJetAxis.value = " << data.distanceToJetAxis.value() << "\n";
+          cout << " distanceToJetAxis.significance = " << data.distanceToJetAxis.significance() << "\n";
+          // cout << data.distanceToGhostTrack.value() << "\t";
+          // cout << data.distanceToGhostTrack.significance() << "\t";
+          // cout << data.closestToJetAxis << "\t";
+          // cout << (data.closestToJetAxis - pv).mag() << "\t";
+          // cout << data.closestToGhostTrack << "\t";
+          // cout << (data.closestToGhostTrack - pv).mag() << "\t";
+          cout <<  " ip2d.value = " << data.ip2d.value() << "\n";
+          cout <<  " ip2d.significance = " << data.ip2d.significance() <<  endl;     
+          seltrack_IP2D [seltracksInEvent_index] = data.ip2d.value();  
+          seltrack_IP2Dsig [seltracksInEvent_index] = data.ip2d.significance();  
+          seltrack_IP3D [seltracksInEvent_index] = data.ip3d.value();  
+          seltrack_IP3Dsig [seltracksInEvent_index] = data.ip3d.significance();
+          seltrack_distToJetAxis [seltracksInEvent_index] = data.distanceToJetAxis.value();  
+          //track_IPz [trackPV_index] = ???;
+          seltracksInEvent_index ++; 
+         }
+        } 
+       }  
      if (tagindexmin != indexmin) cout << " Recorcholis !! TagCollection Jets and TrackIPTagInfoCollection does not match one to one!! " << endl; 
      
  
@@ -917,6 +966,9 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
    
     // Number of selected jets in the event
     njet = ak5_index;    
+    // Number of selected tracks in the event
+    seltracksInEvent = seltracksInEvent_index;   
+    
     cout << " " << endl; 
     cout << "the number of CORRECTED PF Jets in the event is: " << njetCORR << endl; 
     cout << "the number of selected PF Jets in the event is: "  << njet << endl; 

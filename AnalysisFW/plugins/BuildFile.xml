@@ -21,6 +21,11 @@
 <use   name="clhep"/>
 <use   name="DataFormats/BTauReco"/>
 <use   name="SimDataFormats/JetMatching"/>
+<use   name="TrackingTools/IPTools"/>
+<use   name="TrackingTools/TransientTrack"/>
+<use   name="TrackingTools/Records"/>
+<use   name="DataFormats/GeometryVector"/>
+<use   name="RecoVertex/VertexPrimitives"/>
 <use   name="rootmath"/>
 <use   name="2011-jet-inclusivecrosssection-ntupleproduction-optimized/AnalysisFW"/>
 <flags   EDM_PLUGIN="1"/>
