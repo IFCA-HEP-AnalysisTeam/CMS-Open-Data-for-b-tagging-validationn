@@ -102,7 +102,7 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     Float_t jet_jes[kMaxNjet];
     Int_t jet_igen[kMaxNjet];
 
-    // tracks
+    // B-tag(IPTagInfo) selected tracks (associated to ak5CaloJets)
     UInt_t seltracksInEvent;// number of selected tracks in the event
     Int_t  jetTrackIndex          [kMaxNtracks];// selected jet index associated to the track
     Int_t seltrack_nValidPixelHits   [kMaxNtracks]; 
@@ -114,8 +114,19 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     Float_t seltrack_IP3D            [kMaxNtracks];
     Float_t seltrack_IP3Dsig         [kMaxNtracks];
     Float_t seltrack_distToJetAxis   [kMaxNtracks];
-    // ..... chi2 normalized
-    // ..... decay length
+    
+    // tracks (associated to ak5PFJets)  
+    
+    UInt_t tracks_inEvent;// number of  tracks in the event
+    Int_t  tracks_jetIndex [kMaxNtracks];// selected jet index associated to the track
+    Int_t tracks_nValidPixelHits   [kMaxNtracks]; 
+    Int_t tracks_nValidTrackerHits [kMaxNtracks]; 
+    Float_t tracks_pt              [kMaxNtracks]; 
+    Float_t tracks_chi2            [kMaxNtracks]; 
+    Float_t tracks_IPz             [kMaxNtracks];
+    Double_t tracks_IP2D           [kMaxNtracks];
+    Double_t tracks_distToJetAxis  [kMaxNtracks];
+    Double_t tracks_decayLength    [kMaxNtracks];
 
     // loose WP for commisionnig
     ////////////////////////////
