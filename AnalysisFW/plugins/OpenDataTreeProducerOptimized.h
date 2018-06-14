@@ -88,7 +88,7 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     static const UInt_t kMaxNjet = 64;
     static const UInt_t kMaxNtrg = 32;
     static const UInt_t kMaxNtracks = 200;
-
+    static const UInt_t kMaxNsv = 20; 
 
 
     // PF jets
@@ -104,7 +104,7 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
 
     // B-tag(IPTagInfo) selected tracks (associated to ak5CaloJets)
     UInt_t seltracksInEvent;// number of selected tracks in the event
-    Int_t  jetTrackIndex          [kMaxNtracks];// selected jet index associated to the track
+    Int_t  jetSeltrackIndex          [kMaxNtracks];// selected jet index associated to the track
     Int_t seltrack_nValidPixelHits   [kMaxNtracks]; 
     Int_t seltrack_nValidTrackerHits [kMaxNtracks]; 
     Float_t seltrack_pt              [kMaxNtracks]; 
@@ -118,7 +118,7 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     // tracks (associated to ak5PFJets)  
     
     UInt_t tracks_inEvent;// number of  tracks in the event
-    Int_t  tracks_jetIndex [kMaxNtracks];// selected jet index associated to the track
+    Int_t  tracks_jetIndex         [kMaxNtracks];// selected jet index associated to the track
     Int_t tracks_nValidPixelHits   [kMaxNtracks]; 
     Int_t tracks_nValidTrackerHits [kMaxNtracks]; 
     Float_t tracks_pt              [kMaxNtracks]; 
@@ -155,7 +155,12 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
 
     // Secondary Vertex
     ///////////////////////////
-    UInt_t  nSVertex;
+    UInt_t nSVinEvent;
+    Int_t  nSVinJet             [kMaxNjet];
+    Int_t  jetSVIndex            [kMaxNsv];  
+    Float_t svmass               [kMaxNsv];
+    Float_t flight3DSignificance [kMaxNsv];
+    
     ///////////////////////////
 
     // PF jets

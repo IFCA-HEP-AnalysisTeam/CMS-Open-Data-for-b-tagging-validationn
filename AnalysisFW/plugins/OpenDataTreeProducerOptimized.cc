@@ -202,11 +202,14 @@ void OpenDataTreeProducerOptimized::beginJob() {
     mTree->Branch("nBHadrons", nBHadrons,"nBHadrons[njet]/F");   
     // Test to get the N generated in MC, N processed in data
     mTree->Branch("nevent", &nevent,"nevent/i");   
-    // Test number of Secondary Vertex
-    mTree->Branch("nSVertex",     &nSVertex,    "nSVertex/i");    
+    // Secondary Vertex
+    mTree->Branch("nSVinEvent",  &nSVinEvent, "nSVinEvent/I");    
+    mTree->Branch("jetSVIndex",  &jetSVIndex, "jetSVIndex[nSVinEvent]/i");    
+    mTree->Branch("svmass",      svmass,    "svmass[nSVinEvent]/F");
+    mTree->Branch("flight3DSignificance", flight3DSignificance, "flight3DSignificance[nSVinEvent]/F");    
     // B-tag(IPTagInfo) selected tracks (associated to ak5CaloJets)
     mTree->Branch("seltracksInEvent", &seltracksInEvent, "seltracksInEvent/i");
-    mTree->Branch("jetTrackIndex", jetTrackIndex, "jetTrackIndex[seltracksInEvent]/I"); 
+    mTree->Branch("jetSeltrackIndex", jetSeltrackIndex, "jetSeltrackIndex[seltracksInEvent]/I"); 
     mTree->Branch("seltrack_pt", seltrack_pt, "seltrack_pt[seltracksInEvent]/F");
     mTree->Branch("seltrack_nValidPixelHits", seltrack_nValidPixelHits, "seltrack_nValidPixelHits[seltracksInEvent]/I");
     mTree->Branch("seltrack_nValidTrackerHits", seltrack_nValidTrackerHits, "seltrack_nValidTrackerHits[seltracksInEvent]/I");
@@ -243,7 +246,7 @@ void OpenDataTreeProducerOptimized::beginRun(edm::Run const &iRun,
     if (hltConfig_.init(iRun, iSetup, processName_, changed) && changed) {
 
         // List of trigger names and indices 
-        // are not emptied between events, must be done here
+        // are not emptied between events, must be done heckIndex re
         triggerIndex_.clear();
         triggernames.clear();
 
@@ -443,32 +446,35 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     event_obj.getByLabel(secondaryVertexTagInfos_, svTagInfosHandle);
     //event_obj.getByLabel("secondaryVertexTagInfos", svTagInfosHandle);
     const reco::SecondaryVertexTagInfoCollection & svTagInfoColl = *(svTagInfosHandle.product());
-   
-   
-    // Print out the info
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    for(reco::SecondaryVertexTagInfoCollection::const_iterator iter = svTagInfoColl.begin(); iter != svTagInfoColl.end(); ++iter) 
-    {
-      // if there are reconstructed vertices in this jet
-      nSVertex = iter->nVertices();
-      cout << " a jet with   pt = " << iter->jet()->pt() << " eta = " << iter->jet()->eta() << " phi = " << iter->jet()->phi() << '\n';       
-      cout << " contains " << iter->nVertices() << " secondary vertices " << endl;
-      if(iter->nVertices() > 0 )
-       {      
-        for (unsigned int vtx = 0; vtx < iter->nVertices(); ++vtx)
-         {
-          std::cout<<"with" << endl;  
-          std::cout<<"        3D flight distance of " << iter->flightDistance(vtx,false).value() << " cm"<<std::endl;
-          std::cout<<"        3D flight significance of " << iter->flightDistance(vtx,false).significance() << " cm"<<std::endl;
-          std::cout<<"        2D flight distance of " << iter->flightDistance(vtx,true).value() << " cm"<<std::endl;
-          std::cout<<"        2D flight significance of " << iter->flightDistance(vtx,true).significance() << " cm"<<std::endl;
-          std::cout<<"        invariant mass of     " << iter->secondaryVertex(vtx).p4().mass() << " GeV"<<endl;
-          const Vertex &vertex = iter->secondaryVertex(vtx); 
-          std::cout<<"        invariant mass 2nd way of     " << vertex.p4().mass() << " GeV"<<endl;
-         }
-       }
-    }
+    // counter of number of secondary vertex in the event
+    int nSVinEvent_index = 0; 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////  
+    // print the info
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
+//    for(reco::SecondaryVertexTagInfoCollection::const_iterator iter = svTagInfoColl.begin(); iter != svTagInfoColl.end(); ++iter) 
+//    {
+//      // if there are reconstructed vertices in this jet
+//      nSVertex = iter->nVertices();
+//      cout << " a jet with   pt = " << iter->jet()->pt() << " eta = " << iter->jet()->eta() << " phi = " << iter->jet()->phi() << '\n';       
+//      cout << " contains " << iter->nVertices() << " secondary vertices " << endl;
+//      if(iter->nVertices() > 0 )
+//       {      
+//        for (unsigned int vtx = 0; vtx < iter->nVertices(); ++vtx)
+//         {
+//          std::cout<<"with" << endl;  
+//          std::cout<<"        3D flight distance of " << iter->flightDistance(vtx,false).value() << " cm"<<std::endl;
+//          std::cout<<"        3D flight significance of " << iter->flightDistance(vtx,false).significance() << " cm"<<std::endl;
+//          std::cout<<"        2D flight distance of " << iter->flightDistance(vtx,true).value() << " cm"<<std::endl;
+//          std::cout<<"        2D flight significance of " << iter->flightDistance(vtx,true).significance() << " cm"<<std::endl;
+//          std::cout<<"        invariant mass of     " << iter->secondaryVertex(vtx).p4().mass() << " GeV"<<endl;
+//          const Vertex &vertex = iter->secondaryVertex(vtx); 
+//          std::cout<<"        invariant mass 2nd way of     " << vertex.p4().mass() << " GeV"<<endl;
+//         }
+//       }
+//    }
+//    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
+   
+   
 
     // Transient track for IP calculation
     edm::ESHandle<TransientTrackBuilder> builder;
@@ -539,17 +545,18 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 //       edm::RefToBase<reco::Jet> jetRef = myJets->refAt(index);
 //    
 // 
-//       float disc = (*tagHandle_JBP)[myJets->refAt(index)];
+//       float disc = (*tagHandle_CSV)[myJets->refAt(index)];
 //       //float disc = (*tagHandle_JBP)[jetRef];
-//       cout << " pt = " << (*myJets)[index].pt() << "   eta = "  << (*myJets)[index].eta() <<  "   phi  " << (*myJets)[index].phi() << "  disc2 = " << disc<< endl; 
+//       cout << " disc_csv = " << disc<< endl; 
+//       //cout << " pt = " << (*myJets)[index].pt() << "   eta = "  << (*myJets)[index].eta() <<  "   phi  " << (*myJets)[index].phi() << "  disc2 = " << disc<< endl; 
 //     }
 //    
 //    std::cout <<      "---------------------------- mCaloak5JetsName 2nd way ---------------------" << std::endl; 
-    for( edm::View<reco::Jet>::const_iterator jet = myJets->begin(); jet != myJets->end(); ++jet )
-     {
-      cout << "  mCaloak5JetsName     pt = " << jet->pt() << "   eta = "  << jet->eta() <<  "   phi  " << jet->phi() << endl;
-     }
-    std::cout <<      "---------------------------------------------------------------------------" << std::endl; 
+//    for( edm::View<reco::Jet>::const_iterator jet = myJets->begin(); jet != myJets->end(); ++jet )
+//     {
+//      cout << "  mCaloak5JetsName     pt = " << jet->pt() << "   eta = "  << jet->eta() <<  "   phi  " << jet->phi() << endl;
+//     }
+//    std::cout <<      "---------------------------------------------------------------------------" << std::endl; 
     //######################################################
 
 
@@ -946,8 +953,8 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
          cout << " -------------------------- Selected tracks --------------------" << endl; 
          for(int j=0;j< n;j++)
          {
-          jetTrackIndex [seltracksInEvent_index] = ak5_index;
-          cout << " track number in the event  " << seltracksInEvent_index << " associated to the selected jet number  " << jetTrackIndex [seltracksInEvent_index] << " has : " << endl;  
+          jetSeltrackIndex [seltracksInEvent_index] = ak5_index;
+          cout << " track number in the event  " << seltracksInEvent_index << " associated to the selected jet number  " << jetSeltrackIndex [seltracksInEvent_index] << " has : " << endl;  
           cout << " pt = " << selTracks[j]->pt() << "\n";
           seltrack_pt [seltracksInEvent_index] = selTracks[j]->pt();
           // Extract the Impact paramenter info for this track
@@ -987,6 +994,57 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
      if (tagindexmin != indexmin) cout << " Recorcholis !! TagCollection Jets and TrackIPTagInfoCollection does not match one to one!! " << endl; 
      
  
+    //################################################################
+    // Secondary vertices 
+    //################################################################
+     unsigned svindex_test = 0; 
+     float svdR2min_test = 999; 
+     unsigned svindexmin_test = 999;
+     float svindexmin = 999;
+
+     nSVinJet[ak5_index] = 0;  
+     // loop over the SecondaryVertexTagInfoCollection and match the ak5CaloJets with at least one secondary vertex 
+     for(reco::SecondaryVertexTagInfoCollection::const_iterator iter = svTagInfoColl.begin(); iter != svTagInfoColl.end(); ++iter) 
+     {
+       if(iter->nVertices() > 0 )
+       {
+        float svdR2_test = reco::deltaR2 (jet_eta[ak5_index], jet_phi[ak5_index], iter->jet()->eta(), iter->jet()->phi());   
+        if (svdR2_test < svdR2min_test) 
+        { 
+         svdR2min_test = svdR2_test;
+         svindexmin_test = svindex_test;
+        }
+       }
+      svindex_test ++; 
+     }
+     if (sqrt(svdR2min_test) < 0.1)
+     {
+      svindexmin = svindexmin_test; 
+      unsigned int nVertices = (*svTagInfosHandle)[svindexmin].nVertices();  
+      nSVinJet[ak5_index] = nVertices;
+
+      cout<< "the jet number " << ak5_index << " has " << nSVinJet[ak5_index]  << " secondary vertices " << endl;   
+      for (unsigned int vtx = 0; vtx < nVertices; ++vtx)
+         {
+          jetSVIndex[nSVinEvent_index] = ak5_index;  
+          flight3DSignificance[nSVinEvent_index] = (*svTagInfosHandle)[svindexmin].flightDistance(vtx,false).significance();
+          const Vertex &vertex = (*svTagInfosHandle)[svindexmin].secondaryVertex(vtx); 
+          svmass[nSVinEvent_index] = vertex.p4().mass(); 
+          std::cout<<"with" << endl;  
+          std::cout<<"        3D flight distance of " << (*svTagInfosHandle)[svindexmin].flightDistance(vtx,false).value() << " cm"<<std::endl;
+          std::cout<<"        3D flight significance of " << flight3DSignificance[nSVinEvent_index] << " cm"<<std::endl;
+          std::cout<<"        2D flight distance of " << (*svTagInfosHandle)[svindexmin].flightDistance(vtx,true).value() << " cm"<<std::endl;
+          std::cout<<"        2D flight significance of " << (*svTagInfosHandle)[svindexmin].flightDistance(vtx,true).significance() << " cm"<<std::endl;
+          std::cout<<"        invariant mass of     " <<  svmass[nSVinEvent_index]  << " GeV"<<endl;
+          std::cout<<"        invariant mass 2nd way of     " << (*svTagInfosHandle)[svindexmin].secondaryVertex(vtx).p4().mass() << " GeV"<<endl;
+          nSVinEvent_index ++;
+         }
+       }
+     if (svindexmin != indexmin) cout << " Recorcholis !! TagCollection Jets and SecondaryVertexTagInfoCollection does not match one to one!! " << endl; 
+     
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
+    
+
      //cout << "the number of TagInfoCollection Jets in the event is: " << TagInfoJet_index << endl; 
     //################################################################
     /* cout << " " << endl;
@@ -1006,7 +1064,9 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     // Number of tracks in the event
     tracks_inEvent = tracks_inEvent_index; 
     // Number of B-tag(IPTagInfo) selected tracks in the event
-    seltracksInEvent = seltracksInEvent_index;   
+    seltracksInEvent = seltracksInEvent_index;
+    // Number of secondary vertex in the event
+    nSVinEvent = nSVinEvent_index;   
     
     cout << " " << endl; 
     cout << "the number of CORRECTED PF Jets in the event is: " << njetCORR << endl; 
