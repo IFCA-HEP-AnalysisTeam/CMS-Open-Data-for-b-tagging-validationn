@@ -113,7 +113,7 @@ OpenDataTreeProducerOptimized::OpenDataTreeProducerOptimized(edm::ParameterSet c
   m_ipassoc = cfg.getParameter<edm::InputTag>("ipassociation");
 
   // test flavour
-  if (mIsMCarlo){jetFlavourInfos_ = cfg.getParameter<edm::InputTag>("jetFlavourInfos");}
+  if (mIsMCarlo){mJetFlavourInfos = cfg.getParameter<edm::InputTag>("jetFlavourInfos");}
   // test SV
 //  impactParameterTagInfoTrack_  = cfg.getParameter<edm::InputTag>("impactParameterTagInfoTrack");
   secondaryVertexTagInfos_  = cfg.getParameter<edm::InputTag>("secondaryVertexTagInfos"); 
@@ -194,9 +194,9 @@ void OpenDataTreeProducerOptimized::beginJob() {
     mTree->Branch("jet_looseID", jet_looseID, "jet_looseID[njet]/O");
  
     // Test flavour  
-    mTree->Branch("ptF",     ptF,    "ptF[njet]/F");    
-    mTree->Branch("etaF",    etaF,   "etaF[njet]/F");    
-    mTree->Branch("phiF",    phiF,   "phiF[njet]/F");    
+   // mTree->Branch("ptF",     ptF,    "ptF[njet]/F");    
+   // mTree->Branch("etaF",    etaF,   "etaF[njet]/F");    
+   // mTree->Branch("phiF",    phiF,   "phiF[njet]/F");    
     mTree->Branch("HadronF", HadronF,"HadronF[njet]/F");    
     mTree->Branch("PartonF", PartonF,"PartonF[njet]/F");    
     mTree->Branch("nBHadrons", nBHadrons,"nBHadrons[njet]/F");   
@@ -349,20 +349,22 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     /////////////////////////////////////////////////////////////////////////////////////////////////////////  
    
     // Test Flavour
-    //if (mIsMCarlo){
-    //edm::Handle<reco::JetFlavourInfoMatchingCollection> theJetFlavourInfos;
-    //event_obj.getByLabel(jetFlavourInfos_, theJetFlavourInfos );
-    //}
     // Print out the info
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // for ( reco::JetFlavourInfoMatchingCollection::const_iterator j  = theJetFlavourInfos->begin();
-    //                                  j != theJetFlavourInfos->end();
-    //                                  ++j ) {
+    //if (mIsMCarlo){
+    edm::Handle<reco::JetFlavourInfoMatchingCollection> theJetFlavourInfos;
+    //event_obj.getByLabel(mJetFlavourInfos, theJetFlavourInfos );
+    // for ( reco::JetFlavourInfoMatchingCollection::const_iterator j  = theJetFlavourInfos->begin(); j != theJetFlavourInfos->end(); ++j ) 
+    // {
     //      std::cout << "-------------------- Jet Flavour Info --------------------" << std::endl;
+    //      const reco::Jet *aJet = (*j).first.get(); 
     //      reco::JetFlavourInfo aInfo = (*j).second;
     //      // ----------------------- Hadrons -------------------------------
     //      std::cout << "                      Hadron-based flavour: " << aInfo.getHadronFlavour() << std::endl;
+    //      // ----------------------- Partons -------------------------------
+    //      std::cout << "                      Parton-based flavour: " << aInfo.getPartonFlavour() << std::endl;
     // }
+    //}
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Triggers
@@ -484,7 +486,6 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     // Vertex Info
     Handle<reco::VertexCollection> recVtxs;
     event_obj.getByLabel(mOfflineVertices, recVtxs);
-   // const VertexCollection & pv = *(ipHandle.product());
     // use first pv of the collection
     //   Vertex dummy;
     //   const Vertex *pv = &dummy
@@ -539,6 +540,9 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     //######################################################
          edm::Handle<edm::View<reco::Jet> > myJets;
          event_obj.getByLabel(mCaloak5JetsName, myJets);
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////  
+      // print the info
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //    std::cout <<      "---------------------------- mCaloak5JetsName -------------------" << std::endl; 
 //    for (unsigned index = 0; index < myJets -> size(); ++index)
 //     {
@@ -548,7 +552,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 //       float disc = (*tagHandle_CSV)[myJets->refAt(index)];
 //       //float disc = (*tagHandle_JBP)[jetRef];
 //       cout << " disc_csv = " << disc<< endl; 
-//       //cout << " pt = " << (*myJets)[index].pt() << "   eta = "  << (*myJets)[index].eta() <<  "   phi  " << (*myJets)[index].phi() << "  disc2 = " << disc<< endl; 
+//       cout << " pt = " << (*myJets)[index].pt() << "   eta = "  << (*myJets)[index].eta() <<  "   phi  " << (*myJets)[index].phi() << "  disc2 = " << disc<< endl; 
 //     }
 //    
 //    std::cout <<      "---------------------------- mCaloak5JetsName 2nd way ---------------------" << std::endl; 
@@ -557,6 +561,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 //      cout << "  mCaloak5JetsName     pt = " << jet->pt() << "   eta = "  << jet->eta() <<  "   phi  " << jet->phi() << endl;
 //     }
 //    std::cout <<      "---------------------------------------------------------------------------" << std::endl; 
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //######################################################
 
 
@@ -603,7 +608,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 
      }
    
-    cout << "the number of NON corrected PF Jets in the event is: " << njetNoCORR << endl; 
+    //cout << "the number of NON corrected PF Jets in the event is: " << njetNoCORR << endl; 
     int njetCORR =0;
 
 
@@ -657,17 +662,17 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 
 
         // Loop over tracks of the jet
-        cout << " -------------------------- No selected tracks --------------------------------" << endl;  
+        //cout << " -------------------------- No selected tracks --------------------------------" << endl;  
         for(auto i_trk = tracks.begin(); i_trk != tracks.end(); i_trk++) {
 
             if (recVtxs->size() == 0) break;
             tracks_jetIndex [tracks_inEvent_index] = ak5_index;
-            cout << "The track number " << tracks_inEvent_index << " in jet number  " << ak5_index << "  has : " << endl; 
+            //cout << "The track number " << tracks_inEvent_index << " in jet number  " << ak5_index << "  has : " << endl; 
 
-            cout << "  pt = " << (*i_trk)->pt() << endl;              
-            cout << "  normalized chi2 = " << (*i_trk)->normalizedChi2()<< endl;              
-            cout << "  numberOfValidPixelHits = " << (*i_trk)->hitPattern().numberOfValidPixelHits() << endl;
-            cout << "  numberOfValidTrackerHits = "   << (*i_trk)->hitPattern().numberOfValidTrackerHits() << endl;    
+            //cout << "  pt = " << (*i_trk)->pt() << endl;              
+            //cout << "  normalized chi2 = " << (*i_trk)->normalizedChi2()<< endl;              
+            //cout << "  numberOfValidPixelHits = " << (*i_trk)->hitPattern().numberOfValidPixelHits() << endl;
+            //cout << "  numberOfValidTrackerHits = "   << (*i_trk)->hitPattern().numberOfValidTrackerHits() << endl;    
             tracks_pt[tracks_inEvent_index] = (*i_trk)->pt();
             tracks_nValidTrackerHits[tracks_inEvent_index] = (*i_trk)->hitPattern().numberOfValidTrackerHits();
             tracks_nValidPixelHits[tracks_inEvent_index] = (*i_trk)->hitPattern().numberOfValidPixelHits();
@@ -675,21 +680,17 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 
             //Extract the IP Info
             // we always use the first vertex (at the moment)
-            //reco::Vertex pv = (*recVtxs)[0];
             pv = &*recVtxs->begin();
-            //pvRef = edm::Ref<VertexCollection>(recVtxs, 0);
-            cout << "  transverse impact parameter 2d (xy) = " << (*i_trk)->dxy(pv->position()) << endl; 
-            cout << "  longitudinal impact parameter (z)   = " << (*i_trk)->dz(pv->position()) << endl; 
+            //cout << "  transverse impact parameter 2d (xy) = " << (*i_trk)->dxy(pv->position()) << endl; 
+            //cout << "  longitudinal impact parameter (z)   = " << (*i_trk)->dz(pv->position()) << endl; 
             tracks_IPz [tracks_inEvent_index] = (*i_trk)->dz(pv->position());
             
 
             //TrackIPTagInfo::TrackIPData trackIP; 
-            //const TrackRef ptrackRef = *i_trk; 
-            //reco::TransientTrack transientTrack = builder->build(ptrackRef); 
             const reco::TransientTrack transientTrack = builder->build(*i_trk); 
             const GlobalVector direction(i_ak5jet->px(), i_ak5jet->py(), i_ak5jet->pz()); //!!!!!!!
             Double_t distanceToJetAxis =  IPTools::jetTrackDistance(transientTrack, direction, *pv).second.value();
-            cout << "  distance to the jet = " << distanceToJetAxis << endl;
+            //cout << "  distance to the jet = " << distanceToJetAxis << endl;
       
             tracks_distToJetAxis[tracks_inEvent_index] = distanceToJetAxis;
            
@@ -698,7 +699,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
             if (ipPass) 
              {
               IP2d = IPTools::signedTransverseImpactParameter(transientTrack, direction, *pv).second.value();
-              cout << "  if (ip2d) signedimpactparameter = " << IP2d <<endl;       
+              //cout << "  if (ip2d) signedimpactparameter = " << IP2d <<endl;       
               tracks_IP2D [tracks_inEvent_index] = IP2d;
              }
             Double_t decayLength= -999;
@@ -706,7 +707,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
             if (closest.isValid()) 
              {
               decayLength = (closest.globalPosition() - RecoVertex::convertPos(pv->position())).mag();
-              cout << "  decay lenght = " << decayLength << endl;
+              //cout << "  decay lenght = " << decayLength << endl;
               tracks_decayLength[tracks_inEvent_index] = decayLength; 
              }
  
@@ -830,49 +831,58 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
             }
         }
        
+    HadronF[ak5_index] = -999; PartonF[ak5_index] = -999; nBHadrons [ak5_index] = -999;
     //Test Flavour
     if (mIsMCarlo){
       
-      edm::Handle<reco::JetFlavourInfoMatchingCollection> theJetFlavourInfos;
-      event_obj.getByLabel(jetFlavourInfos_, theJetFlavourInfos );
+      //edm::Handle<reco::JetFlavourInfoMatchingCollection> theJetFlavourInfos;
+      event_obj.getByLabel(mJetFlavourInfos, theJetFlavourInfos );
       
-      HadronF[ak5_index] = -999; PartonF[ak5_index] = -999; nBHadrons [ak5_index] = -999;
-      for ( reco::JetFlavourInfoMatchingCollection::const_iterator j  = theJetFlavourInfos->begin();
-                                     j != theJetFlavourInfos->end();
-                                     ++j ) {
+      cout<<"     " <<endl;       
+      cout<<" ------------------------ selected jet number "<< ak5_index<<"  ----------------------------" <<endl;
+      cout<<"                                 pt   = " << jet_pt[ak5_index] << endl;      
+      cout<<"                                 eta  = " << jet_eta[ak5_index] << endl;      
+      cout<<"                                 phi  = " << jet_phi[ak5_index] << endl;      
 
-          const reco::Jet *aJet = (*j).first.get();
-          double deltaR2 = reco::deltaR2( jet_eta[ak5_index],
-                                          jet_phi[ak5_index],
-                                          aJet->eta(),
-                                          aJet->phi()); 
-
- 
-         //---------------------------- Jet Flavour Info -------------------
-         if ( deltaR2 < 0.01) // check the value of the deltaR2
+      //---------------------------- Associated Jet Info -------------------------------
+      const reco::Jet *aJet =(*theJetFlavourInfos)[jetRefIndex].first.get();
+      cout<<" ------------------------ JetFlavourInfoMatchingCollection jet  "<< ak5_index<<"  ----------------------------" <<endl;
+      cout<<"                                 pt   = " << aJet->pt()<< endl;      
+      cout<<"                                 eta  = " << aJet->eta() << endl;      
+      cout<<"                                 phi  = " << aJet->phi() << endl;
+      cout<<"     " <<endl;       
+      double deltaR2 = reco::deltaR2( jet_eta[ak5_index], jet_phi[ak5_index], aJet->eta(), aJet->phi()); 
+      if (sqrt(deltaR2) < 0.1)
+       {
+        //---------------------------- Jet Flavour Info --------------------------------
+        reco::JetFlavourInfo aInfo = (*theJetFlavourInfos)[jetRefIndex].second;
+        // ----------------------- Hadrons-based flavour -------------------------------
+        HadronF[ak5_index] = aInfo.getHadronFlavour();
+        // ----------------------- Parton-based flavour  -------------------------------
+        PartonF[ak5_index] = aInfo.getPartonFlavour();
+        //------------------------ # of clustered b-hadrons ----------------------------
+        const reco::GenParticleRefVector & bHadrons = aInfo.getbHadrons();
+        nBHadrons [ak5_index] = bHadrons.size();
+        //check if the method getbHadrons() gives b hadrons that do not have other b hadrons as daughters  
+        for(reco::GenParticleRefVector::const_iterator it = bHadrons.begin(); it != bHadrons.end(); ++it)
          {
-            reco::JetFlavourInfo aInfo = (*j).second;
-            // ----------------------- Hadrons-based flavour -------------------------------
-            HadronF[ak5_index] = aInfo.getHadronFlavour();
-            // ----------------------- Parton-based flavour  -------------------------------
-            PartonF[ak5_index] = aInfo.getPartonFlavour();
-            //------------------------ # of clustered b-hadrons ----------------------------
-            const reco::GenParticleRefVector & bHadrons = aInfo.getbHadrons();
+           //cout << "b hadron " << endl; 
+           //cout << "  pdgId = "   << (*it)->pdgId() << endl; 
+           //cout << "  number of daughters = " << (*it)->numberOfDaughters() << endl; 
+           unsigned int nDaughters = (*it)->numberOfDaughters();  
+           int hasBHadronDaughter = 0;
+           for (unsigned int d=0; d<nDaughters; ++d) 
+            {
+              int daughterID = abs((*it)->daughter(d)->pdgId());
+              if ( (daughterID/100)%10 == 5 || (daughterID/1000)%10 == 5 ) { hasBHadronDaughter = 1; cout << " Warning !! the hadron hasBHadronDaughter  = " << hasBHadronDaughter << " nBHadrons variable can not be used for gluonsplitting tagging flavour" << endl; break; }
+            } 
+         }
 
-            nBHadrons [ak5_index] = bHadrons.size();          
-//            std::cout << " nBHadrons " << ak5_index << " =  " << nBHadrons [ak5_index]  << std::endl;  
-
-            /*if (bHadrons.size()== 2){std::cout << "                      # of clustered b hadrons: " << bHadrons.size() << std::endl;
-            nBHadrons [ak5_index] = bHadrons.size();          
-            }
-            *///Checking info
-               etaF [ak5_index] = aJet->eta();
-               phiF [ak5_index] = aJet->phi();
-          
-            //break;
-          }
-      }
-    }
+        }else{
+          cout<<" Warning !! No matching between flavourjet collection and the selected PF jet number " << ak5_index << " review lines 835-881 "<< endl; 
+        }
+                  
+       }
     //################################################################
     // B-discriminants from JetTagCollection
     //  negative vaules means not enough information 
@@ -901,11 +911,12 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
       {
        //cout <<" PFindex " << ak5_index << "  caloJet " << indexmin << endl; 
        jet_CSV[ak5_index]  =  (*tagHandle_CSV)[myJets->refAt(indexmin)];
+       //cout << "Jet_CSV disc =  " << jet_CSV[ak5_index]<<endl;; 
        jet_JBP[ak5_index]  =  (*tagHandle_JBP)[myJets->refAt(indexmin)];
        jet_JP[ak5_index]   =  (*tagHandle_JP)[myJets->refAt(indexmin)];
-       //cout << "Jet_JP disc =  " << jet_JP[ak5_index]; 
+       //cout << "Jet_JP disc =  " << jet_JP[ak5_index]<<endl;
        jet_TCHP[ak5_index] =  (*tagHandle_TCHP)[myJets->refAt(indexmin)];
-       //cout << "Jet_TCHP disc =  " << jet_TCHP[ak5_index]; 
+       //cout << "Jet_TCHP disc =  " << jet_TCHP[ak5_index]<<endl; 
        jet_TCHE[ak5_index] =  (*tagHandle_TCHE)[myJets->refAt(indexmin)];
        //cout << "Jet_TCHE disc =  " << jet_TCHE[ak5_index] << endl; 
       } else 
@@ -950,12 +961,12 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
        int n=selTracks.size();
        if (n > 0)
         {
-         cout << " -------------------------- Selected tracks --------------------" << endl; 
+         //cout << " -------------------------- Selected tracks --------------------" << endl; 
          for(int j=0;j< n;j++)
          {
           jetSeltrackIndex [seltracksInEvent_index] = ak5_index;
-          cout << " track number in the event  " << seltracksInEvent_index << " associated to the selected jet number  " << jetSeltrackIndex [seltracksInEvent_index] << " has : " << endl;  
-          cout << " pt = " << selTracks[j]->pt() << "\n";
+          //cout << " track number in the event  " << seltracksInEvent_index << " associated to the selected jet number  " << jetSeltrackIndex [seltracksInEvent_index] << " has : " << endl;  
+          //cout << " pt = " << selTracks[j]->pt() << "\n";
           seltrack_pt [seltracksInEvent_index] = selTracks[j]->pt();
           // Extract the Impact paramenter info for this track
           TrackIPTagInfo::TrackIPData data = (*ipHandle)[tagindexmin].impactParameterData()[j];  
@@ -967,20 +978,20 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
           seltrack_nValidPixelHits[seltracksInEvent_index] = p.numberOfValidPixelHits() ;
           seltrack_nValidTrackerHits [seltracksInEvent_index] = p.numberOfValidTrackerHits() ;
           //}
-          cout << " numberOfValidPixelHits = "  << p.numberOfValidPixelHits() << "\n";    
-          cout << " numberOfValidTrackerHits = " << p.numberOfValidTrackerHits() << "\n";    
-          cout << " ip3d.value = " << data.ip3d.value() << "\n";
-          cout << " ip3d.significance = " << data.ip3d.significance() << "\n";
-          cout << " distanceToJetAxis.value = " << data.distanceToJetAxis.value() << "\n";
-          cout << " distanceToJetAxis.significance = " << data.distanceToJetAxis.significance() << "\n";
+          //cout << " numberOfValidPixelHits = "  << p.numberOfValidPixelHits() << "\n";    
+          //cout << " numberOfValidTrackerHits = " << p.numberOfValidTrackerHits() << "\n";    
+          //cout << " ip3d.value = " << data.ip3d.value() << "\n";
+          //cout << " ip3d.significance = " << data.ip3d.significance() << "\n";
+          //cout << " distanceToJetAxis.value = " << data.distanceToJetAxis.value() << "\n";
+          //cout << " distanceToJetAxis.significance = " << data.distanceToJetAxis.significance() << "\n";
           // cout << data.distanceToGhostTrack.value() << "\t";
           // cout << data.distanceToGhostTrack.significance() << "\t";
           // cout << data.closestToJetAxis << "\t";
           // cout << (data.closestToJetAxis - pv).mag() << "\t";
           // cout << data.closestToGhostTrack << "\t";
           // cout << (data.closestToGhostTrack - pv).mag() << "\t";
-          cout <<  " ip2d.value = " << data.ip2d.value() << "\n";
-          cout <<  " ip2d.significance = " << data.ip2d.significance() <<  endl;     
+          //cout <<  " ip2d.value = " << data.ip2d.value() << "\n";
+          //cout <<  " ip2d.significance = " << data.ip2d.significance() <<  endl;     
           seltrack_IP2D [seltracksInEvent_index] = data.ip2d.value();  
           seltrack_IP2Dsig [seltracksInEvent_index] = data.ip2d.significance();  
           seltrack_IP3D [seltracksInEvent_index] = data.ip3d.value();  
@@ -1023,24 +1034,26 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
       unsigned int nVertices = (*svTagInfosHandle)[svindexmin].nVertices();  
       nSVinJet[ak5_index] = nVertices;
 
-      cout<< "the jet number " << ak5_index << " has " << nSVinJet[ak5_index]  << " secondary vertices " << endl;   
+      //cout<< "the selected jet number " << ak5_index << " with   pt = " << jet_pt[ak5_index] << "  eta = " << jet_eta[ak5_index] << "  phi = " <<jet_phi[ak5_index]<< endl; 
+      //cout<< "that matches with the calo jet number " << svindexmin << " with  pt = " << (*svTagInfosHandle)[svindexmin].jet() ->pt() << " eta = " << (*svTagInfosHandle)[svindexmin].jet() ->eta() << "  phi = " << (*svTagInfosHandle)[svindexmin].jet() ->phi() <<endl;  
+      //cout<<" has " << nSVinJet[ak5_index]  << " secondary vertices " << endl;   
       for (unsigned int vtx = 0; vtx < nVertices; ++vtx)
          {
           jetSVIndex[nSVinEvent_index] = ak5_index;  
           flight3DSignificance[nSVinEvent_index] = (*svTagInfosHandle)[svindexmin].flightDistance(vtx,false).significance();
           const Vertex &vertex = (*svTagInfosHandle)[svindexmin].secondaryVertex(vtx); 
           svmass[nSVinEvent_index] = vertex.p4().mass(); 
-          std::cout<<"with" << endl;  
-          std::cout<<"        3D flight distance of " << (*svTagInfosHandle)[svindexmin].flightDistance(vtx,false).value() << " cm"<<std::endl;
-          std::cout<<"        3D flight significance of " << flight3DSignificance[nSVinEvent_index] << " cm"<<std::endl;
-          std::cout<<"        2D flight distance of " << (*svTagInfosHandle)[svindexmin].flightDistance(vtx,true).value() << " cm"<<std::endl;
-          std::cout<<"        2D flight significance of " << (*svTagInfosHandle)[svindexmin].flightDistance(vtx,true).significance() << " cm"<<std::endl;
-          std::cout<<"        invariant mass of     " <<  svmass[nSVinEvent_index]  << " GeV"<<endl;
-          std::cout<<"        invariant mass 2nd way of     " << (*svTagInfosHandle)[svindexmin].secondaryVertex(vtx).p4().mass() << " GeV"<<endl;
+         // std::cout<<"with" << endl;  
+         // std::cout<<"        3D flight distance of " << (*svTagInfosHandle)[svindexmin].flightDistance(vtx,false).value() << " cm"<<std::endl;
+         // std::cout<<"        3D flight significance of " << flight3DSignificance[nSVinEvent_index] << " cm"<<std::endl;
+         // std::cout<<"        2D flight distance of " << (*svTagInfosHandle)[svindexmin].flightDistance(vtx,true).value() << " cm"<<std::endl;
+         // std::cout<<"        2D flight significance of " << (*svTagInfosHandle)[svindexmin].flightDistance(vtx,true).significance() << " cm"<<std::endl;
+         // std::cout<<"        invariant mass of     " <<  svmass[nSVinEvent_index]  << " GeV"<<endl;
+         // std::cout<<"        invariant mass 2nd way of     " << (*svTagInfosHandle)[svindexmin].secondaryVertex(vtx).p4().mass() << " GeV"<<endl;
           nSVinEvent_index ++;
          }
        }
-     if (svindexmin != indexmin) cout << " Recorcholis !! TagCollection Jets and SecondaryVertexTagInfoCollection does not match one to one!! " << endl; 
+     if (nSVinJet[ak5_index] > 0 && svindexmin != indexmin) cout << " Recorcholis !! TagCollection Jets and SecondaryVertexTagInfoCollection does not match one to one!! " << endl; 
      
     /////////////////////////////////////////////////////////////////////////////////////////////////////////  
     
@@ -1068,10 +1081,10 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     // Number of secondary vertex in the event
     nSVinEvent = nSVinEvent_index;   
     
-    cout << " " << endl; 
-    cout << "the number of CORRECTED PF Jets in the event is: " << njetCORR << endl; 
-    cout << "the number of selected PF Jets in the event is: "  << njet << endl; 
-    cout << " " << endl; 
+    //cout << " " << endl; 
+    //cout << "the number of CORRECTED PF Jets in the event is: " << njetCORR << endl; 
+    //cout << "the number of selected PF Jets in the event is: "  << njet << endl; 
+    //cout << " " << endl; 
 
     
     // Four leading AK7 Jets
