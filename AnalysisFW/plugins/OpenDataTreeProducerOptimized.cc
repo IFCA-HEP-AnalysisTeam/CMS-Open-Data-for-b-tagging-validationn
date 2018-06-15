@@ -625,9 +625,6 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         // pointer for further use
         const PFJet* i_ak5jet = &corjet;
 
-        // jet index in the original collection
-        int indexKey = -1000 * corjet.pt();
-        int jetRefIndex = ak5_handle_index.at(indexKey);
 
         /////////////////////////////////////////////////////////////////////////////////////////////
         // Para chequear la correccion 
@@ -651,6 +648,31 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
             continue;
         }
 
+ 
+        // ##################################################################################################
+        // reference map -> To fix!!!! problems with types throws a c++ std::exception on map::at  
+        // ##################################################################################################
+        //show content:
+        //cout<< " selected jet number = " << ak5_index <<endl;
+        //for (std::map<int,int>::iterator it=ak5_handle_index.begin(); it!=ak5_handle_index.end(); ++it)
+        // {int indexKey = -1000 * corjet.pt();
+        //  cout << "  " << endl; 
+        //  if (abs(it->first-(-1000 * corjet.pt())) < 1) cout <<"    -------- found the matching --------" << endl; 
+        //  std::cout <<" my indexKey = "<< it->first << " =>  my jetRefIndex" << it->second << '\n';
+        //  std::cout <<" int indexKey_var = " << indexKey << endl;      
+        //  std::cout <<" -1000 * corjet.pt() = " << -1000 * corjet.pt() << endl;      
+        //  std::cout <<" int indexKey_var - (-1000 * corjet.pt()) = " << indexKey - (-1000 * corjet.pt()) << endl;      
+        //  //std::cout <<" needed indexKey = " << -1000 * corjet.pt() << endl;      
+        //  std::cout <<" it -> first - indexKey(=-1000 * corjet.pt()) = " << it->first - indexKey << endl; 
+        //  if (abs(it->first-(-1000 * corjet.pt())) < 1) cout <<"    ------------------------------------" << endl; 
+        //  cout << "  " << endl; 
+        // }
+
+        //// jet index in the original collection
+        //int indexKey = -1000 * corjet.pt();
+        //int jetRefIndex = ak5_handle_index.at(indexKey);
+        // ##################################################################################################
+ 
         // Computing beta and beta*
 
         // Get tracks
@@ -831,31 +853,51 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
             }
         }
        
+   // ##################################################################################################
+   //  Flavour Info only available for mc
+   // ##################################################################################################
     HadronF[ak5_index] = -999; PartonF[ak5_index] = -999; nBHadrons [ak5_index] = -999;
-    //Test Flavour
     if (mIsMCarlo){
       
       //edm::Handle<reco::JetFlavourInfoMatchingCollection> theJetFlavourInfos;
       event_obj.getByLabel(mJetFlavourInfos, theJetFlavourInfos );
-      
+     
+      // Get the PFJet index of the current selected jet -> Ideally with the constructed map ak5_handle_index, but it does not work properly :(  
+      float fvdR2min = 999;
+      unsigned fvIndex = 0;
+      unsigned fvIndexMin = 999;
+      unsigned fvIndexMin_test = 999;
+      for ( reco::JetFlavourInfoMatchingCollection::const_iterator j  = theJetFlavourInfos->begin(); j != theJetFlavourInfos->end(); ++j )  
+      {
+       const reco::Jet *refJet =(*j).first.get();
+       float deltaR2 = reco::deltaR2( jet_eta[ak5_index], jet_phi[ak5_index], refJet->eta(), refJet->phi()); 
+       if (deltaR2 < fvdR2min)
+        {
+         fvdR2min = deltaR2;
+         fvIndexMin_test = fvIndex;
+        }       
+       fvIndex ++;
+      } 
+
+      //---------------------------- Selected Jet Info -------------------------------
       cout<<"     " <<endl;       
       cout<<" ------------------------ selected jet number "<< ak5_index<<"  ----------------------------" <<endl;
       cout<<"                                 pt   = " << jet_pt[ak5_index] << endl;      
       cout<<"                                 eta  = " << jet_eta[ak5_index] << endl;      
       cout<<"                                 phi  = " << jet_phi[ak5_index] << endl;      
 
-      //---------------------------- Associated Jet Info -------------------------------
-      const reco::Jet *aJet =(*theJetFlavourInfos)[jetRefIndex].first.get();
-      cout<<" ------------------------ JetFlavourInfoMatchingCollection jet  "<< ak5_index<<"  ----------------------------" <<endl;
-      cout<<"                                 pt   = " << aJet->pt()<< endl;      
-      cout<<"                                 eta  = " << aJet->eta() << endl;      
-      cout<<"                                 phi  = " << aJet->phi() << endl;
-      cout<<"     " <<endl;       
-      double deltaR2 = reco::deltaR2( jet_eta[ak5_index], jet_phi[ak5_index], aJet->eta(), aJet->phi()); 
-      if (sqrt(deltaR2) < 0.1)
+      if (sqrt(fvdR2min) < 0.1)
        {
+        fvIndexMin = fvIndexMin_test;
+        //---------------------------- Associated Jet Info -------------------------------
+        const reco::Jet *aJet =(*theJetFlavourInfos)[fvIndexMin].first.get();
+        cout<<" ------------------------ JetFlavourInfoMatchingCollection jet  "<< ak5_index<<"  ----------------------------" <<endl;
+        cout<<"                                 pt   = " << aJet->pt()<< endl;      
+        cout<<"                                 eta  = " << aJet->eta() << endl;      
+        cout<<"                                 phi  = " << aJet->phi() << endl;
+        cout<<"     " <<endl;       
         //---------------------------- Jet Flavour Info --------------------------------
-        reco::JetFlavourInfo aInfo = (*theJetFlavourInfos)[jetRefIndex].second;
+        reco::JetFlavourInfo aInfo = (*theJetFlavourInfos)[fvIndexMin].second;
         // ----------------------- Hadrons-based flavour -------------------------------
         HadronF[ak5_index] = aInfo.getHadronFlavour();
         // ----------------------- Parton-based flavour  -------------------------------
@@ -882,7 +924,8 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
           cout<<" Warning !! No matching between flavourjet collection and the selected PF jet number " << ak5_index << " review lines 835-881 "<< endl; 
         }
                   
-       }
+     }
+   // ##################################################################################################
     //################################################################
     // B-discriminants from JetTagCollection
     //  negative vaules means not enough information 
@@ -921,7 +964,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
        //cout << "Jet_TCHE disc =  " << jet_TCHE[ak5_index] << endl; 
       } else 
         {
-         cout <<" Warning!! There is not matching between ak5CaloJets and ak5PFJets => No b-tagging info available for the original PFJet number =  " << jetRefIndex << endl;
+         cout <<" Warning!! There is not matching between ak5CaloJets and ak5PFJets => No b-tagging info available for the original PFJet " << endl;
         }  
 
     //################################################################
