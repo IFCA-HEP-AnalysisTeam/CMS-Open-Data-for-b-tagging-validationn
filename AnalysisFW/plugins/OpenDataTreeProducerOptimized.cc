@@ -115,7 +115,6 @@ OpenDataTreeProducerOptimized::OpenDataTreeProducerOptimized(edm::ParameterSet c
   // test flavour
   if (mIsMCarlo){mJetFlavourInfos = cfg.getParameter<edm::InputTag>("jetFlavourInfos");}
   // test SV
-//  impactParameterTagInfoTrack_  = cfg.getParameter<edm::InputTag>("impactParameterTagInfoTrack");
   secondaryVertexTagInfos_  = cfg.getParameter<edm::InputTag>("secondaryVertexTagInfos"); 
 }
 
@@ -228,6 +227,7 @@ void OpenDataTreeProducerOptimized::beginJob() {
     mTree->Branch("tracks_pt", tracks_pt, "tracks_pt[tracks_inEvent]/F");
     mTree->Branch("tracks_chi2", tracks_chi2, "tracks_chi2[tracks_inEvent]/F");
     mTree->Branch("tracks_IPz", tracks_IPz, "tracks_IPz[tracks_inEvent]/F");
+    mTree->Branch("tracks_IP2D", tracks_IP2D, "tracks_IP2D[tracks_inEvent]/F");
     mTree->Branch("tracks_distToJetAxis", tracks_distToJetAxis, "tracks_distToJetAxis[tracks_inEvent]/D");
     mTree->Branch("tracks_decayLength", tracks_decayLength, "tracks_decayLength[tracks_inEvent]/D");
 }
@@ -891,7 +891,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         fvIndexMin = fvIndexMin_test;
         //---------------------------- Associated Jet Info -------------------------------
         const reco::Jet *aJet =(*theJetFlavourInfos)[fvIndexMin].first.get();
-        cout<<" ------------------------ JetFlavourInfoMatchingCollection jet  "<< ak5_index<<"  ----------------------------" <<endl;
+        cout<<" ---------------------- matched JetFlavourInfoMatchingCollection jet  "<< ak5_index<<"  ----------------------------" <<endl;
         cout<<"                                 pt   = " << aJet->pt()<< endl;      
         cout<<"                                 eta  = " << aJet->eta() << endl;      
         cout<<"                                 phi  = " << aJet->phi() << endl;
@@ -950,7 +950,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
        }
       }
       dRmin_matching[ak5_index] = sqrt(dR2min);
-      if (sqrt(dR2min) < 0.1) 
+      if (sqrt(dR2min) < 0.3) 
       {
        //cout <<" PFindex " << ak5_index << "  caloJet " << indexmin << endl; 
        jet_CSV[ak5_index]  =  (*tagHandle_CSV)[myJets->refAt(indexmin)];
@@ -997,7 +997,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
       */
       tagindex_test ++; 
      }
-     if (sqrt(dR2min_test) < 0.1) 
+     if (sqrt(dR2min_test) < 0.3) 
       { 
        tagindexmin = indexmin_test; 
        TrackRefVector selTracks = (*ipHandle)[tagindexmin].selectedTracks();
@@ -1071,7 +1071,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
        }
       svindex_test ++; 
      }
-     if (sqrt(svdR2min_test) < 0.1)
+     if (sqrt(svdR2min_test) < 0.3)
      {
       svindexmin = svindexmin_test; 
       unsigned int nVertices = (*svTagInfosHandle)[svindexmin].nVertices();  

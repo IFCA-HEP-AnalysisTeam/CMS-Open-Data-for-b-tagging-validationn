@@ -22,8 +22,6 @@ process.jetFlavourInfosAK5PFJets = ak5JetFlavourInfos.clone()
 #process.printEventAK5PFJets = cms.EDAnalyzer("printJetFlavourInfo",
 #    jetFlavourInfos = cms.InputTag("jetFlavourInfosAK5PFJets")
 #)
-####
-# test SV
 
 # Impact Parameter Tag Collection Info
 from RecoBTag.ImpactParameter.impactParameter_cfi import impactParameterTagInfos
@@ -33,9 +31,8 @@ process.impactParameterTagInfosV2 = impactParameterTagInfos.clone()
 # Secondary Vertes Tag Collection Info
 from RecoBTag.SecondaryVertex.secondaryVertexTagInfos_cfi import secondaryVertexTagInfos
 process.secondaryVertexTagInfosV2 = secondaryVertexTagInfos.clone()
-#process.secondaryVertexTagInfosV2.trackSelection.qualityClass = cms.string('any')
-process.secondaryVertexTagInfosV2.trackIPTagInfos = cms.InputTag("impactParameterTagInfosV2")
-#process.SecondaryVertexTagInfosV2.trackIPTagInfos = "newImpactParameterTagInfos"
+process.secondaryVertexTagInfosV2.trackIPTagInfos = cms.InputTag("impactParameterTagInfosV2") # !!!! Is this line fine?????
+####
 
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
@@ -48,11 +45,14 @@ runOnVM = False
 # Local input
 ######################################################
 # run with the bash script Full dataset
-#fileList = FileUtils.loadListFromFile(NAMEOFINPUTFILE)
+fileList = FileUtils.loadListFromFile(NAMEOFINPUTFILE)
 #####################################################
-#run partial dataset
-fileList = FileUtils.loadListFromFile('CMS_MonteCarlo2011_Summer11LegDR_QCD_Pt-120to170_TuneZ2_7TeV_pythia6_AODSIM_PU_S13_START53_LV6-v1_00000_file_index.txt')
+#run partial dataset in local
+#fileList = FileUtils.loadListFromFile('CMS_MonteCarlo2011_Summer11LegDR_QCD_Pt-120to170_TuneZ2_7TeV_pythia6_AODSIM_PU_S13_START53_LV6-v1_00000_file_index.txt')
+#####################################################
+# the next line is always uncommented
 process.source.fileNames = cms.untracked.vstring(*fileList)
+#####################################################
 
 if runOnVM:
     process.GlobalTag.connect = cms.string('sqlite_file:/cvmfs/cms-opendata-conddb.cern.ch/START53_LV6A1.db')
@@ -141,7 +141,7 @@ process.hltFilter = cms.EDFilter('HLTHighLevel',
 process.p = cms.Path(
     process.impactParameterTagInfosV2*    ### Test CSV  
     process.impactParameterTagInfoTrack*  ## IP for tracks
-    process.secondaryVertexTagInfosV2*  ### Test CSV
+    process.secondaryVertexTagInfosV2*  ### Test SV , called in the .cc
     process.goodOfflinePrimaryVertices*
     process.hltFilter *
     process.trackingFailureFilter *
@@ -156,16 +156,18 @@ process.p = cms.Path(
 
 # Change number of events here:
 
-process.maxEvents.input = 2
-#process.maxEvents.input = -1
+#process.maxEvents.input = 300
+process.maxEvents.input = -1
 
 process.MessageLogger.cerr.FwkReport.reportEvery = 500
 #process.MessageLogger.cerr.FwkReport.reportEvery = 5000
 
 # Output file
 #######################################################################################################################################
-process.TFileService = cms.Service("TFileService", fileName = cms.string("variablesTest/QCD_Pt-120to170.root"))
-#process.TFileService = cms.Service("TFileService", fileName = cms.string("/eos/user/b/bchazinq/QCDPt470to600/" + NAMEROOTOFOUTPUTROOT ))
+#run partial dataset in local
+#process.TFileService = cms.Service("TFileService", fileName = cms.string("variablesTest/QCD_Pt-120to170.root"))
+# run with the bash script Full dataset
+process.TFileService = cms.Service("TFileService", fileName = cms.string("/eos/user/b/bchazinq/QCDPt120to170/" + NAMEROOTOFOUTPUTROOT ))
 #######################################################################################################################################
 
 # To suppress long output at the end of the job
