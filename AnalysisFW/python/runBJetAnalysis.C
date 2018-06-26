@@ -4,8 +4,9 @@ void runBJetAnalysis (TString filename, bool mctrue, TString rangeOfpt)
 {
    //if (fChain == 0) return;
    //TString _dataPath = filename;
-   //bool    _ismc = mctrue;
-   //cout << " _ismc " << _ismc << endl;
+   bool    _ismc = mctrue;
+   cout << " _ismc " << _ismc << endl;
+   cout << " mctrue " << mctrue << endl;
    //TString _ptRange = rangeOfpt;
   // open the input file
    TFile* infile  = new TFile( filename, "read" );
@@ -14,7 +15,7 @@ void runBJetAnalysis (TString filename, bool mctrue, TString rangeOfpt)
    Int_t nentries = (Int_t) mytree->GetEntries();
 
    BJetAnalysis BJetAnalysis(mytree); 
-   BJetAnalysis.Loop(filename, mctrue, _ptRange); 
+   BJetAnalysis.Loop(filename, mctrue, rangeOfpt); 
    //BJetAnalysis.Loop(_dataPath, _ismc, _ptRange); 
  }
 
