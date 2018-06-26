@@ -53,7 +53,6 @@ class BJetAnalysis : public JetAnalysisBase
   TString ptRange;
   bool ismc;  
   float eventw;     
-  float lumi;
   float ngen; 
       
  

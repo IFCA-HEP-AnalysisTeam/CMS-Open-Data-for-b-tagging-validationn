@@ -19,8 +19,8 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
 // if (fChain == 0) return;
  filename = _dataPath;
  ismc = _ismc;
- cout << " ismc ? " << ismc << endl; 
- ptRange = _ptRange;
+ if (ismc) ptRange = _ptRange;
+ else ptRange = "";
 // open the input file
 // TFile* infile  = new TFile( filename, "read" );
 // get the tree
@@ -63,16 +63,6 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
 //float njet_ptCounter[nflavour][30];
 //float ntracksxjet_ptCounter[nflavour][30];
 //int   ntracksxjet[njet];
-
-
-// Loop over events
-// ----------------------------------------------------------------------------------
- for (Long64_t jentry=0; jentry< nentries;jentry++) 
-  {
-   Long64_t ientry = LoadTree(jentry);
-   if (ientry < 0) break;   
-   fChain->GetEntry(jentry);
- 
   // number of generated events (not stored in ntuples)
    if (filename.Contains("15to30"))   ngen = 9978850; //http://opendata.cern.ch/record/1366
    if (filename.Contains("30to50"))   ngen = 5837856; //http://opendata.cern.ch/record/1539
@@ -84,20 +74,30 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
    if (filename.Contains("470to600")) ngen = 3967154; //http://opendata.cern.ch/record/1553 
    //For data: http://opendata.cern.ch/record/21
   
+
+
+// Loop over events
+// ----------------------------------------------------------------------------------
+ for (Long64_t jentry=0; jentry< nentries; jentry++) 
+  {
+   Long64_t ientry = LoadTree(jentry);
+   if (ientry < 0) break;   
+   fChain->GetEntry(jentry);
+  
   // set the event weigth 
    eventw = 1; // for data
-   if (ismc) { eventw = 2; 
-   //            eventw = (lumi*mcweight)/ngen; //for mc 
-   //            cout << " mcweight = " << mcweight << endl;
-   //            cout << " ngen = " << ngen << endl;
+   if (ismc) { 
+               eventw = (integratedLumi*mcweight)/ngen; //for mc 
+               cout << " mcweight = " << mcweight << endl;
+               cout << " ngen = " << ngen << endl;
+               cout << " lumi = " << integratedLumi << endl;
              }
-   //eventw = 0.0005 / 0.1;
    cout << "eventw = " << eventw << endl;
+   cout << "eventw = " << (integratedLumi*mcweight)/ngen << endl;
 
   // set the passed trigger
   if (triggers[1] == false) continue;
   //if (triggernames != jt60 || triggers[1] == false) continue;
- 
  
   // Fill histograms
   // --------------------------------------------------------------------------------------
@@ -260,12 +260,15 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
        ntracksxjet_ptCounter[jetFlavour][ibin] += ntracksxjet[j];
      }  
    }
-  }//end of setting mc flavour
- }//end of the jet loop
+  } // End of setting mc flavour
+ } // End of the jet loop
+} // End of the event loop
 
   // average track multiplicity histo
   for ( int s = 0; s < nflavour; s++)
   { 
+    if (ismc == false && s > 0) break;
+  
     for (int ibin = 0; ibin < 30; ibin++)
     {
      avg[ibin] = 0;  
@@ -300,8 +303,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
       SaveHistograms (massSV[fv],         "massSV",         _ptRange);  
       SaveHistograms (nrSV[fv],           "nrSV",           _ptRange);
    }  
- }
-} // End of Loop
+} // End of Loop function
 
 // --------------------------------------------------------------------------------------
 // Begin job
@@ -313,7 +315,8 @@ void BJetAnalysis::BeginJob(TString filename, bool _ismc)
  cout<< " filename = "<<filename<<endl; 
  cout<< " ismc     = "<<ismc<<endl;
 // cout<< " nentries = "<<nentries;
- if (ismc) cout << " the ptRange = " << ptRange << endl; 
+ if (ismc) cout << " mc the ptRange = " << ptRange << endl;
+ else cout << " Data ";  
 }
 
 // --------------------------------------------------------------------------------------
