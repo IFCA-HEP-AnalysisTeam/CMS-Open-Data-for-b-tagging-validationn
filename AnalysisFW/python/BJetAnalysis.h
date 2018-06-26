@@ -1,78 +1,62 @@
 #ifndef BJetAnalysis_h
 #define BJetAnalysis_h
+#include "JetAnalysisBase.h"
+#include "Constants.h"
+#include <TTree.h>
+#include <TH1.h>
+#include <TMath.h>
+#include <fstream>
+#include <iostream>
 
-#include "TH1F.h"
 
-
-class BJetAnalysis : JetAnalysisBase
+class BJetAnalysis : public JetAnalysisBase
 {
  public:
 
- //BJetAnalysis (TTree* tree = 0, TString systematic = "nominal");
+ BJetAnalysis (TTree* tree);
+
+ void  BeginJob         (TString filename,
+                         bool _ismc);
 
 
- void  BeginJob         ();
+ void  Loop             (TString _dataPath, 
+                         bool _ismc, 
+                         TString _ptRange);
+
+
+ void  DefineHistograms (int iflv, 
+                         int sflv);
+
+
+ void  SaveHistograms   (TH1F* myHistogram, 
+                         TString hRootName, 
+                         TString ptRange);
+
+
+ void  ResetHistograms  (TH1F* rootHisto);
+
  
+ float xOverflow        (TH1F* rootHisto);
+
+
+ float xUnderflow       (TH1F* rootHisto);
+
+
  void  EndJob           ();
-
- void  Loop             (TString fileName);
-
- void  DefineHistograms (TH1F     rootHisto, 
-                         TString  hname,
-                         int      nbins, 
-                         float    xmin, 
-                         float    xmax);
-
-
- void  ResetHistograms  (TH1F rootHisto);
-
- 
- float Overflow         (TH1F rootHisto);
-
-
- float Underflow        (TH1F rootHisto);
-
-
- void  FillHistograms   (TH1F rootHisto, varyyyyyyy)
 
 
 
  // Global variables
  // --------------------------------------------------------------------------------------------
-  Long64_t nentries = 0;
-  bool ismc;  
+  Long64_t nentries;
   TString filename; 
-  float lumi
-  unsigned int nvariables; 
-  unsigned int ncuts;
-
-  float lumi = 2.33 // 2011 legacy runA
-  Int_t ngen; 
+  TString ptRange;
+  bool ismc;  
   float eventw;     
+  float lumi;
+  float ngen; 
       
-  float ptRange;
-
-// Flavour selection
-// -----------------  
-  enum {
-         allflavour,
-         b_quark,
-         c_quark,
-         lgluon,
-         b_gsplitting,
-         nflavour,
-        }
-
- const TString sflavour [nflavour+1] = {
-         "allflavours",
-         "b_quark",
-         "c_quark",
-         "lgluon",
-         "b_gsplitting",
-         "data"
-        } 
-
-
+ 
  // TH1 histograms to plot
  // --------------------------------------------------------------------------------------------
  
@@ -103,4 +87,5 @@ class BJetAnalysis : JetAnalysisBase
   TH1F* JP  [nflavour];  
   TH1F* JBP [nflavour];
   TH1F* CSV [nflavour];   
-   
+};
+# endif   

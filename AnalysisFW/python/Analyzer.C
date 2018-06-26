@@ -42,7 +42,7 @@ void Analyzer(TString filename, TString ptRange, bool _ismc)
 //                                                                             //
 //   This code opens OpenDataTree_mc.root input file. Extracts the branch      //
 //   information (variables information). Stablishes a selection criteria.     //
-//   Creates Histo_BranchName.root output file. After the selection            //
+//   Creates Histo_BranchName_ptRange.root output file. After the selection            //
 //   requirements, it stores one histogram per cut.                             //
 //                                                                             //
 /////////////////////////////////////////////////////////////////////////////////
@@ -179,39 +179,40 @@ infile -> Close();
 }
 
 
-void runAnalyzer()
+void runAnalyzer(bool _ismc)
 {
-  bool _ismc; 
-  _ismc = true;
-/*  TString filename0 = "/eos/user/b/bchazinq/QCDPt15to30/tuples_MC15-30.root";
-  TString ptRange0 = "_pthat15to30";
-  TString filename1 = "/eos/user/b/bchazinq/QCDPt30to50/tuples_MC30-50.root";
-  TString ptRange1 = "_pthat30to50";
-  TString filename2 = "/eos/user/b/bchazinq/QCDPt50to80/tuples_MC50-80.root";
-  TString ptRange2 = "_pthat50to80";
-  TString filename3 = "/eos/user/b/bchazinq/QCDPt80to120/tuples_MC80-120.root";
-  TString ptRange3 = "_pthat80to120";
-  TString filename4 = "/eos/user/b/bchazinq/QCDPt120to170/tuples_MC120-170.root";
-  TString ptRange4 = "_pthat120to170";
-  */TString filename5 = "/eos/user/b/bchazinq/QCDPt170to300/tuples_MC170-300.root";
-  TString ptRange5 = "_pthat170to300";
-  TString filename6 = "/eos/user/b/bchazinq/QCDPt300to470/tuples_MC300-470.root";
-  TString ptRange6 = "_pthat300to470";
-  TString filename7 = "/eos/user/b/bchazinq/QCDPt470to600/tuples_MC470-600.root";
-  TString ptRange7 = "_pthat470to600";
- /* Analyzer (filename0,ptRange0,_ismc); 
-  Analyzer (filename1,ptRange1,_ismc); 
-  Analyzer (filename2,ptRange2,_ismc); 
-  Analyzer (filename3,ptRange3,_ismc); 
-  Analyzer (filename4,ptRange4,_ismc); 
-  */Analyzer (filename5,ptRange5,_ismc); 
-  Analyzer (filename6,ptRange6,_ismc);
-  Analyzer (filename7,ptRange7,_ismc);
-
-  _ismc   = false;
-  TString filenameData = "/eos/user/b/bchazinq/Data/tuples_Data.root";
-  TString ptRange = "";
-  Analyzer (filenameData,ptRange,_ismc);
-   
+ // bool _ismc; 
+  if (_ismc) 
+   {
+   /*TString filename0 = "/eos/user/b/bchazinq/QCDPt15to30/tuples_MC15-30.root";
+    TString ptRange0 = "_pthat15to30";
+    TString filename1 = "/eos/user/b/bchazinq/QCDPt30to50/tuples_MC30-50.root";
+    TString ptRange1 = "_pthat30to50";
+    TString filename2 = "/eos/user/b/bchazinq/QCDPt50to80/tuples_MC50-80.root";
+    TString ptRange2 = "_pthat50to80";
+    TString filename3 = "/eos/user/b/bchazinq/QCDPt80to120/tuples_MC80-120.root";
+    TString ptRange3 = "_pthat80to120";
+    TString filename4 = "/eos/user/b/bchazinq/QCDPt120to170/tuples_MC120-170.root";
+    TString ptRange4 = "_pthat120to170";
+    */TString filename5 = "/eos/user/b/bchazinq/QCDPt170to300/tuples_MC170-300.root";
+    TString ptRange5 = "_pthat170to300";
+    TString filename6 = "/eos/user/b/bchazinq/QCDPt300to470/tuples_MC300-470.root";
+    TString ptRange6 = "_pthat300to470";
+    TString filename7 = "/eos/user/b/bchazinq/QCDPt470to600/tuples_MC470-600.root";
+    TString ptRange7 = "_pthat470to600";
+   /* Analyzer (filename0,ptRange0,_ismc); 
+    Analyzer (filename1,ptRange1,_ismc); 
+    Analyzer (filename2,ptRange2,_ismc); 
+    Analyzer (filename3,ptRange3,_ismc); 
+    Analyzer (filename4,ptRange4,_ismc); 
+    */Analyzer (filename5,ptRange5,_ismc); 
+    Analyzer (filename6,ptRange6,_ismc);
+    Analyzer (filename7,ptRange7,_ismc);
+   }else{ 
+   // _ismc   = false;
+    TString filenameData = "/eos/user/b/bchazinq/Data/tuples_Data.root";
+    TString ptRange = "";
+    Analyzer (filenameData,ptRange,_ismc);
+   }
 }
  
