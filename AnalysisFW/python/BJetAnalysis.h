@@ -1,19 +1,23 @@
 #ifndef BJetAnalysis_h
 #define BJetAnalysis_h
-#include "JetAnalysisBase.h"
+//#include "JetAnalysisBase.h"
+#include "ChainClass.h"
 #include "Constants.h"
 #include <TTree.h>
 #include <TH1.h>
 #include <TMath.h>
+#include <TChain.h>
 #include <fstream>
 #include <iostream>
 
 
-class BJetAnalysis : public JetAnalysisBase
+class BJetAnalysis : public ChainClass
+//class BJetAnalysis : public JetAnalysisBase
 {
  public:
 
- BJetAnalysis (TTree* tree);
+ BJetAnalysis (TChain* chain);
+// BJetAnalysis (TTree* tree);
 
  void  BeginJob         (TString filename,
                          bool _ismc);
@@ -33,6 +37,10 @@ class BJetAnalysis : public JetAnalysisBase
                          TString ptRange);
 
 
+ void   PrintProgress   (Long64_t counter,
+                         Long64_t total);
+
+
  void  ResetHistograms  (TH1F* rootHisto);
 
  
@@ -48,7 +56,7 @@ class BJetAnalysis : public JetAnalysisBase
 
  // Global variables
  // --------------------------------------------------------------------------------------------
-  Long64_t nentries;
+  Int_t nentries;
   TString filename; 
   TString ptRange;
   bool ismc;  

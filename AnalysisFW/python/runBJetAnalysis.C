@@ -1,6 +1,7 @@
+#include "BJetAnalysis.h"
 #include "BJetAnalysis.C"
 #include "TSystem.h"
-#include "TChain.h"
+//#include "TChain.h"
 
 void runBJetAnalysis (TString foldername, int mctrue, TString rangeOfpt)
 {
@@ -10,25 +11,23 @@ void runBJetAnalysis (TString foldername, int mctrue, TString rangeOfpt)
   
    // Read the tree from an input filename
   // TFile* infile  = new TFile( filename, "read" );
-  // TTree* mytree  = (TTree*) infile -> Get( "ak5ak7/OpenDataTree");
-  // Int_t nentries = (Int_t) mytree->GetEntries();
+  // TTree* myInput  = (TTree*) infile -> Get( "ak5ak7/OpenDataTree");
   // // call the analysis functions
-  // BJetAnalysis BJetAnalysis(mytree);  // remeber change BJetAnalysis.C , BJetAnalysis.h and Jet
+  // BJetAnalysis BJetAnalysis(myInput);  // remeber change BJetAnalysis.C , BJetAnalysis.h and make
   // BJetAnalysis.Loop(filename, _ismc, rangeOfpt); 
    
   // Create a TChain to read several output_*.root trees in the foldername folder.
-  TChain* mychain("ak5ak7/OpenDataTree");
-  TString a = gSystem->GetFromPipe("ls " + foldername + "/output_*.root | wc -l"); 
+  TChain* myInput = new TChain("ak5ak7/OpenDataTree", "");
+  TString a = gSystem->GetFromPipe("ls " + foldername + "output_*.root | wc -l"); 
   int b = atoi( a );
   for (int nfile=0; nfile < b; nfile++)
    {
     TString numb; 
     numb += nfile;
-    mychain->Add(foldername + "output_" + numb + ".root"); 
+    myInput->Add(foldername + "output_" + numb + ".root"); 
    }
-   Int_t nentries = (Int_t) mychain->GetEntries();
-
-   BJetAnalysis BJetAnalysis(mychain); 
+   
+   BJetAnalysis BJetAnalysis(myInput); 
    BJetAnalysis.Loop(foldername, _ismc, rangeOfpt); 
  }
 
