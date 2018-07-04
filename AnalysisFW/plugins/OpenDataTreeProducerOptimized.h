@@ -87,8 +87,8 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     
     static const UInt_t kMaxNjet = 64;
     static const UInt_t kMaxNtrg = 32;
-    static const UInt_t kMaxNtracks = 200;
-    static const UInt_t kMaxNsv = 20; 
+    static const UInt_t kMaxNtracks = 1000;
+    static const UInt_t kMaxNsv = 50; 
 
 
     // PF jets
@@ -104,6 +104,7 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
 
     // B-tag(IPTagInfo) selected tracks (associated to ak5CaloJets)
     UInt_t seltracksInEvent;// number of selected tracks in the event
+    Int_t  seltracksInJet[kMaxNjet];// number of selected tracks in the jet
     Int_t  jetSeltrackIndex          [kMaxNtracks];// selected jet index associated to the track
     Int_t seltrack_nValidPixelHits   [kMaxNtracks]; 
     Int_t seltrack_nValidTrackerHits [kMaxNtracks]; 
@@ -117,16 +118,21 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     
     // tracks (associated to ak5PFJets)  
     
-    UInt_t tracks_inEvent;// number of  tracks in the event
-    Int_t  tracks_jetIndex         [kMaxNtracks];// selected jet index associated to the track
-    Int_t tracks_nValidPixelHits   [kMaxNtracks]; 
-    Int_t tracks_nValidTrackerHits [kMaxNtracks]; 
-    Float_t tracks_pt              [kMaxNtracks]; 
-    Float_t tracks_chi2            [kMaxNtracks]; 
-    Float_t tracks_IPz             [kMaxNtracks];
-    Double_t tracks_IP2D           [kMaxNtracks];
-    Double_t tracks_distToJetAxis  [kMaxNtracks];
-    Double_t tracks_decayLength    [kMaxNtracks];
+    UInt_t goodtracks_inEvent;// number of  tracks in the event
+    // to remove:
+    // ::::::::::::::
+    //Int_t  tracks_inJet[kMaxNjet];// number of  tracks in the jet
+    //Int_t  goodtracks_inJet[kMaxNjet];// number of  tracks in the jet after basic cut after basic cuts
+    // ::::::::::::::
+    Int_t  goodtracks_jetIndex         [kMaxNtracks];// selected jet index associated to the track
+    Int_t  goodtracks_nValidPixelHits   [kMaxNtracks]; 
+    //Int_t tracks_nValidTrackerHits [kMaxNtracks]; 
+    Float_t goodtracks_pt              [kMaxNtracks]; 
+    //Float_t tracks_chi2            [kMaxNtracks]; 
+    //Float_t tracks_IPz             [kMaxNtracks];
+    //Double_t tracks_IP2D           [kMaxNtracks];
+    Double_t goodtracks_distToJetAxis  [kMaxNtracks];
+    //Double_t tracks_decayLength    [kMaxNtracks];
 
     // loose WP for commisionnig
     ////////////////////////////
@@ -156,7 +162,7 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     // Secondary Vertex
     ///////////////////////////
     UInt_t nSVinEvent;
-    Int_t  nSVinJet             [kMaxNjet];
+    Int_t  nSVinJet              [kMaxNjet];
     Int_t  jetSVIndex            [kMaxNsv];  
     Float_t svmass               [kMaxNsv];
     Float_t flight3DSignificance [kMaxNsv];
@@ -211,11 +217,11 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     UInt_t run;
     UInt_t lumi;
     ULong64_t event;
-
-    // Test to get the N generated in MC, N processed in data
-    //     mTree->Branch("nevent", nevent,"nevent/i");
-    UInt_t nevent = 0; 
-
+    // PileUp info
+    float mcPUinfo;
+    // number of PV
+    Int_t nPVinEvent;
+   
     // Triggers
     UInt_t ntrg;
     Bool_t triggers[kMaxNtrg];

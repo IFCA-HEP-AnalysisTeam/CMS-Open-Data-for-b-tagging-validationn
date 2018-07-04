@@ -1,7 +1,7 @@
 #include "BJetAnalysis.h"
 #include "BJetAnalysis.C"
 #include "TSystem.h"
-//#include "TChain.h"
+#include "TCanvas.h"
 
 void runBJetAnalysis (TString foldername, int mctrue, TString rangeOfpt)
 {
@@ -9,12 +9,9 @@ void runBJetAnalysis (TString foldername, int mctrue, TString rangeOfpt)
    //TString _dataPath = filename;
    bool    _ismc = mctrue;
   
-   // Read the tree from an input filename
-  // TFile* infile  = new TFile( filename, "read" );
-  // TTree* myInput  = (TTree*) infile -> Get( "ak5ak7/OpenDataTree");
-  // // call the analysis functions
-  // BJetAnalysis BJetAnalysis(myInput);  // remeber change BJetAnalysis.C , BJetAnalysis.h and make
-  // BJetAnalysis.Loop(filename, _ismc, rangeOfpt); 
+   // Read the tree from an input filename = /fullpath/file.root
+   //TFile* infile  = new TFile( foldername, "read" );
+   //TTree* myInput  = (TTree*) infile -> Get( "ak5ak7/OpenDataTree");
    
   // Create a TChain to read several output_*.root trees in the foldername folder.
   TChain* myInput = new TChain("ak5ak7/OpenDataTree", "");
@@ -22,11 +19,13 @@ void runBJetAnalysis (TString foldername, int mctrue, TString rangeOfpt)
   int b = atoi( a );
   for (int nfile=0; nfile < b; nfile++)
    {
+    //if (nfile == 1) continue; // just QCDPt300to470
     TString numb; 
     numb += nfile;
     myInput->Add(foldername + "output_" + numb + ".root"); 
    }
-   
+
+  // call the analysis functions
    BJetAnalysis BJetAnalysis(myInput); 
    BJetAnalysis.Loop(foldername, _ismc, rangeOfpt); 
  }

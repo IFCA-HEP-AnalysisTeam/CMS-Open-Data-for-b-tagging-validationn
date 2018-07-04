@@ -80,11 +80,11 @@ TString hdimension[nvar] = { //"(130, 0, 650)"
 // Flavour selection
 // -----------------
 const int ncut = 1;  
-TCut Flavour [ncut] = {// "fabs(PartonF) == 5", 
+//TCut Flavour [ncut] = {// "fabs(PartonF) == 5", 
                        // "fabs(PartonF) == 4", 
                        // "fabs(PartonF) != 5 && fabs(PartonF) != 4",
                        // "fabs(PartonF) == 5 && nBHadrons == 2",
-                        "1>0"};
+//                        "1>0"};
                      
 // Name of histograms to save
 TString hnameMC [ncut]= {// "b_quark",
@@ -95,9 +95,9 @@ TString hnameMC [ncut]= {// "b_quark",
                         };
 // cut selection
 // -----------------
-TCut triggerName = "triggernames == \"jt30\"";
+//TCut triggerName = "triggernames == \"jt30\""; //this condition is always true
 //TCut triggerName = "triggernames == \"jt30\"";
-TCut triggerPass = "triggers";
+TCut triggerPass = "triggers[1]"; // correspond to triggernames == \"jt30\
 TCut minimumPt   = "jet_pt >60";
 //TCut minimumPt   = "jet_pt >30";
 TCut maximumEta  = "jet_eta <2.4";
@@ -111,7 +111,7 @@ TCut tightID     = "jet_tightID";
 //TCut flavourb_gsplit = "fabs(PartonF) == 5 && nBHadrons == 2";
 //TCut mainCut     = triggerName && triggerPass && minimumPt && (flavourb || flavourc || flavourlg || flavourb_gsplit) ; 
 //TCut mainCut     = triggerName && triggerPass && minimumPt && (flavourb || flavourc || flavourlg || flavourb_gsplit) ; 
-TCut mainCut = triggerName && triggerPass && minimumPt && minimumEta && maximumEta; 
+TCut mainCut = triggerPass && minimumPt && minimumEta && maximumEta; 
 
 //Values to normalize the mc
 //---------------------------
@@ -145,7 +145,7 @@ for (int i = 0; i < nvar; i++) {
      for (int j = 0; j < ncut; j++){
        TH1D* myhisto = new TH1D();  
        //mytree -> Draw( bname[i] +">>" + hnameMC[j] + hdimension[i], "mcweight *2.33/" + ngen); // To check the pthat
-       mytree -> Draw( bname[i] +">>" + hnameMC[j] + hdimension[i], (triggerName+triggerPass+minimumPt+maximumEta+minimumEta+tightID) * ("mcweight *2.33/" + ngen));
+       mytree -> Draw( bname[i] +">>" + hnameMC[j] + hdimension[i], (triggerPass+minimumPt+maximumEta+minimumEta+tightID) * ("mcweight *2.33/" + ngen));
        //mytree -> Draw( bname[i] +">>" + hnameMC[j] + hdimension[i], (triggerCut0 && triggerCut1 && Flavour[j] && "jet_pt >30") * ("mcweight *2.33/" + ngen));
        //std::cout<< "the total cut is:   " <<"("<< triggerCut0 << " && " <<  triggerCut1 << " && " << Flavour[j] << " && " << "jet_pt >30) * (mcweight *2.33/" << ngen << ")" <<std::endl;
        myhisto = (TH1D*) gDirectory -> Get(hnameMC[j]);
@@ -194,20 +194,52 @@ void runAnalyzer(bool _ismc)
     TString ptRange3 = "_pthat80to120";
     TString filename4 = "/eos/user/b/bchazinq/QCDPt120to170/tuples_MC120-170.root";
     TString ptRange4 = "_pthat120to170";
-    */TString filename5 = "/eos/user/b/bchazinq/QCDPt170to300/tuples_MC170-300.root";
+    TString filename5 = "/eos/user/b/bchazinq/QCDPt170to300/tuples_MC170-300.root";
     TString ptRange5 = "_pthat170to300";
     TString filename6 = "/eos/user/b/bchazinq/QCDPt300to470/tuples_MC300-470.root";
     TString ptRange6 = "_pthat300to470";
     TString filename7 = "/eos/user/b/bchazinq/QCDPt470to600/tuples_MC470-600.root";
     TString ptRange7 = "_pthat470to600";
-   /* Analyzer (filename0,ptRange0,_ismc); 
+    Analyzer (filename0,ptRange0,_ismc); 
     Analyzer (filename1,ptRange1,_ismc); 
     Analyzer (filename2,ptRange2,_ismc); 
     Analyzer (filename3,ptRange3,_ismc); 
     Analyzer (filename4,ptRange4,_ismc); 
-    */Analyzer (filename5,ptRange5,_ismc); 
+    Analyzer (filename5,ptRange5,_ismc); 
     Analyzer (filename6,ptRange6,_ismc);
     Analyzer (filename7,ptRange7,_ismc);
+    */
+    TString filename0 = "/eos/user/b/bchazinq/QCDPt80to120/tuples_80to120_0.root";
+    TString filename1 = "/eos/user/b/bchazinq/QCDPt80to120/tuples_80to120_1.root";
+    TString filename2 = "/eos/user/b/bchazinq/QCDPt80to120/tuples_80to120_2.root";
+    TString filename3 = "/eos/user/b/bchazinq/QCDPt80to120/tuples_80to120_3.root";
+    TString filename4 = "/eos/user/b/bchazinq/QCDPt80to120/tuples_80to120_4.root";
+    TString filename5 = "/eos/user/b/bchazinq/QCDPt80to120/tuples_80to120_5.root";
+    TString filename6 = "/eos/user/b/bchazinq/QCDPt80to120/tuples_80to120_6.root";
+    TString filename7 = "/eos/user/b/bchazinq/QCDPt80to120/tuples_80to120_7.root";
+    TString filename8 = "/eos/user/b/bchazinq/QCDPt80to120/tuples_80to120_8.root";
+    TString filename9 = "/eos/user/b/bchazinq/QCDPt80to120/tuples_80to120_9.root";
+    TString ptRange0 = "_pthat80to120_0";
+    TString ptRange1 = "_pthat80to120_1";
+    TString ptRange2 = "_pthat80to120_2";
+    TString ptRange3 = "_pthat80to120_3";
+    TString ptRange4 = "_pthat80to120_4";
+    TString ptRange5 = "_pthat80to120_5";
+    TString ptRange6 = "_pthat80to120_6";
+    TString ptRange7 = "_pthat80to120_7";
+    TString ptRange8 = "_pthat80to120_8";
+    TString ptRange9 = "_pthat80to120_9";
+    Analyzer (filename0,ptRange0,_ismc); 
+    Analyzer (filename1,ptRange1,_ismc); 
+    Analyzer (filename2,ptRange2,_ismc); 
+    Analyzer (filename3,ptRange3,_ismc); 
+    Analyzer (filename4,ptRange4,_ismc); 
+    Analyzer (filename5,ptRange5,_ismc); 
+    Analyzer (filename6,ptRange6,_ismc);
+    Analyzer (filename7,ptRange7,_ismc);
+    Analyzer (filename8,ptRange8,_ismc);
+    Analyzer (filename9,ptRange9,_ismc);
+
    }else{ 
    // _ismc   = false;
     TString filenameData = "/eos/user/b/bchazinq/Data/tuples_Data.root";

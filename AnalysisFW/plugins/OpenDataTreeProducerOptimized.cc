@@ -87,149 +87,156 @@
 //https://github.com/cms-sw/cmssw/blob/CMSSW_5_3_X/PhysicsTools/JetExamples/test/printJetFlavourInfo.cc
 
 OpenDataTreeProducerOptimized::OpenDataTreeProducerOptimized(edm::ParameterSet const &cfg) {
-  mMinPFPt           = cfg.getParameter<double>                    ("minPFPt");
-  mMinJJMass         = cfg.getParameter<double>                    ("minJJMass");
-  mMaxY              = cfg.getParameter<double>                    ("maxY");
-  mMinNPFJets        = cfg.getParameter<int>                       ("minNPFJets");
-  mPFak5JetsName     = cfg.getParameter<edm::InputTag>             ("pfak5jets");
-  mPFak7JetsName     = cfg.getParameter<edm::InputTag>             ("pfak7jets");
-  mCaloak5JetsName   = cfg.getParameter<edm::InputTag>             ("caloak5jets");
-  mOfflineVertices   = cfg.getParameter<edm::InputTag>             ("offlineVertices");
-  mGoodVtxNdof       = cfg.getParameter<double>                    ("goodVtxNdof");
-  mGoodVtxZ          = cfg.getParameter<double>                    ("goodVtxZ");
-  mSrcPFRho          = cfg.getParameter<edm::InputTag>             ("srcPFRho");
-  mPFMET             = cfg.getParameter<edm::InputTag>             ("pfmet");
-  mGenJetsName       = cfg.getUntrackedParameter<edm::InputTag>    ("genjets",edm::InputTag(""));
-  mPrintTriggerMenu  = cfg.getUntrackedParameter<bool>             ("printTriggerMenu",false);
-  mIsMCarlo          = cfg.getUntrackedParameter<bool>             ("isMCarlo",false);
-  mUseGenInfo        = cfg.getUntrackedParameter<bool>             ("useGenInfo",false);
-  mMinGenPt          = cfg.getUntrackedParameter<double>           ("minGenPt",30);
-  processName_       = cfg.getParameter<std::string>               ("processName");
-  triggerNames_      = cfg.getParameter<std::vector<std::string> > ("triggerNames");
-  triggerResultsTag_ = cfg.getParameter<edm::InputTag>             ("triggerResults");
-  mJetCorr_ak5       = cfg.getParameter<std::string>               ("jetCorr_ak5");
-  mJetCorr_ak7       = cfg.getParameter<std::string>               ("jetCorr_ak7");
-  // tracks IP
-  m_ipassoc = cfg.getParameter<edm::InputTag>("ipassociation");
+	mMinPFPt           = cfg.getParameter<double>                    ("minPFPt");
+	mMinJJMass         = cfg.getParameter<double>                    ("minJJMass");
+	mMaxY              = cfg.getParameter<double>                    ("maxY");
+	mMinNPFJets        = cfg.getParameter<int>                       ("minNPFJets");
+	mPFak5JetsName     = cfg.getParameter<edm::InputTag>             ("pfak5jets");
+	mPFak7JetsName     = cfg.getParameter<edm::InputTag>             ("pfak7jets");
+	mCaloak5JetsName   = cfg.getParameter<edm::InputTag>             ("caloak5jets");
+	mOfflineVertices   = cfg.getParameter<edm::InputTag>             ("offlineVertices");
+	mGoodVtxNdof       = cfg.getParameter<double>                    ("goodVtxNdof");
+	mGoodVtxZ          = cfg.getParameter<double>                    ("goodVtxZ");
+	mSrcPFRho          = cfg.getParameter<edm::InputTag>             ("srcPFRho");
+	mPFMET             = cfg.getParameter<edm::InputTag>             ("pfmet");
+	mGenJetsName       = cfg.getUntrackedParameter<edm::InputTag>    ("genjets",edm::InputTag(""));
+	mPrintTriggerMenu  = cfg.getUntrackedParameter<bool>             ("printTriggerMenu",false);
+	mIsMCarlo          = cfg.getUntrackedParameter<bool>             ("isMCarlo",false);
+	mUseGenInfo        = cfg.getUntrackedParameter<bool>             ("useGenInfo",false);
+	mMinGenPt          = cfg.getUntrackedParameter<double>           ("minGenPt",30);
+	processName_       = cfg.getParameter<std::string>               ("processName");
+	triggerNames_      = cfg.getParameter<std::vector<std::string> > ("triggerNames");
+	triggerResultsTag_ = cfg.getParameter<edm::InputTag>             ("triggerResults");
+	mJetCorr_ak5       = cfg.getParameter<std::string>               ("jetCorr_ak5");
+	mJetCorr_ak7       = cfg.getParameter<std::string>               ("jetCorr_ak7");
+	// tracks IP
+	m_ipassoc = cfg.getParameter<edm::InputTag>("ipassociation");
 
-  // test flavour
-  if (mIsMCarlo){mJetFlavourInfos = cfg.getParameter<edm::InputTag>("jetFlavourInfos");}
-  // test SV
-  secondaryVertexTagInfos_  = cfg.getParameter<edm::InputTag>("secondaryVertexTagInfos"); 
+	// test flavour
+	if (mIsMCarlo){mJetFlavourInfos = cfg.getParameter<edm::InputTag>("jetFlavourInfos");}
+	// test SV
+	secondaryVertexTagInfos_  = cfg.getParameter<edm::InputTag>("secondaryVertexTagInfos"); 
 }
 
 void OpenDataTreeProducerOptimized::beginJob() {
-    mTree = fs->make< TTree >("OpenDataTree", "OpenDataTree");
+	mTree = fs->make< TTree >("OpenDataTree", "OpenDataTree");
 
-    // Variables of the flat tuple
-    mTree->Branch("njet", &njet, "njet/i");
-    mTree->Branch("jet_pt", jet_pt, "jet_pt[njet]/F");
-    mTree->Branch("jet_eta", jet_eta, "jet_eta[njet]/F");
-    mTree->Branch("jet_phi", jet_phi, "jet_phi[njet]/F");
-    mTree->Branch("jet_E", jet_E, "jet_E[njet]/F");   
-    mTree->Branch("jet_tightID", jet_tightID, "jet_tightID[njet]/O");
-    mTree->Branch("jet_area", jet_area, "jet_area[njet]/F");
-    mTree->Branch("jet_jes", jet_jes, "jet_jes[njet]/F");
-    mTree->Branch("jet_igen", jet_igen, "jet_igen[njet]/I");
-    // b discriminant
-    mTree->Branch("jet_CSV", jet_CSV, "jet_CSV[njet]/F");
-    mTree->Branch("jet_JP", jet_JP, "jet_JP[njet]/F");
-    mTree->Branch("jet_JBP", jet_JBP, "jet_JBP[njet]/F");
-    mTree->Branch("jet_TCHP", jet_TCHP, "jet_TCHP[njet]/F");
-    mTree->Branch("jet_TCHE", jet_TCHE, "jet_TCHE[njet]/F");
-    mTree->Branch("dRmin_matching", dRmin_matching, "dRmin_matching[njet]/F");
+	// Variables of the flat tuple
+	mTree->Branch("njet", &njet, "njet/i");
+	mTree->Branch("jet_pt", jet_pt, "jet_pt[njet]/F");
+	mTree->Branch("jet_eta", jet_eta, "jet_eta[njet]/F");
+	mTree->Branch("jet_phi", jet_phi, "jet_phi[njet]/F");
+	mTree->Branch("jet_E", jet_E, "jet_E[njet]/F");   
+	mTree->Branch("jet_tightID", jet_tightID, "jet_tightID[njet]/O");
+	mTree->Branch("jet_area", jet_area, "jet_area[njet]/F");
+	mTree->Branch("jet_jes", jet_jes, "jet_jes[njet]/F");
+	mTree->Branch("jet_igen", jet_igen, "jet_igen[njet]/I");
+	// b discriminant
+	mTree->Branch("jet_CSV", jet_CSV, "jet_CSV[njet]/F");
+	mTree->Branch("jet_JP", jet_JP, "jet_JP[njet]/F");
+	mTree->Branch("jet_JBP", jet_JBP, "jet_JBP[njet]/F");
+	mTree->Branch("jet_TCHP", jet_TCHP, "jet_TCHP[njet]/F");
+	mTree->Branch("jet_TCHE", jet_TCHE, "jet_TCHE[njet]/F");
+	mTree->Branch("dRmin_matching", dRmin_matching, "dRmin_matching[njet]/F");
 
-    // AK7 variables
-    mTree->Branch("njet_ak7", &njet_ak7, "njet_ak7/i");
-    mTree->Branch("jet_pt_ak7", jet_pt_ak7, "jet_pt_ak7[njet_ak7]/F");
-    mTree->Branch("jet_eta_ak7", jet_eta_ak7, "jet_eta_ak7[njet_ak7]/F");
-    mTree->Branch("jet_phi_ak7", jet_phi_ak7, "jet_phi_ak7[njet_ak7]/F");
-    mTree->Branch("jet_E_ak7", jet_E_ak7, "jet_E_ak7[njet_ak7]/F");
-    mTree->Branch("jet_area_ak7", jet_area_ak7, "jet_area_ak7[njet_ak7]/F");
-    mTree->Branch("jet_jes_ak7", jet_jes_ak7, "jet_jes_ak7[njet_ak7]/F");
-    mTree->Branch("ak7_to_ak5", ak7_to_ak5, "ak7_to_ak5[njet_ak7]/I");
+	// AK7 variables
+	mTree->Branch("njet_ak7", &njet_ak7, "njet_ak7/i");
+	mTree->Branch("jet_pt_ak7", jet_pt_ak7, "jet_pt_ak7[njet_ak7]/F");
+	mTree->Branch("jet_eta_ak7", jet_eta_ak7, "jet_eta_ak7[njet_ak7]/F");
+	mTree->Branch("jet_phi_ak7", jet_phi_ak7, "jet_phi_ak7[njet_ak7]/F");
+	mTree->Branch("jet_E_ak7", jet_E_ak7, "jet_E_ak7[njet_ak7]/F");
+	mTree->Branch("jet_area_ak7", jet_area_ak7, "jet_area_ak7[njet_ak7]/F");
+	mTree->Branch("jet_jes_ak7", jet_jes_ak7, "jet_jes_ak7[njet_ak7]/F");
+	mTree->Branch("ak7_to_ak5", ak7_to_ak5, "ak7_to_ak5[njet_ak7]/I");
 
-    mTree->Branch("ngen", &ngen, "ngen/i");
-    mTree->Branch("gen_pt", gen_pt, "gen_pt[ngen]/F");
-    mTree->Branch("gen_eta", gen_eta, "gen_eta[ngen]/F");
-    mTree->Branch("gen_phi", gen_phi, "gen_phi[ngen]/F");
-    mTree->Branch("gen_E", gen_E, "gen_E[ngen]/F");
+	mTree->Branch("ngen", &ngen, "ngen/i");
+	mTree->Branch("gen_pt", gen_pt, "gen_pt[ngen]/F");
+	mTree->Branch("gen_eta", gen_eta, "gen_eta[ngen]/F");
+	mTree->Branch("gen_phi", gen_phi, "gen_phi[ngen]/F");
+	mTree->Branch("gen_E", gen_E, "gen_E[ngen]/F");
 
-    mTree->Branch("run", &run, "run/i");
-    mTree->Branch("lumi", &lumi, "lumi/i");
-    mTree->Branch("event", &event, "event/l");
-    mTree->Branch("ntrg", &ntrg, "ntrg/i");
-    mTree->Branch("triggers", triggers, "triggers[ntrg]/O");
-    mTree->Branch("triggernames", &triggernames);
-    mTree->Branch("prescales", prescales, "prescales[ntrg]/i");
-    mTree->Branch("met", &met, "met/F");
-    mTree->Branch("sumet", &sumet, "sumet/F");
-    mTree->Branch("rho", &rho, "rho/F");
-    mTree->Branch("pthat", &pthat, "pthat/F");
-    mTree->Branch("mcweight", &mcweight, "mcweight/F");
+	mTree->Branch("run", &run, "run/i");
+	mTree->Branch("lumi", &lumi, "lumi/i");
+	mTree->Branch("event", &event, "event/l");
+	mTree->Branch("ntrg", &ntrg, "ntrg/i");
+	mTree->Branch("triggers", triggers, "triggers[ntrg]/O");
+	mTree->Branch("triggernames", &triggernames);
+	mTree->Branch("prescales", prescales, "prescales[ntrg]/i");
+	mTree->Branch("met", &met, "met/F");
+	mTree->Branch("sumet", &sumet, "sumet/F");
+	mTree->Branch("rho", &rho, "rho/F");
+	mTree->Branch("pthat", &pthat, "pthat/F");
+	mTree->Branch("mcweight", &mcweight, "mcweight/F");
+	mTree->Branch("mcPUinfo", &mcPUinfo, "mcPUinfo/F");
+	mTree->Branch("nPVinEvent", &nPVinEvent, "nPVinEvent/i");
 
-    mTree->Branch("chf", chf, "chf[njet]/F");   
-    mTree->Branch("nhf", nhf, "nhf[njet]/F");   
-    mTree->Branch("phf", phf, "phf[njet]/F");   
-    mTree->Branch("elf", elf, "elf[njet]/F");   
-    mTree->Branch("muf", muf, "muf[njet]/F");   
-    mTree->Branch("hf_hf", hf_hf, "hf_hf[njet]/F");   
-    mTree->Branch("hf_phf", hf_phf, "hf_phf[njet]/F");   
-    mTree->Branch("hf_hm", hf_hm, "hf_hm[njet]/i");    
-    mTree->Branch("hf_phm", hf_phm, "hf_phm[njet]/i");
-    mTree->Branch("chm", chm, "chm[njet]/i");   
-    mTree->Branch("nhm", nhm, "nhm[njet]/i");   
-    mTree->Branch("phm", phm, "phm[njet]/i");   
-    mTree->Branch("elm", elm, "elm[njet]/i");   
-    mTree->Branch("mum", mum, "mum[njet]/i");
-    mTree->Branch("beta", beta, "beta[njet]/F");   
-    mTree->Branch("bstar", bstar, "bstar[njet]/F");
-    
-    //loose WP for commisionning
-    mTree->Branch("nhfJet", nhfJet, "nhfJet[njet]/F");
-    mTree->Branch("nemfJet", nemfJet, "nemfJet[njet]/F");
-    mTree->Branch("chemfJet", chemfJet, "chemfJet[njet]/F");
-    mTree->Branch("chmJet", chmJet, "chmJet[njet]/i"); 
-    mTree->Branch("jet_looseID", jet_looseID, "jet_looseID[njet]/O");
- 
-    // Test flavour  
-   // mTree->Branch("ptF",     ptF,    "ptF[njet]/F");    
-   // mTree->Branch("etaF",    etaF,   "etaF[njet]/F");    
-   // mTree->Branch("phiF",    phiF,   "phiF[njet]/F");    
-    mTree->Branch("HadronF", HadronF,"HadronF[njet]/F");    
-    mTree->Branch("PartonF", PartonF,"PartonF[njet]/F");    
-    mTree->Branch("nBHadrons", nBHadrons,"nBHadrons[njet]/F");   
-    // Test to get the N generated in MC, N processed in data
-    mTree->Branch("nevent", &nevent,"nevent/i");   
-    // Secondary Vertex
-    mTree->Branch("nSVinEvent",  &nSVinEvent, "nSVinEvent/I");    
-    mTree->Branch("jetSVIndex",  &jetSVIndex, "jetSVIndex[nSVinEvent]/i");    
-    mTree->Branch("svmass",      svmass,    "svmass[nSVinEvent]/F");
-    mTree->Branch("flight3DSignificance", flight3DSignificance, "flight3DSignificance[nSVinEvent]/F");    
-    // B-tag(IPTagInfo) selected tracks (associated to ak5CaloJets)
-    mTree->Branch("seltracksInEvent", &seltracksInEvent, "seltracksInEvent/i");
-    mTree->Branch("jetSeltrackIndex", jetSeltrackIndex, "jetSeltrackIndex[seltracksInEvent]/I"); 
-    mTree->Branch("seltrack_pt", seltrack_pt, "seltrack_pt[seltracksInEvent]/F");
-    mTree->Branch("seltrack_nValidPixelHits", seltrack_nValidPixelHits, "seltrack_nValidPixelHits[seltracksInEvent]/I");
-    mTree->Branch("seltrack_nValidTrackerHits", seltrack_nValidTrackerHits, "seltrack_nValidTrackerHits[seltracksInEvent]/I");
-    mTree->Branch("seltrack_IP2D", seltrack_IP2D, "seltrack_IP2D [seltracksInEvent]/F");
-    mTree->Branch("seltrack_IP2Dsig", seltrack_IP2Dsig, "seltrack_IP2Dsig [seltracksInEvent]/F");
-    mTree->Branch("seltrack_IP3D", seltrack_IP3D, "seltrack_IP3D [seltracksInEvent]/F");
-    mTree->Branch("seltrack_IP3Dsig", seltrack_IP3Dsig, "seltrack_IP3Dsig [seltracksInEvent]/F");
-    mTree->Branch("seltrack_distToJetAxis", seltrack_distToJetAxis, "seltrack_distToJetAxis [seltracksInEvent]/F");
-//  mTree->Branch("track_IPz", "track_IPz", "track_IPz [seltracksInEvent]/F");
-  
-    // tracks (associated to ak5PFJets)
-    mTree->Branch("tracks_inEvent", &tracks_inEvent, "tracks_inEvent/i");
-    mTree->Branch("tracks_jetIndex", tracks_jetIndex, "tracks_jetIndex[tracks_inEvent]/I");
-    mTree->Branch("tracks_nValidPixelHits", tracks_nValidPixelHits, "tracks_nValidPixelHits[tracks_inEvent]/I");
-    mTree->Branch("tracks_nValidTrackerHits", tracks_nValidTrackerHits, "tracks_nValidTrackerHits[tracks_inEvent]/I");
-    mTree->Branch("tracks_pt", tracks_pt, "tracks_pt[tracks_inEvent]/F");
-    mTree->Branch("tracks_chi2", tracks_chi2, "tracks_chi2[tracks_inEvent]/F");
-    mTree->Branch("tracks_IPz", tracks_IPz, "tracks_IPz[tracks_inEvent]/F");
-    mTree->Branch("tracks_IP2D", tracks_IP2D, "tracks_IP2D[tracks_inEvent]/F");
-    mTree->Branch("tracks_distToJetAxis", tracks_distToJetAxis, "tracks_distToJetAxis[tracks_inEvent]/D");
-    mTree->Branch("tracks_decayLength", tracks_decayLength, "tracks_decayLength[tracks_inEvent]/D");
+	mTree->Branch("chf", chf, "chf[njet]/F");   
+	mTree->Branch("nhf", nhf, "nhf[njet]/F");   
+	mTree->Branch("phf", phf, "phf[njet]/F");   
+	mTree->Branch("elf", elf, "elf[njet]/F");   
+	mTree->Branch("muf", muf, "muf[njet]/F");   
+	mTree->Branch("hf_hf", hf_hf, "hf_hf[njet]/F");   
+	mTree->Branch("hf_phf", hf_phf, "hf_phf[njet]/F");   
+	mTree->Branch("hf_hm", hf_hm, "hf_hm[njet]/i");    
+	mTree->Branch("hf_phm", hf_phm, "hf_phm[njet]/i");
+	mTree->Branch("chm", chm, "chm[njet]/i");   
+	mTree->Branch("nhm", nhm, "nhm[njet]/i");   
+	mTree->Branch("phm", phm, "phm[njet]/i");   
+	mTree->Branch("elm", elm, "elm[njet]/i");   
+	mTree->Branch("mum", mum, "mum[njet]/i");
+	mTree->Branch("beta", beta, "beta[njet]/F");   
+	mTree->Branch("bstar", bstar, "bstar[njet]/F");
+
+	//loose WP for commisionning
+	mTree->Branch("nhfJet", nhfJet, "nhfJet[njet]/F");
+	mTree->Branch("nemfJet", nemfJet, "nemfJet[njet]/F");
+	mTree->Branch("chemfJet", chemfJet, "chemfJet[njet]/F");
+	mTree->Branch("chmJet", chmJet, "chmJet[njet]/i"); 
+	mTree->Branch("jet_looseID", jet_looseID, "jet_looseID[njet]/O");
+
+	// Test flavour  
+	// mTree->Branch("ptF",     ptF,    "ptF[njet]/F");    
+	// mTree->Branch("etaF",    etaF,   "etaF[njet]/F");    
+	// mTree->Branch("phiF",    phiF,   "phiF[njet]/F");    
+	mTree->Branch("HadronF", HadronF,"HadronF[njet]/F");    
+	mTree->Branch("PartonF", PartonF,"PartonF[njet]/F");    
+	mTree->Branch("nBHadrons", nBHadrons,"nBHadrons[njet]/F");   
+	// Secondary Vertex
+	mTree->Branch("nSVinEvent",  &nSVinEvent, "nSVinEvent/i");    
+	mTree->Branch("nSVinJet",  &nSVinJet, "nSVinJet[njet]/i");    
+	mTree->Branch("jetSVIndex",  &jetSVIndex, "jetSVIndex[nSVinEvent]/i");    
+	mTree->Branch("svmass",      svmass,    "svmass[nSVinEvent]/F");
+	mTree->Branch("flight3DSignificance", flight3DSignificance, "flight3DSignificance[nSVinEvent]/F");    
+	// B-tag(IPTagInfo) selected tracks (associated to ak5CaloJets)
+	mTree->Branch("seltracksInEvent", &seltracksInEvent, "seltracksInEvent/I");
+	mTree->Branch("seltracksInJet", &seltracksInJet, "seltracksInJet[njet]/i");
+	mTree->Branch("jetSeltrackIndex", jetSeltrackIndex, "jetSeltrackIndex[seltracksInEvent]/i"); 
+	mTree->Branch("seltrack_pt", seltrack_pt, "seltrack_pt[seltracksInEvent]/F");
+	mTree->Branch("seltrack_nValidPixelHits", seltrack_nValidPixelHits, "seltrack_nValidPixelHits[seltracksInEvent]/i");
+	mTree->Branch("seltrack_nValidTrackerHits", seltrack_nValidTrackerHits, "seltrack_nValidTrackerHits[seltracksInEvent]/i");
+	mTree->Branch("seltrack_IP2D", seltrack_IP2D, "seltrack_IP2D [seltracksInEvent]/F");
+	mTree->Branch("seltrack_IP2Dsig", seltrack_IP2Dsig, "seltrack_IP2Dsig [seltracksInEvent]/F");
+	mTree->Branch("seltrack_IP3D", seltrack_IP3D, "seltrack_IP3D [seltracksInEvent]/F");
+	mTree->Branch("seltrack_IP3Dsig", seltrack_IP3Dsig, "seltrack_IP3Dsig [seltracksInEvent]/F");
+	mTree->Branch("seltrack_distToJetAxis", seltrack_distToJetAxis, "seltrack_distToJetAxis [seltracksInEvent]/F");
+	//  mTree->Branch("track_IPz", "track_IPz", "track_IPz [seltracksInEvent]/F");
+
+	// tracks (associated to ak5PFJets)
+	mTree->Branch("goodtracks_inEvent", &goodtracks_inEvent, "goodtracks_inEvent/i");
+	// to remove:
+	// ::::::::::::::
+	// mTree->Branch("tracks_inJet", &tracks_inJet, "tracks_inJet[njet]/i");
+	// mTree->Branch("goodtracks_inJet", &goodtracks_inJet, "goodtracks_inJet[njet]/i");
+	// ::::::::::::::
+	mTree->Branch("goodtracks_jetIndex", goodtracks_jetIndex, "goodtracks_jetIndex[goodtracks_inEvent]/i");
+	mTree->Branch("goodtracks_nValidPixelHits", goodtracks_nValidPixelHits, "goodtracks_nValidPixelHits[goodtracks_inEvent]/i");
+	// mTree->Branch("tracks_nValidTrackerHits", tracks_nValidTrackerHits, "tracks_nValidTrackerHits[tracks_inEvent]/i");
+	mTree->Branch("goodtracks_pt", goodtracks_pt, "goodtracks_pt[goodtracks_inEvent]/F");
+	// mTree->Branch("tracks_chi2", tracks_chi2, "tracks_chi2[tracks_inEvent]/F");
+	// mTree->Branch("tracks_IPz", tracks_IPz, "tracks_IPz[tracks_inEvent]/F");
+	// mTree->Branch("tracks_IP2D", tracks_IP2D, "tracks_IP2D[tracks_inEvent]/F");
+	mTree->Branch("goodtracks_distToJetAxis", goodtracks_distToJetAxis, "goodtracks_distToJetAxis[goodtracks_inEvent]/D");
+	// mTree->Branch("tracks_decayLength", tracks_decayLength, "tracks_decayLength[tracks_inEvent]/D");
 }
 
 void OpenDataTreeProducerOptimized::endJob() {
@@ -237,255 +244,269 @@ void OpenDataTreeProducerOptimized::endJob() {
 
 
 void OpenDataTreeProducerOptimized::beginRun(edm::Run const &iRun,
-                                     edm::EventSetup const &iSetup) {
+		edm::EventSetup const &iSetup) {
 
-    // Mapping trigger indices 
-    int iTrigger=0;//mi trigger***
-    int jTrigger=0; // trigger de la coleccion***
-    bool changed(true);
-    if (hltConfig_.init(iRun, iSetup, processName_, changed) && changed) {
+	// Mapping trigger indices 
+	int iTrigger=0;//mi trigger***
+	int jTrigger=0; // trigger de la coleccion***
+	bool changed(true);
+	if (hltConfig_.init(iRun, iSetup, processName_, changed) && changed) {
 
-        // List of trigger names and indices 
-        // are not emptied between events, must be done heckIndex re
-        triggerIndex_.clear();
-        triggernames.clear();
+		// List of trigger names and indices 
+		// are not emptied between events, must be done heckIndex re
+		triggerIndex_.clear();
+		triggernames.clear();
 
-        // Iterate over all active triggers of the AOD file
-        iTrigger++;
-        auto name_list = hltConfig_.triggerNames();
-        for (std::string name_to_search: triggerNames_) {
-            // Find the version of jet trigger that is active in this run 
-            
-            for (std::string name_candidate: name_list) {
-	   
-                jTrigger++;
-	        //printf(" Mi trigger %i: %s y el trigger de la coleccion %i: %s\n", iTrigger++, triggerNames_, jTrigger++, name_list);
-		//printf(" Mi trigger %i: %s y el trigger de la coleccion %i: %s\n", iTrigger++, name_to_search, jTrigger++, name_candidate);
-//                std::cout<< "Mi trigger  : " << iTrigger << "    name_to_search     " << name_to_search << std::endl; 
-//                std::cout<< "el trigger de la coleccion  : " << jTrigger << "    name_candidate     " << name_candidate << std::endl; 
+		// Iterate over all active triggers of the AOD file
+		iTrigger++;
+		auto name_list = hltConfig_.triggerNames();
+		for (std::string name_to_search: triggerNames_) {
+			// Find the version of jet trigger that is active in this run 
 
-                // Match the prefix to the full name (eg. HLT_Jet30 to HLT_Jet30_v10)
-                if ( name_candidate.find(name_to_search + "_v") != std::string::npos ) {
-                    // Save index corresponding to the trigger
-                    triggerIndex_.push_back(hltConfig_.triggerIndex(name_candidate));
+			for (std::string name_candidate: name_list) {
 
-                    // Save the trigger name
-                    triggernames.push_back("jt" + name_to_search.substr(7, string::npos));
-                    break;            
-                }
-            }
-        }
-    }
+				jTrigger++;
+				//printf(" Mi trigger %i: %s y el trigger de la coleccion %i: %s\n", iTrigger++, triggerNames_, jTrigger++, name_list);
+				//printf(" Mi trigger %i: %s y el trigger de la coleccion %i: %s\n", iTrigger++, name_to_search, jTrigger++, name_candidate);
+				//                std::cout<< "Mi trigger  : " << iTrigger << "    name_to_search     " << name_to_search << std::endl; 
+				//                std::cout<< "el trigger de la coleccion  : " << jTrigger << "    name_candidate     " << name_candidate << std::endl; 
 
-    // Retrieve cross section of the simulated process
-    mcweight = 0;
-    if (mIsMCarlo) {
+				// Match the prefix to the full name (eg. HLT_Jet30 to HLT_Jet30_v10)
+				if ( name_candidate.find(name_to_search + "_v") != std::string::npos ) {
+					// Save index corresponding to the trigger
+					triggerIndex_.push_back(hltConfig_.triggerIndex(name_candidate));
 
-        edm::Handle<GenRunInfoProduct> genRunInfo;
-        iRun.getByLabel("generator", genRunInfo );
+					// Save the trigger name
+					triggernames.push_back("jt" + name_to_search.substr(7, string::npos));
+					break;            
+				}
+			}
+		}
+	}
 
-        // Save only the cross section, since the total number of 
-        // generated events is not available in this context (!!)
-        mcweight = genRunInfo->crossSection();
-        std::cout << "Cross section: " <<  mcweight << std::endl;
-    }
-    
+	// Retrieve cross section of the simulated process
+	mcweight = 0;
+	if (mIsMCarlo) {
+
+		edm::Handle<GenRunInfoProduct> genRunInfo;
+		iRun.getByLabel("generator", genRunInfo );
+
+		// Save only the cross section, since the total number of 
+		// generated events is not available in this context (!!)
+		mcweight = genRunInfo->crossSection();
+		std::cout << "Cross section: " <<  mcweight << std::endl;
+	}
+
 }
 
 
 void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
-                                    edm::EventSetup const &iSetup) {
+		edm::EventSetup const &iSetup) {
 
-    // Event info
-    run = event_obj.id().run();
-    lumi = event_obj.luminosityBlock();
-    event = event_obj.id().event();
-    cout << " ##########################################################################################  " << endl; 
-    std::cout << " run number: " << run <<std::endl; 
-    std::cout << " lumi = lumiosityBlock: " << lumi <<std::endl; 
-    cout << " event number: " << event << endl; 
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
-    // Test Discriminant 
-    //---------------------------- Jet CSV discriminantor -----------------------
-    edm::Handle<reco::JetTagCollection> tagHandle_CSV;
-    event_obj.getByLabel("combinedSecondaryVertexBJetTags", tagHandle_CSV);
-    //const reco::JetTagCollection & tag_CSV = *(tagHandle_CSV.product());
-    //---------------------------- Jet JBP tag discriminantor -------------------
-    edm::Handle<reco::JetTagCollection> tagHandle_JBP;
-    event_obj.getByLabel("jetBProbabilityBJetTags", tagHandle_JBP); 
-    //const reco::JetTagCollection & tag_JBP = *(tagHandle_JBP.product());
-    //---------------------------- Jet JP tag discriminantor -------------------
-    edm::Handle<reco::JetTagCollection> tagHandle_JP;
-    event_obj.getByLabel("jetProbabilityBJetTags", tagHandle_JP); 
-    //const reco::JetTagCollection & tag_JP = *(tagHandle_JP.product());
-    //---------------------------- Jet TCHP discriminator -----------------------
-    edm::Handle<reco::JetTagCollection> tagHandle_TCHP;
-    event_obj.getByLabel("trackCountingHighPurBJetTags", tagHandle_TCHP); 
-    //const reco::JetTagCollection & tag_TCHP = *(tagHandle_TCHP.product());
-    //---------------------------- Jet TCHE discriminator -----------------------
-    edm::Handle<reco::JetTagCollection> tagHandle_TCHE;
-    event_obj.getByLabel("trackCountingHighEffBJetTags", tagHandle_TCHE); 
-    //const reco::JetTagCollection & tag_TCHE = *(tagHandle_TCHE.product());
-    
-    // Print out the info
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//    std::cout << "event " << event << std::endl;  
-//    std::cout << "-----------------------------------------------------------------------" << std::endl;    
-//    std::cout << "-----------------------------------------------------------------------" << std::endl;    
-//
-//    std::cout <<      "---------------------------- Jet CSV tag Info -------------------" << std::endl;  
-//    std::cout << "tag_CSV.size()    " << tag_CSV.size() << std::endl; 
-//    for (int i = 0; i != (int)tag_CSV.size(); i++)
-//     {
-//     std::cout << "ptCSV   " << tag_CSV[i].first -> pt() << "    etaCSV   " << tag_CSV[i].first -> eta() << "   phiCSV   " << tag_CSV[i].first -> phi() << "    disc1   "<< tag_CSV[i].second << std::endl;   
-//     } 
-//    std::cout <<      "---------------------------- Jet JBP tag Info -------------------" << std::endl; 
-//      std::cout << "tag_JBP.size()    " << tag_JBP.size() << std::endl; 
-//    for (int i = 0; i != (int)tag_JBP.size(); i++)
-//    { 
-//      std::cout << "ptJBP   " << tag_JBP[i].first -> pt() << "  etaJBP    " << tag_JBP[i].first -> eta() << "    phiJBP   " << tag_JBP[i].first -> phi() << "    disc1   "<< tag_JBP[i].second << std::endl;   
-//    }
-//  //////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
-   
-    // Test Flavour
-    // Print out the info
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //if (mIsMCarlo){
-    edm::Handle<reco::JetFlavourInfoMatchingCollection> theJetFlavourInfos;
-    //event_obj.getByLabel(mJetFlavourInfos, theJetFlavourInfos );
-    // for ( reco::JetFlavourInfoMatchingCollection::const_iterator j  = theJetFlavourInfos->begin(); j != theJetFlavourInfos->end(); ++j ) 
-    // {
-    //      std::cout << "-------------------- Jet Flavour Info --------------------" << std::endl;
-    //      const reco::Jet *aJet = (*j).first.get(); 
-    //      reco::JetFlavourInfo aInfo = (*j).second;
-    //      // ----------------------- Hadrons -------------------------------
-    //      std::cout << "                      Hadron-based flavour: " << aInfo.getHadronFlavour() << std::endl;
-    //      // ----------------------- Partons -------------------------------
-    //      std::cout << "                      Parton-based flavour: " << aInfo.getPartonFlavour() << std::endl;
-    // }
-    //}
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Event info
+	run = event_obj.id().run();
+	lumi = event_obj.luminosityBlock();
+	event = event_obj.id().event();
+	cout << " ##########################################################################################  " << endl; 
+	std::cout << " run number: " << run <<std::endl; 
+	std::cout << " lumi = lumiosityBlock: " << lumi <<std::endl; 
+	cout << " event number: " << event << endl; 
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////  
+	// Test Discriminant 
+	//---------------------------- Jet CSV discriminantor -----------------------
+	edm::Handle<reco::JetTagCollection> tagHandle_CSV;
+	event_obj.getByLabel("combinedSecondaryVertexBJetTags", tagHandle_CSV);
+	//const reco::JetTagCollection & tag_CSV = *(tagHandle_CSV.product());
+	//---------------------------- Jet JBP tag discriminantor -------------------
+	edm::Handle<reco::JetTagCollection> tagHandle_JBP;
+	event_obj.getByLabel("jetBProbabilityBJetTags", tagHandle_JBP); 
+	//const reco::JetTagCollection & tag_JBP = *(tagHandle_JBP.product());
+	//---------------------------- Jet JP tag discriminantor -------------------
+	edm::Handle<reco::JetTagCollection> tagHandle_JP;
+	event_obj.getByLabel("jetProbabilityBJetTags", tagHandle_JP); 
+	//const reco::JetTagCollection & tag_JP = *(tagHandle_JP.product());
+	//---------------------------- Jet TCHP discriminator -----------------------
+	edm::Handle<reco::JetTagCollection> tagHandle_TCHP;
+	event_obj.getByLabel("trackCountingHighPurBJetTags", tagHandle_TCHP); 
+	//const reco::JetTagCollection & tag_TCHP = *(tagHandle_TCHP.product());
+	//---------------------------- Jet TCHE discriminator -----------------------
+	edm::Handle<reco::JetTagCollection> tagHandle_TCHE;
+	event_obj.getByLabel("trackCountingHighEffBJetTags", tagHandle_TCHE); 
+	//const reco::JetTagCollection & tag_TCHE = *(tagHandle_TCHE.product());
 
-    // Triggers
-    edm::Handle<edm::TriggerResults>   triggerResultsHandle_;
-    event_obj.getByLabel(triggerResultsTag_, triggerResultsHandle_);
+	// Print out the info
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//    std::cout << "event " << event << std::endl;  
+	//    std::cout << "-----------------------------------------------------------------------" << std::endl;    
+	//    std::cout << "-----------------------------------------------------------------------" << std::endl;    
+	//
+	//    std::cout <<      "---------------------------- Jet CSV tag Info -------------------" << std::endl;  
+	//    std::cout << "tag_CSV.size()    " << tag_CSV.size() << std::endl; 
+	//    for (int i = 0; i != (int)tag_CSV.size(); i++)
+	//     {
+	//     std::cout << "ptCSV   " << tag_CSV[i].first -> pt() << "    etaCSV   " << tag_CSV[i].first -> eta() << "   phiCSV   " << tag_CSV[i].first -> phi() << "    disc1   "<< tag_CSV[i].second << std::endl;   
+	//     } 
+	//    std::cout <<      "---------------------------- Jet JBP tag Info -------------------" << std::endl; 
+	//      std::cout << "tag_JBP.size()    " << tag_JBP.size() << std::endl; 
+	//    for (int i = 0; i != (int)tag_JBP.size(); i++)
+	//    { 
+	//      std::cout << "ptJBP   " << tag_JBP[i].first -> pt() << "  etaJBP    " << tag_JBP[i].first -> eta() << "    phiJBP   " << tag_JBP[i].first -> phi() << "    disc1   "<< tag_JBP[i].second << std::endl;   
+	//    }
+	//  //////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////  
 
-    // Sanity checks
-    assert(triggerResultsHandle_.isValid() && "Error in getting TriggerResults from Event!");
-    assert(triggerResultsHandle_->size() == hltConfig_.size() && "Size mismatch between triggerResultsHandle_ and hltConfig_");
-    
-    // Number of triggers to be saved
-    ntrg = triggerIndex_.size();
+	// Test Flavour
+	// Print out the info
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//if (mIsMCarlo){
+	edm::Handle<reco::JetFlavourInfoMatchingCollection> theJetFlavourInfos;
+	//event_obj.getByLabel(mJetFlavourInfos, theJetFlavourInfos );
+	// for ( reco::JetFlavourInfoMatchingCollection::const_iterator j  = theJetFlavourInfos->begin(); j != theJetFlavourInfos->end(); ++j ) 
+	// {
+	//      std::cout << "-------------------- Jet Flavour Info --------------------" << std::endl;
+	//      const reco::Jet *aJet = (*j).first.get(); 
+	//      reco::JetFlavourInfo aInfo = (*j).second;
+	//      // ----------------------- Hadrons -------------------------------
+	//      std::cout << "                      Hadron-based flavour: " << aInfo.getHadronFlavour() << std::endl;
+	//      // ----------------------- Partons -------------------------------
+	//      std::cout << "                      Parton-based flavour: " << aInfo.getPartonFlavour() << std::endl;
+	// }
+	//}
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // Iterate only over the selected jet triggers
-    for (unsigned itrig = 0; itrig < ntrg; itrig++) {
+	// Triggers
+	edm::Handle<edm::TriggerResults>   triggerResultsHandle_;
+	event_obj.getByLabel(triggerResultsTag_, triggerResultsHandle_);
 
-        // Trigger bit
-        Bool_t isAccepted = triggerResultsHandle_->accept(triggerIndex_[itrig]);
-        triggers[itrig] = isAccepted;
+	// Sanity checks
+	assert(triggerResultsHandle_.isValid() && "Error in getting TriggerResults from Event!");
+	assert(triggerResultsHandle_->size() == hltConfig_.size() && "Size mismatch between triggerResultsHandle_ and hltConfig_");
 
-        // Trigger prescales are retrieved using the trigger name
-        std::string trgName = hltConfig_.triggerName(triggerIndex_[itrig]);
-        const std::pair< int, int > prescalePair(hltConfig_.prescaleValues(event_obj, iSetup, trgName));
+	// Number of triggers to be saved
+	ntrg = triggerIndex_.size();
 
-        // Total prescale: PreL1*PreHLT 
-        prescales[itrig] = prescalePair.first*prescalePair.second;   
-    }    
+	// Iterate only over the selected jet triggers
+	for (unsigned itrig = 0; itrig < ntrg; itrig++) {
 
-    // Rho
-    Handle< double > rho_handle;
-    event_obj.getByLabel(mSrcPFRho, rho_handle);
-    rho = *rho_handle;
+		// Trigger bit
+		Bool_t isAccepted = triggerResultsHandle_->accept(triggerIndex_[itrig]);
+		triggers[itrig] = isAccepted;
+
+		// Trigger prescales are retrieved using the trigger name
+		std::string trgName = hltConfig_.triggerName(triggerIndex_[itrig]);
+		const std::pair< int, int > prescalePair(hltConfig_.prescaleValues(event_obj, iSetup, trgName));
+
+		// Total prescale: PreL1*PreHLT 
+		prescales[itrig] = prescalePair.first*prescalePair.second;   
+	}    
+
+	// Rho
+	Handle< double > rho_handle;
+	event_obj.getByLabel(mSrcPFRho, rho_handle);
+	rho = *rho_handle;
+
+	// PileUp info for mc
+	mcPUinfo = -999;
+	if (mIsMCarlo)
+	{
+		edm::Handle<std::vector <PileupSummaryInfo> > PupInfo;
+		event_obj.getByLabel("addPileupInfo", PupInfo);
+		std::vector<PileupSummaryInfo>::const_iterator ipu;
+		for (ipu = PupInfo->begin(); ipu != PupInfo->end(); ++ipu) 
+		{
+			if ( ipu->getBunchCrossing() != 0 ) continue; // storing detailed PU info only for BX=0
+			mcPUinfo = ipu->getTrueNumInteractions();
+		}
+	}
+
+	// Generator Info
+
+	// Retrieve pthat and mcweight (only MC)
+	pthat = 0;
+	if (mIsMCarlo && mUseGenInfo) {
+		Handle< GenEventInfoProduct > hEventInfo;
+		event_obj.getByLabel("generator", hEventInfo);
+
+		// Monte Carlo weight (NOT AVAILABLE FOR 2011 MC!!)
+		//mcweight = hEventInfo->weight();
+
+		// Pthat 
+		if (hEventInfo->hasBinningValues()) {
+			pthat = hEventInfo->binningValues()[0];
+		}
+	}
+
+	// Generator-level jets
+	ngen = 0;
+	if (mIsMCarlo) {
+
+		Handle< GenJetCollection > genjets;
+		event_obj.getByLabel(mGenJetsName, genjets);
+
+		// Index of the simulated jet
+		int gen_index = 0; 
+
+		for (GenJetCollection::const_iterator i_gen = genjets->begin(); i_gen != genjets->end(); i_gen++)  {
+
+			// pT and rapidity selection
+			if (i_gen->pt() > mMinGenPt && fabs(i_gen->y()) < mMaxY) {
+				gen_pt[gen_index] = i_gen->pt();
+				gen_eta[gen_index] = i_gen->eta();
+				gen_phi[gen_index] = i_gen->phi();
+				gen_E[gen_index] = i_gen->energy();
+				gen_index++;
+			}
+		}
+
+		// Number of generated jets in this event
+		ngen = gen_index;
+	}
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////  
+	// Secondary Vertex Info
+	edm::Handle<reco::SecondaryVertexTagInfoCollection> svTagInfosHandle;
+	event_obj.getByLabel(secondaryVertexTagInfos_, svTagInfosHandle);
+	//event_obj.getByLabel("secondaryVertexTagInfos", svTagInfosHandle);
+	const reco::SecondaryVertexTagInfoCollection & svTagInfoColl = *(svTagInfosHandle.product());
+	// counter of number of secondary vertex in the event
+	int nSVinEvent_index = 0; 
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////  
+	// print the info
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////  
+	//    for(reco::SecondaryVertexTagInfoCollection::const_iterator iter = svTagInfoColl.begin(); iter != svTagInfoColl.end(); ++iter) 
+	//    {
+	//      // if there are reconstructed vertices in this jet
+	//      nSVertex = iter->nVertices();
+	//      cout << " a jet with   pt = " << iter->jet()->pt() << " eta = " << iter->jet()->eta() << " phi = " << iter->jet()->phi() << '\n';       
+	//      cout << " contains " << iter->nVertices() << " secondary vertices " << endl;
+	//      if(iter->nVertices() > 0 )
+	//       {      
+	//        for (unsigned int vtx = 0; vtx < iter->nVertices(); ++vtx)
+	//         {
+	//          std::cout<<"with" << endl;  
+	//          std::cout<<"        3D flight distance of " << iter->flightDistance(vtx,false).value() << " cm"<<std::endl;
+	//          std::cout<<"        3D flight significance of " << iter->flightDistance(vtx,false).significance() << " cm"<<std::endl;
+	//          std::cout<<"        2D flight distance of " << iter->flightDistance(vtx,true).value() << " cm"<<std::endl;
+	//          std::cout<<"        2D flight significance of " << iter->flightDistance(vtx,true).significance() << " cm"<<std::endl;
+	//          std::cout<<"        invariant mass of     " << iter->secondaryVertex(vtx).p4().mass() << " GeV"<<endl;
+	//          const Vertex &vertex = iter->secondaryVertex(vtx); 
+	//          std::cout<<"        invariant mass 2nd way of     " << vertex.p4().mass() << " GeV"<<endl;
+	//         }
+	//       }
+	//    }
+	//    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
 
 
-    // Generator Info
 
-    // Retrieve pthat and mcweight (only MC)
-    pthat = 0;
-    if (mIsMCarlo && mUseGenInfo) {
-        Handle< GenEventInfoProduct > hEventInfo;
-        event_obj.getByLabel("generator", hEventInfo);
+	// Transient track for IP calculation
+	edm::ESHandle<TransientTrackBuilder> builder;
+	iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", builder);
 
-        // Monte Carlo weight (NOT AVAILABLE FOR 2011 MC!!)
-        //mcweight = hEventInfo->weight();
-        
-        // Pthat 
-        if (hEventInfo->hasBinningValues()) {
-            pthat = hEventInfo->binningValues()[0];
-        }
-    }
 
-    // Generator-level jets
-    ngen = 0;
-    if (mIsMCarlo) {
-
-        Handle< GenJetCollection > genjets;
-        event_obj.getByLabel(mGenJetsName, genjets);
-    
-        // Index of the simulated jet
-        int gen_index = 0; 
-
-        for (GenJetCollection::const_iterator i_gen = genjets->begin(); i_gen != genjets->end(); i_gen++)  {
-
-            // pT and rapidity selection
-            if (i_gen->pt() > mMinGenPt && fabs(i_gen->y()) < mMaxY) {
-                gen_pt[gen_index] = i_gen->pt();
-                gen_eta[gen_index] = i_gen->eta();
-                gen_phi[gen_index] = i_gen->phi();
-                gen_E[gen_index] = i_gen->energy();
-                gen_index++;
-            }
-        }
-
-        // Number of generated jets in this event
-        ngen = gen_index;
-    }
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
-    // Secondary Vertex Info
-    edm::Handle<reco::SecondaryVertexTagInfoCollection> svTagInfosHandle;
-    event_obj.getByLabel(secondaryVertexTagInfos_, svTagInfosHandle);
-    //event_obj.getByLabel("secondaryVertexTagInfos", svTagInfosHandle);
-    const reco::SecondaryVertexTagInfoCollection & svTagInfoColl = *(svTagInfosHandle.product());
-    // counter of number of secondary vertex in the event
-    int nSVinEvent_index = 0; 
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
-    // print the info
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
-//    for(reco::SecondaryVertexTagInfoCollection::const_iterator iter = svTagInfoColl.begin(); iter != svTagInfoColl.end(); ++iter) 
-//    {
-//      // if there are reconstructed vertices in this jet
-//      nSVertex = iter->nVertices();
-//      cout << " a jet with   pt = " << iter->jet()->pt() << " eta = " << iter->jet()->eta() << " phi = " << iter->jet()->phi() << '\n';       
-//      cout << " contains " << iter->nVertices() << " secondary vertices " << endl;
-//      if(iter->nVertices() > 0 )
-//       {      
-//        for (unsigned int vtx = 0; vtx < iter->nVertices(); ++vtx)
-//         {
-//          std::cout<<"with" << endl;  
-//          std::cout<<"        3D flight distance of " << iter->flightDistance(vtx,false).value() << " cm"<<std::endl;
-//          std::cout<<"        3D flight significance of " << iter->flightDistance(vtx,false).significance() << " cm"<<std::endl;
-//          std::cout<<"        2D flight distance of " << iter->flightDistance(vtx,true).value() << " cm"<<std::endl;
-//          std::cout<<"        2D flight significance of " << iter->flightDistance(vtx,true).significance() << " cm"<<std::endl;
-//          std::cout<<"        invariant mass of     " << iter->secondaryVertex(vtx).p4().mass() << " GeV"<<endl;
-//          const Vertex &vertex = iter->secondaryVertex(vtx); 
-//          std::cout<<"        invariant mass 2nd way of     " << vertex.p4().mass() << " GeV"<<endl;
-//         }
-//       }
-//    }
-//    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
-   
-   
-
-    // Transient track for IP calculation
-    edm::ESHandle<TransientTrackBuilder> builder;
-    iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", builder);
-    
-    
-    // Vertex Info
-    Handle<reco::VertexCollection> recVtxs;
-    event_obj.getByLabel(mOfflineVertices, recVtxs);
+	// Vertex Info
+	Handle<reco::VertexCollection> recVtxs;
+	event_obj.getByLabel(mOfflineVertices, recVtxs);
+	nPVinEvent = recVtxs->size(); 
     // use first pv of the collection
     //   Vertex dummy;
     //   const Vertex *pv = &dummy
@@ -572,7 +593,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
      event_obj.getByLabel(m_ipassoc, ipHandle);
      const TrackIPTagInfoCollection & ip = *(ipHandle.product());
      //index for the  track in the event
-     int tracks_inEvent_index = 0; 
+     int goodtracks_inEvent_index = 0; 
      //index for the B-tag(IPTagInfo) selected track in the event
      int seltracksInEvent_index =0;
      //################################################################
@@ -681,40 +702,56 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         float sumTrkPt(0.0), sumTrkPtBeta(0.0),sumTrkPtBetaStar(0.0);
         beta[ak5_index] = 0.0;
         bstar[ak5_index] = 0.0;
+     
+       // to remove:
+       // ::::::::::::::
+       // tracks_inJet[ak5_index] = 0; 
+       // tracks_inJet[ak5_index] = tracks.size()
+       // int goodtracks_inJet = 0; 
+       // goodtracks_inJet[ak5_index] = 0; 
+       // ::::::::::::::
 
 
         // Loop over tracks of the jet
         //cout << " -------------------------- No selected tracks --------------------------------" << endl;  
         for(auto i_trk = tracks.begin(); i_trk != tracks.end(); i_trk++) {
+          
+             
+            //bool goodtracks = false; 
+            //bool plot_tracknrPixelHits_sel = false;
+            //bool plot_trackPt_sel = false;
+            //bool plot_distToJetAxis_sel = false;
 
             if (recVtxs->size() == 0) break;
-            tracks_jetIndex [tracks_inEvent_index] = ak5_index;
             //cout << "The track number " << tracks_inEvent_index << " in jet number  " << ak5_index << "  has : " << endl; 
 
             //cout << "  pt = " << (*i_trk)->pt() << endl;              
             //cout << "  normalized chi2 = " << (*i_trk)->normalizedChi2()<< endl;              
             //cout << "  numberOfValidPixelHits = " << (*i_trk)->hitPattern().numberOfValidPixelHits() << endl;
             //cout << "  numberOfValidTrackerHits = "   << (*i_trk)->hitPattern().numberOfValidTrackerHits() << endl;    
-            tracks_pt[tracks_inEvent_index] = (*i_trk)->pt();
-            tracks_nValidTrackerHits[tracks_inEvent_index] = (*i_trk)->hitPattern().numberOfValidTrackerHits();
-            tracks_nValidPixelHits[tracks_inEvent_index] = (*i_trk)->hitPattern().numberOfValidPixelHits();
-            tracks_chi2[tracks_inEvent_index] = (*i_trk)->normalizedChi2();          
+            //tracks_nValidTrackerHits[tracks_inEvent_index] = (*i_trk)->hitPattern().numberOfValidTrackerHits();
+            //tracks_chi2[tracks_inEvent_index] = (*i_trk)->normalizedChi2();          
+   
+            float tracks_chi2 = -999;
+            tracks_chi2 = (*i_trk)->normalizedChi2();
+            int tracks_nValidTrackerHits = -999;
+            tracks_nValidTrackerHits =  (*i_trk)->hitPattern().numberOfValidTrackerHits();
+
 
             //Extract the IP Info
             // we always use the first vertex (at the moment)
             pv = &*recVtxs->begin();
             //cout << "  transverse impact parameter 2d (xy) = " << (*i_trk)->dxy(pv->position()) << endl; 
             //cout << "  longitudinal impact parameter (z)   = " << (*i_trk)->dz(pv->position()) << endl; 
-            tracks_IPz [tracks_inEvent_index] = (*i_trk)->dz(pv->position());
-            
+            //tracks_IPz [tracks_inEvent_index] = (*i_trk)->dz(pv->position());
+            float tracks_IPz = -999; 
+            tracks_IPz = (*i_trk)->dz(pv->position()); 
 
             //TrackIPTagInfo::TrackIPData trackIP; 
             const reco::TransientTrack transientTrack = builder->build(*i_trk); 
             const GlobalVector direction(i_ak5jet->px(), i_ak5jet->py(), i_ak5jet->pz()); //!!!!!!!
             Double_t distanceToJetAxis =  IPTools::jetTrackDistance(transientTrack, direction, *pv).second.value();
             //cout << "  distance to the jet = " << distanceToJetAxis << endl;
-      
-            tracks_distToJetAxis[tracks_inEvent_index] = distanceToJetAxis;
            
             Double_t IP2d = -999;
             bool ipPass = IPTools::signedTransverseImpactParameter(transientTrack, direction, *pv).first;
@@ -722,7 +759,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
              {
               IP2d = IPTools::signedTransverseImpactParameter(transientTrack, direction, *pv).second.value();
               //cout << "  if (ip2d) signedimpactparameter = " << IP2d <<endl;       
-              tracks_IP2D [tracks_inEvent_index] = IP2d;
+              //tracks_IP2D [tracks_inEvent_index] = IP2d;
              }
             Double_t decayLength= -999;
             TrajectoryStateOnSurface closest = IPTools::closestApproachToJet(transientTrack.impactPointState(), *pv, direction,transientTrack.field());
@@ -730,9 +767,18 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
              {
               decayLength = (closest.globalPosition() - RecoVertex::convertPos(pv->position())).mag();
               //cout << "  decay lenght = " << decayLength << endl;
-              tracks_decayLength[tracks_inEvent_index] = decayLength; 
+              //tracks_decayLength[tracks_inEvent_index] = decayLength; 
              }
  
+            // set the ordinary tracks cuts
+            if (tracks_nValidTrackerHits >=8 && tracks_chi2 <5 && fabs(tracks_IPz) <17 && fabs(IP2d) <0.2 && decayLength <5)
+             { 
+              goodtracks_jetIndex [goodtracks_inEvent_index] = ak5_index;
+              goodtracks_nValidPixelHits[goodtracks_inEvent_index] = (*i_trk)->hitPattern().numberOfValidPixelHits();
+              goodtracks_pt[goodtracks_inEvent_index] = (*i_trk)->pt();
+              goodtracks_distToJetAxis[goodtracks_inEvent_index] = distanceToJetAxis;
+              goodtracks_inEvent_index ++; 
+             }
            // Sum pT
             sumTrkPt += (*i_trk)->pt();
             
@@ -767,7 +813,6 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
                       break;
                 } 
             }
-        tracks_inEvent_index ++; 
         }
         
     
@@ -964,7 +1009,8 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
        //cout << "Jet_TCHE disc =  " << jet_TCHE[ak5_index] << endl; 
       } else 
         {
-         cout <<" Warning!! There is not matching between ak5CaloJets and ak5PFJets => No b-tagging info available for the original PFJet " << endl;
+         cout <<" Warning!! There is not matching between ak5CaloJets and the current ak5PFJets => No b-tagging info available for the original PFJet " << endl;
+         cout <<" selected PFJet number " << ak5_index << " indexmin " << indexmin <<endl;
         }  
 
     //################################################################
@@ -975,6 +1021,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
      cout << "Found " << ip.size() << " TagInfo" << endl;
      cout << " " << endl; 
      */
+     seltracksInJet[ak5_index] = 0;
      unsigned tagindex_test = 0; 
      float dR2min_test = 999; 
      unsigned indexmin_test = 999;
@@ -1002,6 +1049,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
        tagindexmin = indexmin_test; 
        TrackRefVector selTracks = (*ipHandle)[tagindexmin].selectedTracks();
        int n=selTracks.size();
+       seltracksInJet[ak5_index] = n;
        if (n > 0)
         {
          //cout << " -------------------------- Selected tracks --------------------" << endl; 
@@ -1046,7 +1094,8 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         } 
        }  
      if (tagindexmin != indexmin) cout << " Recorcholis !! TagCollection Jets and TrackIPTagInfoCollection does not match one to one!! " << endl; 
-     
+     cout <<" " << endl;
+     cout <<" selected PFJet number " << ak5_index << " tagindexmin " << tagindexmin <<endl;
  
     //################################################################
     // Secondary vertices 
@@ -1118,7 +1167,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     // Number of selected jets in the event
     njet = ak5_index;    
     // Number of tracks in the event
-    tracks_inEvent = tracks_inEvent_index; 
+    goodtracks_inEvent = goodtracks_inEvent_index; 
     // Number of B-tag(IPTagInfo) selected tracks in the event
     seltracksInEvent = seltracksInEvent_index;
     // Number of secondary vertex in the event
