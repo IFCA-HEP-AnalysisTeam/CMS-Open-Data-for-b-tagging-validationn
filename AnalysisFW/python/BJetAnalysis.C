@@ -6,7 +6,7 @@
 // --------------------------------------------------------------------------------------
 // Constructor
 // --------------------------------------------------------------------------------------
-//BJetAnalysis::BJetAnalysis(TTree* tree) : DataOutput2Class(tree)
+//BJetAnalysis::BJetAnalysis(TTree* tree) : TreeClass_QCD15to30(tree)
 BJetAnalysis::BJetAnalysis(TChain* chain) : ChainClass(chain)
 {
  cout << " b-tagging validation of 2011 Legacy dataset " << endl; 
@@ -171,16 +171,17 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
     }
    }
    // selected secondary vertices variables
-   if (nSVinEvent== 0) nrSV [0] -> Fill(nSVinEvent, eventw);
-   else if (nSVinEvent > 0)
+   //if (nSVinEvent== 0) nrSV [0] -> Fill(nSVinEvent, eventw);
+   nrSV  [0] -> Fill(nSVinEvent, eventw);
+   if (nSVinEvent > 0)
    {
-    for (int i =0; i < nSVinEvent; i++)
+    for (int i =1; i <= nSVinEvent; i++)
     { 
+     //match with the selected jet
      if (jetSVIndex[i]==j)
      {
       massSV[0] -> Fill(svmass[i], eventw);
       flight3Dsignif[0] -> Fill(flight3DSignificance[i], eventw);
-      nrSV  [0] -> Fill(1, eventw);
      }
     }
    }
@@ -250,22 +251,24 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
     for (int k = 0; k < seltracksInEvent; k++)
     {
      if (jetSeltrackIndex[k]==j)
+      //match with the selected jet
      { 
       IP3D [jetFlavour] -> Fill(seltrack_IP3D[k], eventw);
       IP3Dsignif [jetFlavour] -> Fill(seltrack_IP3Dsig[k], eventw);
      }
     }
 
-    if (nSVinEvent== 0) nrSV [jetFlavour] -> Fill(nSVinEvent, eventw);
-    else if (nSVinEvent > 0)
+    nrSV  [jetFlavour] -> Fill(nSVinEvent, eventw);
+    //if (nSVinEvent== 0) nrSV [jetFlavour] -> Fill(nSVinEvent, eventw);
+    if (nSVinEvent > 0)
     {
-     for (int i =0; i < nSVinEvent; i++)
+     for (int i = 1; i <= nSVinEvent; i++)
      { 
+      //match with the selected jet
       if (jetSVIndex[i]==j)
       {
        massSV[jetFlavour] -> Fill(svmass[i], eventw);
        flight3Dsignif[jetFlavour] -> Fill(flight3DSignificance[i], eventw);
-       nrSV  [jetFlavour] -> Fill(1, eventw);
       }
      }
     }
