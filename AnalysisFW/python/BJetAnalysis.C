@@ -163,6 +163,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
    ntracksxjet[j] = 0;
    for (int k = 0; k < seltracksInEvent; k++)
    {
+    //get the track info of the selected jet
     if (jetSeltrackIndex[k]==j)
     { 
      ntracksxjet[j] += 1 ;
@@ -171,19 +172,21 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
     }
    }
    // selected secondary vertices variables
-   //if (nSVinEvent== 0) nrSV [0] -> Fill(nSVinEvent, eventw);
-   nrSV  [0] -> Fill(nSVinEvent, eventw);
+   if (nSVinEvent== 0) nrSV [0] -> Fill(nSVinEvent, eventw); // the nr.of SV in this jet is 0
    if (nSVinEvent > 0)
    {
-    for (int i =1; i <= nSVinEvent; i++)
+    int nSVinJet = 0;
+    for (int i =0; i < nSVinEvent; i++)
     { 
-     //match with the selected jet
+     //get the SV info of the selected jet
      if (jetSVIndex[i]==j)
      {
+      nSVinJet += 1;
       massSV[0] -> Fill(svmass[i], eventw);
       flight3Dsignif[0] -> Fill(flight3DSignificance[i], eventw);
-     }
+     } 
     }
+    nrSV [0] -> Fill(nSVinJet, eventw);
    }
 
    // calculate the input of the selected-track-multiplicity per jet-pt histogram
@@ -258,19 +261,22 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
      }
     }
 
-    nrSV  [jetFlavour] -> Fill(nSVinEvent, eventw);
-    //if (nSVinEvent== 0) nrSV [jetFlavour] -> Fill(nSVinEvent, eventw);
+   // selected secondary vertices variables
+    if (nSVinEvent== 0) nrSV [jetFlavour] -> Fill(nSVinEvent, eventw); // the nr.of SV in this jet is 0
     if (nSVinEvent > 0)
     {
-     for (int i = 1; i <= nSVinEvent; i++)
+     int nSVinJetf = 0;
+     for (int i = 0; i <= nSVinEvent; i++)
      { 
-      //match with the selected jet
+      //get the SV info of the selected jet
       if (jetSVIndex[i]==j)
       {
+       nSVinJetf += 1;
        massSV[jetFlavour] -> Fill(svmass[i], eventw);
        flight3Dsignif[jetFlavour] -> Fill(flight3DSignificance[i], eventw);
       }
      }
+     nrSV [0] -> Fill(nSVinJetf, eventw);
     }
     
 /*    for (int p = 0; p < tracks_inEvent; p++)
