@@ -2,6 +2,7 @@
 #define BJetAnalysis_h
 //#include "JetAnalysisBase.h"
 //#include "DataOutput2Class.h"
+//#include "TreeClass_QCD15to30.h"
 #include "ChainClass.h"
 #include "Constants.h"
 #include <TTree.h>
@@ -13,6 +14,7 @@
 
 
 class BJetAnalysis : public ChainClass
+//class BJetAnalysis : public TreeClass_QCD15to30
 //class BJetAnalysis : public JetAnalysisBase
 //class BJetAnalysis : public DataOutput2Class 
 {
@@ -68,6 +70,9 @@ class BJetAnalysis : public ChainClass
  
  // TH1 histograms to plot
  // --------------------------------------------------------------------------------------------
+
+  // minimun dR between ak5CaloJets and ak5PFJets. The current cut is dRmin < 0.3
+  TH1F* dRmin[nflavour];
  
  // jet variables
   TH1F* jetPt [nflavour];

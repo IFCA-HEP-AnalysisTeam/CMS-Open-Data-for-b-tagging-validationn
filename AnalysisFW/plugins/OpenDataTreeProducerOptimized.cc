@@ -856,6 +856,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 
         // Jet ID requirement for btagging commisioning plots 2011 collected from twiki: 
         // https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetID#Recommendations_for_7_TeV_data_a
+        // Using the case: fabs(i_ak5jet->eta()) < 2.4
         nhfJet[ak5_index]   = i_ak5jet->neutralHadronEnergyFraction() * jec; 
         nemfJet[ak5_index]  = i_ak5jet->neutralEmEnergyFraction() * jec;
         chemfJet[ak5_index] = i_ak5jet->chargedEmEnergyFraction() * jec;

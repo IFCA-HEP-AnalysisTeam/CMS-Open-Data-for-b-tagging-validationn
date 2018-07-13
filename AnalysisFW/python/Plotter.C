@@ -1,6 +1,7 @@
 #include "TH1F.h"
 #include "TFile.h"
 #include "TCanvas.h"
+#include "TLegend.h"
 #include "THStack.h"
 #include "TString.h"
 #include "TColor.h"
@@ -40,61 +41,172 @@ void DrawLatex(Font_t      tfont,
   tl->Draw("same");
 }
 
+//-----------------------------------------------------
+// Set Legend 
+//-----------------------------------------------------
+
+TLegend *myLegend ( )
+{
+
+ TLegend *leg1;
+ leg1 = new TLegend(0.75, 0.9, 0.9, 0.7);
+ leg1->SetFillColor(kWhite); leg1->SetBorderSize(0.);
+ leg1->SetTextColor(1); leg1->SetTextSize(0.020);
+ leg1->SetTextFont(50);
+ //leg1->SetHeader(svar[vv] + "  " + lHeader[R]); //leg1_fit->SetMargin(0.2); 
+ leg1->AddEntry((TObject*)0, " ", "");
+                  
+  return leg1; 
+}
+
+
+//-----------------------------------------------------
+// MoveOverflows
+//-----------------------------------------------------
+//
+//   For all histogram types: nbins, xlow, xup
+//
+//     bin = 0;       underflow bin
+//     bin = 1;       first bin with low-edge xlow INCLUDED
+//     bin = nbins;   last bin with upper-edge xup EXCLUDED
+//     bin = nbins+1; overflow bin
+//
+//-----------------------------------------------------
+void MoveOverflows(TH1F* hist, Float_t xmin, Float_t xmax)
+{
+  int nentries = hist->GetEntries();
+  int nbins    = hist->GetNbinsX();
+  
+  TAxis* xaxis = (TAxis*)hist->GetXaxis();
+  // Underflow
+  //---------------------------------------------------------------------------- 
+   if (xmin != -999)
+    {
+      Int_t   firstBin = -1;
+      Float_t firstVal = 0;
+      Float_t firstErr = 0;
+      
+      for (Int_t i=0; i<=nbins+1; i++)
+	{
+	  if (xaxis->GetBinLowEdge(i) < xmin)
+	    {
+	      firstVal += hist->GetBinContent(i);
+	      firstErr += (hist->GetBinError(i)*hist->GetBinError(i));
+	      hist->SetBinContent(i, 0);
+	      hist->SetBinError  (i, 0);
+	    }
+	  else if (firstBin == -1)
+	    {
+	      firstVal += hist->GetBinContent(i);
+	      firstErr += (hist->GetBinError(i)*hist->GetBinError(i));
+	      firstBin = i;
+	    }
+	}
+
+      firstErr = sqrt(firstErr);
+  
+      hist->SetBinContent(firstBin, firstVal);
+      hist->SetBinError  (firstBin, firstErr);
+    }
+
+   // Overflow
+   //----------------------------------------------------------------------------
+   if (xmax != -999)
+    {
+      Int_t   lastBin = -1;
+      Float_t lastVal = 0;
+      Float_t lastErr = 0;
+      
+      for (Int_t i=nbins+1; i>=0; i--)
+	{
+	  Float_t lowEdge = xaxis->GetBinLowEdge(i);
+      
+	  if (lowEdge >= xmax)
+	    {
+	      lastVal += hist->GetBinContent(i);
+	      lastErr += (hist->GetBinError(i)*hist->GetBinError(i));
+	      hist->SetBinContent(i, 0);
+	      hist->SetBinError  (i, 0);
+	    }
+	  else if (lastBin == -1)
+	    {
+	      lastVal += hist->GetBinContent(i);
+	      lastErr += (hist->GetBinError(i)*hist->GetBinError(i));
+	      lastBin = i;
+	    }
+	}
+
+      lastErr = sqrt(lastErr);
+  
+      hist->SetBinContent(lastBin, lastVal);
+      hist->SetBinError  (lastBin, lastErr);
+    }
+ 
+ hist->SetEntries(nentries);
+
+} 
+
+
 //-----------------------------------------------------------------------------
 // Draw 
 //------------------------------------------------------------------------------
 void Plotter()
 {
 
- 
-// bool UnityNorm = false; 
-   bool DataNorm  = true;
-   bool adjustXlimits = false;
-   // set the xvalue from which you want to draw your histo
-   float lowerXlimit = 0; float upperXlimit = 0; //This is applied on FindFirstBinAbove, FindLastBinAbove functions which return the first/last bin above lowerXlimit/upperXlimit  
-  // Number of variables to plot
-  const int nplot =3;
-  // Name of variables to plot
-  TString vname [nplot] = { "jet_pt", "jet_phi", "jet_eta"
-                            //"jet_CSV",
-                            //"jet_JBP",
-                            //"jet_TCHP",
-                            //"nSVertex",
-                            //"pthat" 
-                          };
+  bool DataNorm  = true;
+  bool moveoverflow = true;
+  
+  bool setLinY = false; //massSV is a linear plot 
+  bool adjustXlimits = false;
+  // set the xvalue from which you want to draw your histo
+  float lowerXlimit = 0; float upperXlimit = 0; //This is applied on FindFirstBinAbove, FindLastBinAbove functions which return the first/last bin above lowerXlimit/upperXlimit  
+  //bool UnityNorm = false; 
+  
+// Number of variables to plot
+  const int nplot =13;
 
-  TString xname [nplot] = {"#bf{jet p_{T}}", "#bf{jet #phi}", "#bf{jet #eta}" 
-                            //,"CSV discriminator", "JBP discriminator", "TCHP discriminator", "nSVertex","#bf{pthat}"
-                           };
-  TString units [nplot] = { "#bf{[GeV/c]}","#bf{[rad]}",     ""
-                            //,                  "",                  "",                   "",         "", "#bf{[GeV/c]}"
-                           }; 
+  // Name of variables to plot
+  TString vname [nplot] = { "jet_pt"             ,  "jet_phi",         "jet_eta", 
+                            "seltrack_IP3Dsignif",  "seltrack_IP3D", 
+                            "nrSV"               ,  "flight3Dsignif",  "massSV",
+                           "jet_CSV",                "jet_JBP"      ,  "jet_JP",  "jet_TCHP", "jet_TCHE" };
+
+  TString xname [nplot] = {"#bf{jet p_{T}}"      ,   "#bf{jet #phi}"         , "#bf{jet #eta}", 
+                           "#bf{3D IP significance}"  ,   "#bf{3D IP}"                 , 
+                           "#bf{nr.of SV}"            ,   "#bf{3D flight significance}", "#bf{SV mass}",  
+                           "#bf{CSV discriminator}"   ,   "#bf{JBP discriminator}"     , "#bf{JP discriminator}","#bf{TCHP discriminator}", "#bf{TCHE discriminator}" };
+
+  TString units [nplot] = { "#bf{[GeV/c]}",    "#bf{[rad]}",          ""       ,        
+                              ""          ,    "#bf{[cm]}" , 
+                              ""          ,       ""       ,     "#bf{[GeV/c]}",
+                              ""          ,       ""       ,          ""       ,    ""  ,   ""};
+ 
   // Name of saved MC histograms to plot from each file
-  const int nhistoMC = 1;
-  TString hnameMC [nhistoMC]= {"allFlavours"
-                                // "b_quark",
-                                // "c_quark",
-                                // "lgluon",
-                                // "b_gsplitting"
-                           };
+  const int nhistoMC = 5;
+  TString hnameMC [nhistoMC]= {  "b_quark",
+                                 "c_quark",
+                                 "lgluon",
+                                 "b_gsplitting",
+                                 "allflavours"
+                               };
   
   TString hnameData = "data";
 
   // Loop over nplot
-  for (int i = 1; i < nplot /*nplot*/; i++) { 
+  for (int i = 0; i < nplot /*nplot*/; i++) { 
      
-     TFile* infileData = new TFile ("Histo_" + vname[i] + "_Data.root", "read");
+     TFile* infileData = new TFile ("testHistoTightID_9july/test_Histo_" + vname[i] + "_Data_CHECKING1.root", "read");
      TH1D* myHistoData = (TH1D*) infileData -> Get (hnameData);
 
-     TFile* infileMC   = new TFile ("Histo_" + vname[i] + "_MC.root", "read");
+     TFile* infileMC   = new TFile ("testHistoTightID_9july/test_Histo_" + vname[i] + "_MC.root", "read");
      TH1D* myHistoMC[nhistoMC];
      
      // Integral
      float integralDat = myHistoData -> Integral();
-     std::cout << "dat" << integralDat << std::endl;
-     TH1D* allMC = (TH1D*) infileMC -> Get ("allFlavours");
+     std::cout << "Integral dats :" << integralDat << std::endl;
+     TH1D* allMC = (TH1D*) infileMC -> Get ("allflavours");
      float integral = allMC -> Integral();
-     std::cout << "mc" << integral << std::endl;
+     std::cout << "Integral mc" << integral << std::endl;
    
      // Loop over nhistoMC 
      for (int j = 0; j < nhistoMC; j++){
@@ -105,7 +217,7 @@ void Plotter()
          if (DataNorm) myHistoMC[j] -> Scale(integralDat/integral);
          //if (DataNorm && !UnityNorm) myHistoMC[j] -> Scale(1/integralDat);
      }
-    
+     
      // Normalize to unity 
      //if (UnityNorma && !DataNorma) myHistoData -> Scale(1/integralDat);
 
@@ -116,9 +228,12 @@ void Plotter()
      TCanvas* currentCanvas = NULL;
      TPad* pad1 = NULL;
      TPad* pad2 = NULL;
+
+     if (vname[i] == "massSV") setLinY = true;
      
-      currentCanvas = new TCanvas ("Histo_" + vname[i], "", 900,600);
-     //currentCanvas -> SetTitle("public 2011 run A    2.33/fb (7 TeV)");
+     currentCanvas = new TCanvas ("test_Histo_" + vname[i], "", 900,600);
+     TLegend* _leg = myLegend (); 
+    //currentCanvas -> SetTitle("public 2011 run A    2.33/fb (7 TeV)");
      pad1 = new TPad();
      pad1 = new TPad("pad1", "pad1", 0, 0.3, 1, 1.0);
      pad1->SetTopMargin   (0.08);
@@ -139,7 +254,7 @@ void Plotter()
 
      pad1->cd();
      gStyle->SetOptStat("");
-     pad1->SetLogy();
+     if (setLinY == false) pad1->SetLogy();
 
      //axis title
      TAxis* xaxis = (TAxis*)myHistoData->GetXaxis();
@@ -147,48 +262,70 @@ void Plotter()
      xaxis->SetTitle(xname[i] +units[i]);
      xaxis->SetLabelSize(0.08);
 
+   cout << " to adjust the axis" <<endl;  
      // Adjust xaxis and yaxis
 
-     //set the minimum
-     float min = myHistoData->GetMinimum() > 1.e-1 ? myHistoData->GetMinimum(): 1.e-1; 
-     float max = myHistoData->GetMaximum()*10.;     
-     for (int j =1; j<=nhistoMC; j++) 
+     //set the maximun and minimum on the y axis
+     float ymin = myHistoData->GetMinimum() > 1.e-1 ? myHistoData->GetMinimum(): 1.e-1; 
+     float ymax = myHistoData->GetMaximum()*10.;     
+     if (setLinY) ymax = myHistoData->GetMaximum() + 100.;  setLinY = false;     
+     for (int j =0; j<nhistoMC; j++) 
       { 
-       if (myHistoMC[j]->GetMinimum()> 1.e-1 && myHistoMC[j]->GetMinimum() < myHistoData->GetMinimum()) min = myHistoMC[j]->GetMinimum();
-       if (myHistoMC[j]->GetMaximum() > max) max = myHistoMC[j]->GetMaximum();
+       if (myHistoMC[j]->GetMinimum()> 1.e-1 && myHistoMC[j]->GetMinimum() < myHistoData->GetMinimum()) ymin = myHistoMC[j]->GetMinimum();
+       if (myHistoMC[j]->GetMaximum() > ymax) ymax = myHistoMC[j]->GetMaximum();
       }
-     //Set the range user
+     //Set the range user on the x axis
+     float xmin = myHistoData->GetBinLowEdge(1); 
+     float xmax = myHistoData->GetBinLowEdge(nbins+1);
      float binmin; float binmax;
      if(adjustXlimits)
      {
       binmin = (myHistoData->FindFirstBinAbove(lowerXlimit) < allMC->FindFirstBinAbove(lowerXlimit)) ? myHistoData->FindFirstBinAbove(lowerXlimit) : allMC->FindFirstBinAbove(lowerXlimit);
       binmax = (myHistoData->FindLastBinAbove(upperXlimit) > allMC->FindLastBinAbove(upperXlimit)) ? myHistoData->FindLastBinAbove(upperXlimit) : allMC->FindLastBinAbove(upperXlimit);
       xaxis->SetRangeUser(myHistoData->GetBinLowEdge(binmin), myHistoData->GetBinLowEdge(binmax)+myHistoData->GetBinWidth(binmax));
+      xmin = myHistoData->GetBinLowEdge(binmin);
+      xmax = myHistoData->GetBinLowEdge(binmax)+myHistoData->GetBinWidth(binmax);      
      }    
      // Set cosmetics 
      myHistoData -> SetMarkerStyle (kFullCircle);
      myHistoData -> SetMarkerColor  (kBlack);
-     myHistoData -> SetMarkerSize(0.6);
+     myHistoData -> SetMarkerSize(0.8);
            
      myHistoMC[0] -> SetFillColor(kRed);
-     //myHistoMC[1] -> SetFillColor(kGreen+2);
-     //myHistoMC[2] -> SetFillColor(kCyan);
-     //myHistoMC[3] -> SetFillColor(kCyan+1);
-     
+     myHistoMC[1] -> SetFillColor(kGreen+1);
+     myHistoMC[2] -> SetFillColor(kBlue+2);
+     myHistoMC[3] -> SetFillColor(kAzure+6);
+
+     if (moveoverflow)
+     {
+       MoveOverflows(myHistoData, xmin, xmax);     
+       MoveOverflows(myHistoMC[0], xmin, xmax);     
+       MoveOverflows(myHistoMC[1], xmin, xmax);     
+       MoveOverflows(myHistoMC[2], xmin, xmax);     
+       MoveOverflows(myHistoMC[3], xmin, xmax);     
+     }
+
+     // Set legend
+     _leg -> AddEntry(myHistoData, "data" , "p");
+     _leg -> AddEntry(myHistoMC[0], "b quark" , "f");
+     _leg -> AddEntry(myHistoMC[3], "b from gluon splitting" , "f");
+     _leg -> AddEntry(myHistoMC[1], "c quark" , "f");
+     _leg -> AddEntry(myHistoMC[2], "uds quark or gluon" , "f");
+ 
      std::cout << "2" <<std::endl;   
      // Stack the MC histograms
      THStack* st1 = new THStack(vname[i], "");
      st1 -> Add(myHistoMC[0]);
-     //st1 -> Add(myHistoMC[3]);
-     //st1 -> Add(myHistoMC[1]);
-     //st1 -> Add(myHistoMC[2]);
+     st1 -> Add(myHistoMC[3]);
+     st1 -> Add(myHistoMC[1]);
+     st1 -> Add(myHistoMC[2]);
 
      //currentCanvas -> cd();
      //Set log Y scale
      //gPad-> SetLogy();
      // Draw
-     st1 -> SetMinimum(min);
-     st1 -> SetMaximum(max);
+     st1 -> SetMinimum(ymin);
+     st1 -> SetMaximum(ymax);
      
      //TAxis* yaxis = (TAxis*)st1->GetYaxis();
      //yaxis->SetTitle("#bf{entries}");
@@ -211,22 +348,22 @@ void Plotter()
      DrawLatex(52, 0.282, 0.945, 0.030, 11, "Public Data");
      DrawLatex(42, 0.895, 0.945, 0.050, 31, Form("%.2f fb^{-1} (7TeV)", 2.33));
      std::cout << "3" <<std::endl;   
-     
+     _leg ->Draw(); 
      //--------------------------------------------------------------------------
      // pad2 : Data/MC 
      //--------------------------------------------------------------------------
      pad2->cd();
      TH1D* ratio = (TH1D*)myHistoData->Clone("ratio");
      ratio->SetTitle("");
-     float ymin =0.4, ymax =1.6;
+     float rymin =0.45, rymax =1.55;
      for (Int_t ibin=1; ibin<=ratio->GetNbinsX(); ibin++) 
       {
-       float ratioVal = myHistoMC[0]->GetBinContent(ibin) != 0 ? (myHistoData->GetBinContent(ibin)/myHistoMC[0]->GetBinContent(ibin)) : -999;
-       float ratioErr = myHistoData->GetBinContent(ibin)  != 0 ? (myHistoData->GetBinError(ibin)/myHistoMC[0]->GetBinContent(ibin))    :    0;
+       float ratioVal = myHistoMC[4]->GetBinContent(ibin) != 0 ? (myHistoData->GetBinContent(ibin)/myHistoMC[4]->GetBinContent(ibin)) : -999;
+       float ratioErr = myHistoData->GetBinContent(ibin)  != 0 ? (myHistoData->GetBinError(ibin)/myHistoMC[4]->GetBinContent(ibin))    :    0;
       // if (myHistoMC[0]->GetBinContent(ibin) != 0) 
       //    ratioVal = myHistoData->GetBinContent(ibin)/myHistoMC[0]->GetBinContent(ibin);
        std::cout << "variable=  " << vname[i] << "  bin= " << ibin << "  data=  " << myHistoData->GetBinContent(ibin) 
-       << "  mc=  "<< myHistoMC[0]->GetBinContent(ibin) << "  ratio  =  " << ratioVal <<std::endl; 
+       << "  mc=  "<< myHistoMC[4]->GetBinContent(ibin) << "  ratio  =  " << ratioVal <<std::endl; 
        ratio -> SetBinContent(ibin, ratioVal);
        ratio -> SetBinError(ibin, ratioErr);
       }
@@ -234,7 +371,7 @@ void Plotter()
      ratio->SetMarkerColor(1);
      ratio->SetMarkerSize(0.8);
      ratio->SetMarkerStyle(kFullSquare);
-     ratio->GetYaxis()->SetRangeUser(ymin, ymax);
+     ratio->GetYaxis()->SetRangeUser(rymin, rymax);
      // ratio axix title
      TAxis* yaxis2 = (TAxis*)ratio->GetYaxis();
      yaxis2->SetLabelSize(.08);

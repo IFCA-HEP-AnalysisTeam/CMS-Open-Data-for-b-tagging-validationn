@@ -86,7 +86,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
  // int badMCentries = 0; ////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ELIMINAR !!!!!!!!!!!!!!!!!!!!!!! QCD80to120
  //for (Long64_t jentry=0; jentry< 102317; jentry++) ////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ELIMINAR !!!!!!!!!!!!!!!!!!!!!!! QCD300to470
  //for (Long64_t jentry=102312; jentry< 102317; jentry++) ////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ELIMINAR !!!!!!!!!!!!!!!!!!!!!!! QCD300to470
- cout << " before event loop " << endl;
+ //cout << " before event loop " << endl;
  for (Long64_t jentry=0; jentry< nentries; jentry++) 
   {
    Long64_t ientry = LoadTree(jentry);
@@ -115,14 +115,14 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
                //cout << " ngen = " << ngen << endl;
                //cout << " lumi = " << integratedLumi << endl;
              }
-   //cout << "eventw = " << eventw << endl;
+  // cout << "eventw = " << eventw << endl;
   // cout << "eventw = " << (integratedLumi*mcweight)/ngen << endl;
-
+  
   // set the passed trigger
-  //if (triggers[0] == false) continue;
+  //if (triggers[0] == false) continue; //triggernames != jt30
   if (triggers[1] == false) continue; //triggernames != jt60
   //if (triggernames != jt60 || triggers[1] == false) continue;
-  //cout<< " triggernames = " << triggernames <<endl; 
+  
   // Fill histograms
   // --------------------------------------------------------------------------------------
   
@@ -145,11 +145,14 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
    // baseline selection
    if (jet_pt[j] < 60) continue;
    if (jet_eta[j] > 2.4 || jet_eta[j] < -2.4) continue;
-   if (jet_tightID[j] == false) continue; // check with the loose
+   if (jet_looseID[j] == false) continue; // check with the loose
+   //if (jet_tightID[j] == false) continue; // check with the loose
    
    
    // all flavour (data and mc)
-     // only jet variables
+     // only jet  index dependent variables
+   dRmin  [0] -> Fill (dRmin_matching[j], eventw);
+
    jetPt  [0] -> Fill(jet_pt [j],  eventw);  
    jetEta [0] -> Fill(jet_eta[j],  eventw);  
    jetPhi [0] -> Fill(jet_phi[j],  eventw);
@@ -194,43 +197,33 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
    for (int m =60; m <= 350; m+= 10)
    { 
     //bin number
-    int ibin = (m-60)/10;
+    int ibin = (m-60)/10+1; // start in ibin = 1 
     //select the jets for the current pt bin 
     if(jet_pt[j] < m+1 && jet_pt[j] >= m ) 
      { 
       // save the global variables to fill the histogram  
-       njet_ptCounter[0][ibin] += 1;
-       ntracksxjet_ptCounter[0][ibin] += ntracksxjet[j];
+       njet_ptCounter[0][ibin] += 1*eventw;
+       ntracksxjet_ptCounter[0][ibin] += ntracksxjet[j]*eventw;
      }  
     } 
    
- /*   // set the ordinary tracks cuts 
-   bool plot_tracknrPixelHits_sel = false;
-   bool plot_trackPt_sel = false;
-   bool plot_distToJetAxis_sel = false;
- 
-   for (int p = 0; p < tracks_inEvent; p++)
+    // set the ordinary tracks cuts 
+   for (int p = 0; p < goodtracks_inEvent; p++)
    {
-    if (tracks_jetIndex[p] == j)
+    if (goodtracks_jetIndex[p] == j)
     { 
-     if (tracks_nValidTrackerHits[p] >= 8 && tracks_chi2[p] < 5 && tracks_IP2D[p] < 0.2 && tracks_IPz[p] < 17 && tracks_distToJetAxis[p] < 0.07 && tracks_pt[p] > 1 )
-     {
-       plot_tracknrPixelHits_sel = true;
-       nrPixelHits[0] -> Fill(tracks_nValidPixelHits[p], eventw);
-     }
-     if (tracks_nValidTrackerHits[p] >= 8 && tracks_chi2[p] < 5 && tracks_IP2D[p] < 0.2 && tracks_IPz[p] < 17 && tracks_distToJetAxis[p] < 0.07 && tracks_nValidPixelHits[p] >= 2) 
-     { 
-       plot_trackPt_sel = true;
-       trackPt[0] -> Fill(tracks_pt[p], eventw);
-     }
-     if (tracks_nValidTrackerHits[p] >= 8 && tracks_chi2[p] < 5 && tracks_IP2D[p] < 0.2 && tracks_IPz[p] < 17 && tracks_pt[p] > 1 && tracks_nValidPixelHits[p] >= 2) 
-     {
-      plot_distToJetAxis_sel = true;
-      distanceToJetAxis[0] -> Fill (tracks_distToJetAxis[p], eventw);
-     }
+     if (fabs(goodtracks_distToJetAxis[p]) < 0.07 && goodtracks_pt[p] > 1) nrPixelHits[0] -> Fill(goodtracks_nValidPixelHits[p], eventw);
+     if (fabs(goodtracks_distToJetAxis[p]) < 0.07 && goodtracks_nValidPixelHits[p] >= 2) trackPt[0] -> Fill(goodtracks_pt[p], eventw);
+     if (goodtracks_nValidPixelHits[p] >= 2 && goodtracks_pt[p] > 1) distanceToJetAxis[0] -> Fill (fabs(goodtracks_distToJetAxis[p]), eventw); 
+     // Note for distanceToJetAxis variable: 
+     //     ---------------------------------------------------------------------------------------------------------------------------------------
+     //     according to https://github.com/cms-sw/cmssw/blob/CMSSW_5_3_X/TrackingTools/IPTools/src/IPTools.cc#L225-L227
+     //     see also: http://cmsdoxygen.web.cern.ch/cmsdoxygen/CMSSW_5_3_30/doc/html/dc/dbd/namespaceIPTools.html#ac885942692075fb3d719a75d0af84e76
+     //     The histogram is filled using the fabs(goodtracks_distToJetAxis[p]) value 
+     //     ---------------------------------------------------------------------------------------------------------------------------------------
     }
    }
-*/
+
    // set the flavour
    if (ismc)
    {
@@ -241,6 +234,8 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
     if (fabs(PartonF[j]) != 5 && fabs(PartonF[j]) != 4) jetFlavour = 3; // "lgluon"
     if (fabs(PartonF[j]) == 5 && nBHadrons[j] == 2) jetFlavour = 4;// "b_gsplitting"
     if (jetFlavour < 0 ) cout << " Warning! jetFlavour = " << jetFlavour << " this does not work! " << endl;      
+
+    dRmin  [jetFlavour] -> Fill (dRmin_matching[j], eventw);
 
     jetPt  [jetFlavour] -> Fill(jet_pt[j],   eventw); 
     jetEta [jetFlavour] -> Fill(jet_eta[j],  eventw);  
@@ -279,28 +274,30 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
      nrSV [0] -> Fill(nSVinJetf, eventw);
     }
     
-/*    for (int p = 0; p < tracks_inEvent; p++)
+   for (int p = 0; p < goodtracks_inEvent; p++)
    {
-    if (tracks_jetIndex[p] == j)
-    {
-     if (plot_tracknrPixelHits_sel) nrPixelHits[jetFlavour] -> Fill(tracks_nValidPixelHits[p], eventw);
-     if (plot_trackPt_sel)          trackPt[jetFlavour] -> Fill(tracks_pt[p], eventw);
-     if (plot_distToJetAxis_sel )   distanceToJetAxis[jetFlavour] -> Fill (tracks_distToJetAxis[p], eventw);
+    if (goodtracks_jetIndex[p] == j)
+    { 
+     if (goodtracks_distToJetAxis[p] < 0.07 && goodtracks_pt[p] > 1) nrPixelHits[jetFlavour] -> Fill(goodtracks_nValidPixelHits[p], eventw);
+     if (goodtracks_distToJetAxis[p] < 0.07 && goodtracks_nValidPixelHits[p] >= 2) trackPt[jetFlavour] -> Fill(goodtracks_pt[p], eventw);
+     if (goodtracks_nValidPixelHits[p] >= 2 && goodtracks_pt[p] > 1) distanceToJetAxis[jetFlavour] -> Fill (fabs(goodtracks_distToJetAxis[p]), eventw); 
+     // see previous note for distanceToJetAxis variable
     }
-   }    
-    
-*/   // calculate the input of the selected-track-multiplicity per jet-pt histogram
-     // loop over the jet pt bins
+   }
+   
+   // calculate the input of the selected-track-multiplicity per jet-pt histogram
+   // loop over the jet pt bins
+   // int ibin= int(jet_pt-60)/10 +1; if (ibin <=350) {njet_ptCounter[jetFlavour][ibin] += 1*eventw;ntracksxjet_ptCounter[jetFlavour][ibin] += ntracksxjet[j]*eventw;}
    for (int m =60; m <= 350; m+= 10)
    { 
     //bin number
-    int ibin = (m-60)/10;
+    int ibin = (m-60)/10 + 1; // start in ibin = 1 
     //select the jets for the current pt bin 
-    if(jet_pt[j] < m+1 && jet_pt[j] >= m ) 
+    if(jet_pt[j] < m+10 && jet_pt[j] >= m ) 
      { 
       // save the global variables to fill the histogram  
-       njet_ptCounter[jetFlavour][ibin] += 1;
-       ntracksxjet_ptCounter[jetFlavour][ibin] += ntracksxjet[j];
+       njet_ptCounter[jetFlavour][ibin] += 1*eventw;
+       ntracksxjet_ptCounter[jetFlavour][ibin] += ntracksxjet[j]*eventw;
      }  
    }
  } // End of setting mc flavour
@@ -315,11 +312,11 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
   { 
     if (ismc == false && s > 0) break;
   
-    for (int ibin = 0; ibin < 30; ibin++)
+    for (int ibin = 1; ibin < 30; ibin++)
     {
      avg[ibin] = 0;  
      avg[ibin] = ntracksxjet_ptCounter[s][ibin]/njet_ptCounter[s][ibin];
-     avgTrackMultiplicity[s]->Fill( avg[ibin], eventw); 
+     avgTrackMultiplicity[s]->SetBinContent(ibin,avg[ibin]); 
     }
   }
   // Save histograms
@@ -328,9 +325,12 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
     {
       if (ismc == false && fv > 0) break;  
 
+      SaveHistograms (dRmin[fv], "dRmin_matching", _ptRange);
+
       SaveHistograms (jetPt[fv],  "jet_pt", _ptRange);  
       SaveHistograms (jetEta[fv], "jet_eta", _ptRange);  
       SaveHistograms (jetPhi[fv], "jet_phi", _ptRange); 
+
       SaveHistograms (TCHE[fv], "jet_TCHE", _ptRange); 
       SaveHistograms (TCHP[fv], "jet_TCHP", _ptRange); 
       SaveHistograms (JP[fv], "jet_JP", _ptRange); 
@@ -341,10 +341,10 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
       SaveHistograms (IP3Dsignif[fv], "seltrack_IP3Dsignif", _ptRange);  
       SaveHistograms (avgTrackMultiplicity[fv], "avgTrackMultiplicity", _ptRange);  
 
-/*      SaveHistograms (nrPixelHits[fv],   "tracks_nrPixelHits", _ptRange);  
+      SaveHistograms (nrPixelHits[fv],   "tracks_nrPixelHits", _ptRange);  
       SaveHistograms (trackPt[fv],   "tracks_Pt", _ptRange);  
       SaveHistograms (distanceToJetAxis[fv],   "tracks_distanceToJetAxis", _ptRange);  
-*/
+
       SaveHistograms (flight3Dsignif[fv], "flight3Dsignif", _ptRange);  
       SaveHistograms (massSV[fv],         "massSV",         _ptRange);  
       SaveHistograms (nrSV[fv],           "nrSV",           _ptRange);
@@ -386,7 +386,9 @@ void BJetAnalysis::DefineHistograms(int iflv, int sflv)
  // cout << " sflavour " << sflavour[sflv] << endl;  
  // cout << "  " << endl;  
  // cout << "  " << endl;  
- // cout << "  " << endl;  
+ // cout << "  " << endl;
+  // to cross-check
+  dRmin [iflv] = new TH1F (sflavour[sflv], " " , 10, 0, 1); 
   // jet variables
   jetPt [iflv] = new TH1F (sflavour[sflv], " " , 100,  0,  250);
   jetEta[iflv] = new TH1F (sflavour[sflv], " " , 50,  -5,  5);
@@ -402,7 +404,7 @@ void BJetAnalysis::DefineHistograms(int iflv, int sflv)
   // secondary vertex
   flight3Dsignif[iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 80); 
   massSV        [iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 8); 
-  nrSV          [iflv] = new TH1F (sflavour[sflv], " ", 5, 0, 5); 
+  nrSV          [iflv] = new TH1F (sflavour[sflv], " ", 6, 0, 5); 
   // b-discriminants
   TCHE[iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 30);  
   TCHP[iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 30);
@@ -424,8 +426,8 @@ void BJetAnalysis::SaveHistograms (TH1F* myHistogram, TString hRootName, TString
  // Histo_jet_phi_pthat170to300_MC.root
  // Histo_jet_phi_Data.root  
  TString hname = " ";
- if (ismc) hname = "test_Histo_" +  hRootName + "_" + ptRange + "_MC.root"; 
- else      hname = "test_Histo_" +  hRootName + "_Data_CHECKING1.root" ; /// remove CHECKING after the debuging
+ if (ismc) hname = "Histo_" +  hRootName + "_" + ptRange + "_MC.root"; 
+ else      hname = "Histo_" +  hRootName + "_Data.root" ; 
  TFile* OutFileName = new TFile( hname , "update"); 
  myHistogram -> Write();
  OutFileName -> Close();
