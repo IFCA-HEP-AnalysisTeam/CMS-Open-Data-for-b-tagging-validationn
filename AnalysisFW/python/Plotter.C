@@ -163,23 +163,29 @@ void Plotter()
   //bool UnityNorm = false; 
   
 // Number of variables to plot
-  const int nplot =13;
+  const int nplot =18;
 
   // Name of variables to plot
   TString vname [nplot] = { "jet_pt"             ,  "jet_phi",         "jet_eta", 
                             "seltrack_IP3Dsignif",  "seltrack_IP3D", 
                             "nrSV"               ,  "flight3Dsignif",  "massSV",
-                           "jet_CSV",                "jet_JBP"      ,  "jet_JP",  "jet_TCHP", "jet_TCHE" };
+                            "jet_CSV"            ,  "jet_JBP"      ,  "jet_JP",  "jet_TCHP", "jet_TCHE",
+                            "tracks_Pt"          ,  "tracks_distanceToJetAxis",  "tracks_nrPixelHits",            
+                            "avgTrackMultiplicity", "dRmin_matching" };
 
   TString xname [nplot] = {"#bf{jet p_{T}}"      ,   "#bf{jet #phi}"         , "#bf{jet #eta}", 
                            "#bf{3D IP significance}"  ,   "#bf{3D IP}"                 , 
                            "#bf{nr.of SV}"            ,   "#bf{3D flight significance}", "#bf{SV mass}",  
-                           "#bf{CSV discriminator}"   ,   "#bf{JBP discriminator}"     , "#bf{JP discriminator}","#bf{TCHP discriminator}", "#bf{TCHE discriminator}" };
+                           "#bf{CSV discriminator}"   ,   "#bf{JBP discriminator}"     , "#bf{JP discriminator}","#bf{TCHP discriminator}", "#bf{TCHE discriminator}",
+                           "#bf{track p_{T}}"         ,   "#bf{distance to jet axis}"  , "#bf{nr. of pixel hits}",
+                           "#bf{jet p_{T}}"           ,    "dRminak5(CalovsPF)"};
 
   TString units [nplot] = { "#bf{[GeV/c]}",    "#bf{[rad]}",          ""       ,        
                               ""          ,    "#bf{[cm]}" , 
                               ""          ,       ""       ,     "#bf{[GeV/c]}",
-                              ""          ,       ""       ,          ""       ,    ""  ,   ""};
+                              ""          ,       ""       ,          ""       ,    ""  ,   ""
+                            "#bf{[GeV/c]}",    "#bf{[cm]}" ,          ""       , 
+                            "#bf{[GeV/c]}"        ""};
  
   // Name of saved MC histograms to plot from each file
   const int nhistoMC = 5;
@@ -195,22 +201,24 @@ void Plotter()
   // Loop over nplot
   for (int i = 0; i < nplot /*nplot*/; i++) { 
      
-     TFile* infileData = new TFile ("testHistoTightID_9july/test_Histo_" + vname[i] + "_Data_CHECKING1.root", "read");
-     TH1D* myHistoData = (TH1D*) infileData -> Get (hnameData);
+     TFile* infileData = new TFile ("Histo_" + vname[i] + "_Data.root", "read");
+     //TFile* infileData = new TFile ("testHistoTightID_9july/test_Histo_" + vname[i] + "_Data_CHECKING1.root", "read");
+     TH1F* myHistoData = (TH1F*) infileData -> Get (hnameData);
 
-     TFile* infileMC   = new TFile ("testHistoTightID_9july/test_Histo_" + vname[i] + "_MC.root", "read");
-     TH1D* myHistoMC[nhistoMC];
+     TFile* infileMC   = new TFile ("Histo_" + vname[i] + "_MC.root", "read");
+     //TFile* infileMC   = new TFile ("testHistoTightID_9july/test_Histo_" + vname[i] + "_MC.root", "read");
+     TH1F* myHistoMC[nhistoMC];
      
      // Integral
      float integralDat = myHistoData -> Integral();
      std::cout << "Integral dats :" << integralDat << std::endl;
-     TH1D* allMC = (TH1D*) infileMC -> Get ("allflavours");
+     TH1F* allMC = (TH1F*) infileMC -> Get ("allflavours");
      float integral = allMC -> Integral();
      std::cout << "Integral mc" << integral << std::endl;
    
      // Loop over nhistoMC 
      for (int j = 0; j < nhistoMC; j++){
-         myHistoMC[j] = (TH1D*) infileMC -> Get (hnameMC[j]);
+         myHistoMC[j] = (TH1F*) infileMC -> Get (hnameMC[j]);
          
          // Normalize to unity
          //if (UnityNorm && !DataNorm)  myHistoMC[j] -> Scale(1/integral);
@@ -229,7 +237,7 @@ void Plotter()
      TPad* pad1 = NULL;
      TPad* pad2 = NULL;
 
-     if (vname[i] == "massSV") setLinY = true;
+     if (vname[i] == "massSV" || vname[i] == "avgTrackMultiplicity") setLinY = true;
      
      currentCanvas = new TCanvas ("test_Histo_" + vname[i], "", 900,600);
      TLegend* _leg = myLegend (); 
@@ -268,15 +276,19 @@ void Plotter()
      //set the maximun and minimum on the y axis
      float ymin = myHistoData->GetMinimum() > 1.e-1 ? myHistoData->GetMinimum(): 1.e-1; 
      float ymax = myHistoData->GetMaximum()*10.;     
-     if (setLinY) ymax = myHistoData->GetMaximum() + 100.;  setLinY = false;     
      for (int j =0; j<nhistoMC; j++) 
       { 
        if (myHistoMC[j]->GetMinimum()> 1.e-1 && myHistoMC[j]->GetMinimum() < myHistoData->GetMinimum()) ymin = myHistoMC[j]->GetMinimum();
        if (myHistoMC[j]->GetMaximum() > ymax) ymax = myHistoMC[j]->GetMaximum();
       }
+     if (setLinY) ymax = myHistoData->GetMaximum() + 100.;       
+     if (setLinY && vname[i] == "massSV") ymax = myHistoData->GetMaximum() + 5000.;      
+     if (setLinY && vname[i] == "avgTrackMultiplicity") { ymax = myHistoData->GetMaximum() + 10; ymin = 0;}  
+     setLinY = false;     
      //Set the range user on the x axis
+     int nxbins = myHistoData->GetNbinsX();
      float xmin = myHistoData->GetBinLowEdge(1); 
-     float xmax = myHistoData->GetBinLowEdge(nbins+1);
+     float xmax = myHistoData->GetBinLowEdge(nxbins+1);
      float binmin; float binmax;
      if(adjustXlimits)
      {
@@ -290,12 +302,22 @@ void Plotter()
      myHistoData -> SetMarkerStyle (kFullCircle);
      myHistoData -> SetMarkerColor  (kBlack);
      myHistoData -> SetMarkerSize(0.8);
-           
+     
+    if (vname[i] == "avgTrackMultiplicity" || vname[i] == "dRmin_matching")
+    {
+     myHistoMC[0] -> SetLineColor(kRed);
+     myHistoMC[1] -> SetLineColor(kGreen+1);
+     myHistoMC[2] -> SetLineColor(kBlue+2);
+     myHistoMC[3] -> SetLineColor(kAzure+6);
+ 
+    }
+    else
+    {      
      myHistoMC[0] -> SetFillColor(kRed);
      myHistoMC[1] -> SetFillColor(kGreen+1);
      myHistoMC[2] -> SetFillColor(kBlue+2);
      myHistoMC[3] -> SetFillColor(kAzure+6);
-
+    }
      if (moveoverflow)
      {
        MoveOverflows(myHistoData, xmin, xmax);     
@@ -320,6 +342,7 @@ void Plotter()
      st1 -> Add(myHistoMC[1]);
      st1 -> Add(myHistoMC[2]);
 
+     std::cout << "3" <<std::endl;   
      //currentCanvas -> cd();
      //Set log Y scale
      //gPad-> SetLogy();
@@ -332,12 +355,21 @@ void Plotter()
      //yaxis->SetTitleSize(0.09);
      //yaxis->SetTitleOffset(0);// 1
      //yaxis->CenterTitle();
-     st1 -> Draw("hist");
+     if (vname[i] == "avgTrackMultiplicity" || vname[i] == "dRmin_matching") 
+     {
+     st1 -> Draw("nostack,hist");
+     }
+     else
+     {
+       st1 -> Draw("hist");
+     }
      myHistoData -> Draw("ep,same");
      st1 -> GetYaxis()->SetTitle("#bf{entries}");
+     if (vname[i] == "avgTrackMultiplicity") st1 -> GetYaxis()->SetTitle("#bf{track multiplicity}");
      st1 -> GetYaxis()->SetTitleSize(0.05);
      st1 -> GetYaxis()->SetTitleOffset(0.55);
      st1 -> GetYaxis()->CenterTitle();
+     std::cout << "4" <<std::endl;   
      // apply the range user
      if(adjustXlimits) st1 -> GetXaxis()->SetRangeUser(myHistoData->GetBinLowEdge(binmin), myHistoData->GetBinLowEdge(binmax)+myHistoData->GetBinWidth(binmax));
      //pad1->GetFrame()->DrawClone();
@@ -347,15 +379,15 @@ void Plotter()
      DrawLatex(61, 0.165, 0.945, 0.050, 11,  "CMS 2011");
      DrawLatex(52, 0.282, 0.945, 0.030, 11, "Public Data");
      DrawLatex(42, 0.895, 0.945, 0.050, 31, Form("%.2f fb^{-1} (7TeV)", 2.33));
-     std::cout << "3" <<std::endl;   
      _leg ->Draw(); 
+     std::cout << "5" <<std::endl;   
      //--------------------------------------------------------------------------
      // pad2 : Data/MC 
      //--------------------------------------------------------------------------
      pad2->cd();
-     TH1D* ratio = (TH1D*)myHistoData->Clone("ratio");
+     TH1F* ratio = (TH1F*)myHistoData->Clone("ratio");
      ratio->SetTitle("");
-     float rymin =0.45, rymax =1.55;
+     float rymin =0.50, rymax =1.50;
      for (Int_t ibin=1; ibin<=ratio->GetNbinsX(); ibin++) 
       {
        float ratioVal = myHistoMC[4]->GetBinContent(ibin) != 0 ? (myHistoData->GetBinContent(ibin)/myHistoMC[4]->GetBinContent(ibin)) : -999;
@@ -367,6 +399,7 @@ void Plotter()
        ratio -> SetBinContent(ibin, ratioVal);
        ratio -> SetBinError(ibin, ratioErr);
       }
+     std::cout << "5" <<std::endl;   
      // cosmetics
      ratio->SetMarkerColor(1);
      ratio->SetMarkerSize(0.8);
@@ -408,6 +441,8 @@ void Plotter()
      currentCanvas->Update();
      // Save the canvas
      currentCanvas -> Print("plots/"+ vname[i] + ".png");
+     currentCanvas -> Print("plots/"+ vname[i] + ".jpg");
+     currentCanvas -> Print("plots/"+ vname[i] + ".pdf");
   }
 }     
 
