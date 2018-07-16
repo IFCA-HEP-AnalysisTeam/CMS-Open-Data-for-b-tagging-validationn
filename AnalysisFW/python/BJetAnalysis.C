@@ -50,12 +50,14 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
  // ----------------------------------------------------------------------------------
  // selected-track-multiplicity per jet-pt histogram
   float njet_ptCounter[nflavour][30];
-  float ntracksxjet_ptCounter[nflavour][30];
+  float  ntracksxjet_ptCounter[nflavour][30];
   float avg[30];
+
+ float a = 0;  // Remove after the debuging !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
   for (int fv = 0; fv < nflavour; fv ++)
   {
-   for (int ibin = 0; ibin < 30; ibin ++)
+   for (int ibin = 1; ibin < 31; ibin ++)
    { 
     njet_ptCounter[fv][ibin] = 0;
     ntracksxjet_ptCounter[fv][ibin] = 0;
@@ -87,7 +89,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
  //for (Long64_t jentry=0; jentry< 102317; jentry++) ////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ELIMINAR !!!!!!!!!!!!!!!!!!!!!!! QCD300to470
  //for (Long64_t jentry=102312; jentry< 102317; jentry++) ////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ELIMINAR !!!!!!!!!!!!!!!!!!!!!!! QCD300to470
  //cout << " before event loop " << endl;
- for (Long64_t jentry=0; jentry< nentries; jentry++) 
+ for (Long64_t jentry=0; jentry<nentries; jentry++) 
   {
    Long64_t ientry = LoadTree(jentry);
    //cout << "  " << endl;
@@ -197,9 +199,9 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
    for (int m =60; m <= 350; m+= 10)
    { 
     //bin number
-    int ibin = (m-60)/10+1; // start in ibin = 1 
+    int ibin = (m-60)/10 + 1; // start in ibin = 1 
     //select the jets for the current pt bin 
-    if(jet_pt[j] < m+1 && jet_pt[j] >= m ) 
+    if(jet_pt[j] < m+10 && jet_pt[j] >= m ) 
      { 
       // save the global variables to fill the histogram  
        njet_ptCounter[0][ibin] += 1*eventw;
@@ -271,15 +273,15 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
        flight3Dsignif[jetFlavour] -> Fill(flight3DSignificance[i], eventw);
       }
      }
-     nrSV [0] -> Fill(nSVinJetf, eventw);
+     nrSV [jetFlavour] -> Fill(nSVinJetf, eventw);
     }
     
    for (int p = 0; p < goodtracks_inEvent; p++)
    {
     if (goodtracks_jetIndex[p] == j)
     { 
-     if (goodtracks_distToJetAxis[p] < 0.07 && goodtracks_pt[p] > 1) nrPixelHits[jetFlavour] -> Fill(goodtracks_nValidPixelHits[p], eventw);
-     if (goodtracks_distToJetAxis[p] < 0.07 && goodtracks_nValidPixelHits[p] >= 2) trackPt[jetFlavour] -> Fill(goodtracks_pt[p], eventw);
+     if (fabs(goodtracks_distToJetAxis[p]) < 0.07 && goodtracks_pt[p] > 1) nrPixelHits[jetFlavour] -> Fill(goodtracks_nValidPixelHits[p], eventw);
+     if (fabs(goodtracks_distToJetAxis[p]) < 0.07 && goodtracks_nValidPixelHits[p] >= 2) trackPt[jetFlavour] -> Fill(goodtracks_pt[p], eventw);
      if (goodtracks_nValidPixelHits[p] >= 2 && goodtracks_pt[p] > 1) distanceToJetAxis[jetFlavour] -> Fill (fabs(goodtracks_distToJetAxis[p]), eventw); 
      // see previous note for distanceToJetAxis variable
     }
@@ -311,11 +313,11 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
   for ( int s = 0; s < nflavour; s++)
   { 
     if (ismc == false && s > 0) break;
-  
-    for (int ibin = 1; ibin < 30; ibin++)
+     
+    for (int ibin = 1; ibin < 31; ibin++)
     {
      avg[ibin] = 0;  
-     avg[ibin] = ntracksxjet_ptCounter[s][ibin]/njet_ptCounter[s][ibin];
+     if (njet_ptCounter[s][ibin] != 0) avg[ibin] = ntracksxjet_ptCounter[s][ibin]/njet_ptCounter[s][ibin];
      avgTrackMultiplicity[s]->SetBinContent(ibin,avg[ibin]); 
     }
   }
@@ -404,7 +406,7 @@ void BJetAnalysis::DefineHistograms(int iflv, int sflv)
   // secondary vertex
   flight3Dsignif[iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 80); 
   massSV        [iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 8); 
-  nrSV          [iflv] = new TH1F (sflavour[sflv], " ", 6, 0, 5); 
+  nrSV          [iflv] = new TH1F (sflavour[sflv], " ", 6, 0, 6); 
   // b-discriminants
   TCHE[iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 30);  
   TCHP[iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 30);
