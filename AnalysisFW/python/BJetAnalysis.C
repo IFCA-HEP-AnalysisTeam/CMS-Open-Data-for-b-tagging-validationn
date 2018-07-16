@@ -153,7 +153,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
    
    // all flavour (data and mc)
      // only jet  index dependent variables
-   dRmin  [0] -> Fill (dRmin_matching[j], eventw);
+  /* dRmin  [0] -> Fill (dRmin_matching[j], eventw);
 
    jetPt  [0] -> Fill(jet_pt [j],  eventw);  
    jetEta [0] -> Fill(jet_eta[j],  eventw);  
@@ -176,7 +176,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
      IP3Dsignif [0] -> Fill(seltrack_IP3Dsig[k], eventw);
     }
    }
-   // selected secondary vertices variables
+  */ // selected secondary vertices variables
    if (nSVinEvent== 0) nrSV [0] -> Fill(nSVinEvent, eventw); // the nr.of SV in this jet is 0
    if (nSVinEvent > 0)
    {
@@ -196,7 +196,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
 
    // calculate the input of the selected-track-multiplicity per jet-pt histogram
      // loop over the jet pt bins
-   for (int m =60; m <= 350; m+= 10)
+  /* for (int m =60; m <= 350; m+= 10)
    { 
     //bin number
     int ibin = (m-60)/10 + 1; // start in ibin = 1 
@@ -225,6 +225,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
      //     ---------------------------------------------------------------------------------------------------------------------------------------
     }
    }
+  */
 
    // set the flavour
    if (ismc)
@@ -237,7 +238,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
     if (fabs(PartonF[j]) == 5 && nBHadrons[j] == 2) jetFlavour = 4;// "b_gsplitting"
     if (jetFlavour < 0 ) cout << " Warning! jetFlavour = " << jetFlavour << " this does not work! " << endl;      
 
-    dRmin  [jetFlavour] -> Fill (dRmin_matching[j], eventw);
+  /*  dRmin  [jetFlavour] -> Fill (dRmin_matching[j], eventw);
 
     jetPt  [jetFlavour] -> Fill(jet_pt[j],   eventw); 
     jetEta [jetFlavour] -> Fill(jet_eta[j],  eventw);  
@@ -257,7 +258,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
       IP3Dsignif [jetFlavour] -> Fill(seltrack_IP3Dsig[k], eventw);
      }
     }
-
+  */
    // selected secondary vertices variables
     if (nSVinEvent== 0) nrSV [jetFlavour] -> Fill(nSVinEvent, eventw); // the nr.of SV in this jet is 0
     if (nSVinEvent > 0)
@@ -276,7 +277,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
      nrSV [jetFlavour] -> Fill(nSVinJetf, eventw);
     }
     
-   for (int p = 0; p < goodtracks_inEvent; p++)
+ /*  for (int p = 0; p < goodtracks_inEvent; p++)
    {
     if (goodtracks_jetIndex[p] == j)
     { 
@@ -302,6 +303,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
        ntracksxjet_ptCounter[jetFlavour][ibin] += ntracksxjet[j]*eventw;
      }  
    }
+  */
  } // End of setting mc flavour
 
  } // End of the jet loop
@@ -310,7 +312,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
 
 
   // average track multiplicity histo
-  for ( int s = 0; s < nflavour; s++)
+ /* for ( int s = 0; s < nflavour; s++)
   { 
     if (ismc == false && s > 0) break;
      
@@ -321,13 +323,14 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
      avgTrackMultiplicity[s]->SetBinContent(ibin,avg[ibin]); 
     }
   }
+ */
   // Save histograms
   // --------------------------------------------------------------------------------------
     for (int fv = 0; fv < nflavour; fv ++)
     {
       if (ismc == false && fv > 0) break;  
 
-      SaveHistograms (dRmin[fv], "dRmin_matching", _ptRange);
+   /*   SaveHistograms (dRmin[fv], "dRmin_matching", _ptRange);
 
       SaveHistograms (jetPt[fv],  "jet_pt", _ptRange);  
       SaveHistograms (jetEta[fv], "jet_eta", _ptRange);  
@@ -347,7 +350,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
       SaveHistograms (trackPt[fv],   "tracks_Pt", _ptRange);  
       SaveHistograms (distanceToJetAxis[fv],   "tracks_distanceToJetAxis", _ptRange);  
 
-      SaveHistograms (flight3Dsignif[fv], "flight3Dsignif", _ptRange);  
+     */ SaveHistograms (flight3Dsignif[fv], "flight3Dsignif", _ptRange);  
       SaveHistograms (massSV[fv],         "massSV",         _ptRange);  
       SaveHistograms (nrSV[fv],           "nrSV",           _ptRange);
    
@@ -390,7 +393,7 @@ void BJetAnalysis::DefineHistograms(int iflv, int sflv)
  // cout << "  " << endl;  
  // cout << "  " << endl;
   // to cross-check
-  dRmin [iflv] = new TH1F (sflavour[sflv], " " , 10, 0, 1); 
+ /* dRmin [iflv] = new TH1F (sflavour[sflv], " " , 10, 0, 1); 
   // jet variables
   jetPt [iflv] = new TH1F (sflavour[sflv], " " , 100,  0,  250);
   jetEta[iflv] = new TH1F (sflavour[sflv], " " , 50,  -5,  5);
@@ -403,17 +406,17 @@ void BJetAnalysis::DefineHistograms(int iflv, int sflv)
   nrPixelHits      [iflv] = new TH1F (sflavour[sflv], " ", 9, 0, 9); 
   trackPt          [iflv] = new TH1F (sflavour[sflv], " ", 150, 0, 15); 
   distanceToJetAxis[iflv] = new TH1F (sflavour[sflv], " ", 100, 0, 0.3); 
-  // secondary vertex
+ */ // secondary vertex
   flight3Dsignif[iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 80); 
   massSV        [iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 8); 
   nrSV          [iflv] = new TH1F (sflavour[sflv], " ", 6, 0, 6); 
   // b-discriminants
-  TCHE[iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 30);  
+  /*TCHE[iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 30);  
   TCHP[iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 30);
   JP  [iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 2.5);
   JBP [iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 8);
   CSV [iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 1);
- }
+*/ }
  
 // --------------------------------------------------------------------------------------
 // Save Histograms
