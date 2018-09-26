@@ -16,10 +16,18 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 # False: when runing in lxplus 
 runOnVM = False
 
-# Index of data files
-files2011data = FileUtils.loadListFromFile(NAMEOFINPUTFILE)
-#files2011data = FileUtils.loadListFromFile('CMS_Run2011A_Jet_AOD_12Oct2013-v1_20000_file_index.txt')
+# Local input
+######################################################
+# run with the bash script Full dataset
+#files2011data = FileUtils.loadListFromFile(NAMEOFINPUTFILE) 
+######################################################
+#run partial dataset in local
+#files2011data = FileUtils.loadListFromFile('CMS_Run2011A_Jet_AOD_12Oct2013-v1_20001_file_index.txt') 
+files2011data = FileUtils.loadListFromFile('CMS_Run2011A_Jet_AOD_12Oct2013-v1_20000_file_index.txt') 
+######################################################
+# the next line is always uncommented
 process.source.fileNames = cms.untracked.vstring(*files2011data)
+#######################################################
 
 # Read condition data from local sqlite database
 if runOnVM:
@@ -144,14 +152,19 @@ process.p = cms.Path(
 # 50000 events per 1 hour (both for DATA and MC)
 
 # Change number of events here:
-process.maxEvents.input = -1
-#process.maxEvents.input = 50000
+#process.maxEvents.input = -1
+process.maxEvents.input = 10000
 
 process.MessageLogger.cerr.FwkReport.reportEvery = 5000
 
 # Output file
-process.TFileService = cms.Service("TFileService", fileName = cms.string("/eos/user/b/bchazinq/Data/" + NAMEROOTOFOUTPUTROOT))
+#######################################################################################################################################
+#run partial dataset in local
+process.TFileService = cms.Service("TFileService", fileName = cms.string('OpenDataTree_data20000.root'))
 #process.TFileService = cms.Service("TFileService", fileName = cms.string('OpenDataTree_data.root'))
+# run with the bash script Full dataset
+#process.TFileService = cms.Service("TFileService", fileName = cms.string("/eos/user/b/bchazinq/Data10000/" + NAMEROOTOFOUTPUTROOT))
+########################################################################################################################################
 
 # To suppress long output at the end of the job
 #process.options.wantSummary = False   

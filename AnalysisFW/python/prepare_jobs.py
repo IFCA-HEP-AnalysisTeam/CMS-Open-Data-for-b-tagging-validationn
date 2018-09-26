@@ -23,7 +23,8 @@ TAG = bcolors.FAIL + "[JOB_MANAGER]"
 
 def make_job(cwd, info, template, bash_template, queue):
 
-  dirname = cwd + "/job_" + str(info[0])
+  dirname = cwd + "/Data10000_job_" + str(info[0])
+  #dirname = cwd + "/Pt50to80_job_" + str(info[0])
   bashFile = dirname + "/bash_wrap.sh"
   inputFiles = dirname + "/input.txt"
   confFile = dirname + "/data_cfg.py"

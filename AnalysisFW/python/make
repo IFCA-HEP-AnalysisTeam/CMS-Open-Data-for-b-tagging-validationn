@@ -1,1 +1,3 @@
-`root-config --cxx --cflags` -o   runBJetAnalysis  runBJetAnalysis.C JetAnalysisBase.C `root-config --glibs`
+`root-config --cxx --cflags` -o   runBJetAnalysis  runBJetAnalysis.C  ChainClass.C `root-config --glibs`
+#`root-config --cxx --cflags` -o   runBJetAnalysis  runBJetAnalysis.C  TreeClass_QCD15to30.C `root-config --glibs`
+#`root-config --cxx --cflags` -o   runBJetAnalysis  runBJetAnalysis.C  TreeClass_Data10000.C `root-config --glibs`

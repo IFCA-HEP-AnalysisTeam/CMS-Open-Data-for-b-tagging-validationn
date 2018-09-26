@@ -87,6 +87,8 @@
 //https://github.com/cms-sw/cmssw/blob/CMSSW_5_3_X/PhysicsTools/JetExamples/test/printJetFlavourInfo.cc
 
 OpenDataTreeProducerOptimized::OpenDataTreeProducerOptimized(edm::ParameterSet const &cfg) {
+  
+
 	mMinPFPt           = cfg.getParameter<double>                    ("minPFPt");
 	mMinJJMass         = cfg.getParameter<double>                    ("minJJMass");
 	mMaxY              = cfg.getParameter<double>                    ("maxY");
@@ -119,6 +121,9 @@ OpenDataTreeProducerOptimized::OpenDataTreeProducerOptimized(edm::ParameterSet c
 }
 
 void OpenDataTreeProducerOptimized::beginJob() {
+
+   
+
 	mTree = fs->make< TTree >("OpenDataTree", "OpenDataTree");
 
 	// Variables of the flat tuple
@@ -246,6 +251,8 @@ void OpenDataTreeProducerOptimized::endJob() {
 void OpenDataTreeProducerOptimized::beginRun(edm::Run const &iRun,
 		edm::EventSetup const &iSetup) {
 
+
+
 	// Mapping trigger indices 
 	int iTrigger=0;//mi trigger***
 	int jTrigger=0; // trigger de la coleccion***
@@ -258,29 +265,32 @@ void OpenDataTreeProducerOptimized::beginRun(edm::Run const &iRun,
 		triggernames.clear();
 
 		// Iterate over all active triggers of the AOD file
-		iTrigger++;
 		auto name_list = hltConfig_.triggerNames();
 		for (std::string name_to_search: triggerNames_) {
 			// Find the version of jet trigger that is active in this run 
 
 			for (std::string name_candidate: name_list) {
 
-				jTrigger++;
 				//printf(" Mi trigger %i: %s y el trigger de la coleccion %i: %s\n", iTrigger++, triggerNames_, jTrigger++, name_list);
 				//printf(" Mi trigger %i: %s y el trigger de la coleccion %i: %s\n", iTrigger++, name_to_search, jTrigger++, name_candidate);
-				//                std::cout<< "Mi trigger  : " << iTrigger << "    name_to_search     " << name_to_search << std::endl; 
-				//                std::cout<< "el trigger de la coleccion  : " << jTrigger << "    name_candidate     " << name_candidate << std::endl; 
+				                std::cout<< "Mi trigger  : " << iTrigger << "    name_to_search     " << name_to_search << std::endl; 
+				                std::cout<< "el trigger de la coleccion  : " << jTrigger << "    name_candidate     " << name_candidate << std::endl; 
 
 				// Match the prefix to the full name (eg. HLT_Jet30 to HLT_Jet30_v10)
 				if ( name_candidate.find(name_to_search + "_v") != std::string::npos ) {
+                                        std::cout << "Han matcheado" <<endl; 
 					// Save index corresponding to the trigger
 					triggerIndex_.push_back(hltConfig_.triggerIndex(name_candidate));
-
+                                        std::cout << "Me guardo el indice: "<< hltConfig_.triggerIndex(name_candidate) <<endl; 
 					// Save the trigger name
 					triggernames.push_back("jt" + name_to_search.substr(7, string::npos));
+                                        std::cout << "Me guardo el nombre: "<<"jt" + name_to_search.substr(7, string::npos)<<endl; 
+                                        std::cout << "                      paso a mi siguiente trigger                   "<< endl; 
 					break;            
 				}
+			jTrigger++;
 			}
+		iTrigger++;
 		}
 	}
 
@@ -307,10 +317,12 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 	run = event_obj.id().run();
 	lumi = event_obj.luminosityBlock();
 	event = event_obj.id().event();
+	//cout << " ##########################################################################################  " << endl; 
+	//std::cout << " run number: " << run <<std::endl; 
+	//std::cout << " lumi = lumiosityBlock: " << lumi <<std::endl; 
 	cout << " ##########################################################################################  " << endl; 
-	std::cout << " run number: " << run <<std::endl; 
-	std::cout << " lumi = lumiosityBlock: " << lumi <<std::endl; 
 	cout << " event number: " << event << endl; 
+	cout << "   " << endl; 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////  
 	// Test Discriminant 
 	//---------------------------- Jet CSV discriminantor -----------------------
@@ -598,6 +610,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
      int seltracksInEvent_index =0;
      //################################################################
 
+    float ak5CaloJet_IndexMatch [kMaxNjet]; // for debuging !!!!!
 
     for (auto i_ak5jet_orig = ak5_handle->begin(); i_ak5jet_orig != ak5_handle->end(); ++i_ak5jet_orig) {
         
@@ -998,6 +1011,13 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
       dRmin_matching[ak5_index] = sqrt(dR2min);
       if (sqrt(dR2min) < 0.3) 
       {
+      cout <<" Matching between : "<<endl; // for debuging !!!!! 
+      cout <<" PFJet  " << ak5_index <<endl; // for debuging !!!!!
+      cout <<" CaloJet  " << indexmin << endl; // for debuging !!!!!  
+      ak5CaloJet_IndexMatch[ak5_index] = indexmin; // for debuging !!!!!
+      //cout <<"####################### Matching for bDiscriminators #######################"<<endl;  // for debuging !!!!!
+      //cout <<"  PFJet index " << ak5_index << " CaloJet index " << indexmin <<endl;                // for debuging !!!!!
+      //cout <<"###########################################################################"<<endl;  // for debuging !!!!!
        //cout <<" PFindex " << ak5_index << "  caloJet " << indexmin << endl; 
        jet_CSV[ak5_index]  =  (*tagHandle_CSV)[myJets->refAt(indexmin)];
        //cout << "Jet_CSV disc =  " << jet_CSV[ak5_index]<<endl;; 
@@ -1010,8 +1030,10 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
        //cout << "Jet_TCHE disc =  " << jet_TCHE[ak5_index] << endl; 
       } else 
         {
-         cout <<" Warning!! There is not matching between ak5CaloJets and the current ak5PFJets => No b-tagging info available for the original PFJet " << endl;
-         cout <<" selected PFJet number " << ak5_index << " indexmin " << indexmin <<endl;
+         cout <<"  " << endl; 
+         cout <<" Warning!! There is not matching between ak5CaloJets and the current ak5PFJets "<< ak5_index << "  => No b-tagging info available for the original PFJet " << endl;
+         cout <<"                  best matching:   PFJet  " << ak5_index << " ; " << " CaloJet  "<< indexmin <<"; with  sqrt(dR2min) =  " << sqrt(dR2min) <<endl; 
+         cout <<"  " << endl; 
         }  
 
     //################################################################
@@ -1094,9 +1116,9 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
          }
         } 
        }  
-     if (tagindexmin != indexmin) cout << " Recorcholis !! TagCollection Jets and TrackIPTagInfoCollection does not match one to one!! " << endl; 
-     cout <<" " << endl;
-     cout <<" selected PFJet number " << ak5_index << " tagindexmin " << tagindexmin <<endl;
+     //if (tagindexmin != indexmin) cout << " Recorcholis !! TagCollection Jets and TrackIPTagInfoCollection does not match one to one!! " << endl; 
+     //cout <<" " << endl;
+     //cout <<" selected PFJet number " << ak5_index << " tagindexmin " << tagindexmin <<endl;
  
     //################################################################
     // Secondary vertices 
@@ -1146,7 +1168,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
           nSVinEvent_index ++;
          }
        }
-     if (nSVinJet[ak5_index] > 0 && svindexmin != indexmin) cout << " Recorcholis !! TagCollection Jets and SecondaryVertexTagInfoCollection does not match one to one!! " << endl; 
+     //if (nSVinJet[ak5_index] > 0 && svindexmin != indexmin) cout << " Recorcholis !! TagCollection Jets and SecondaryVertexTagInfoCollection does not match one to one!! " << endl; 
      
     /////////////////////////////////////////////////////////////////////////////////////////////////////////  
     
@@ -1166,7 +1188,30 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
   
    
     // Number of selected jets in the event
-    njet = ak5_index;    
+    njet = ak5_index;   
+       // for debuging !!!!!
+       ////////////////////////// 
+       float caloIndex_Repes[njet];
+       for (UInt_t i=0; i<njet; i++)
+       {
+        caloIndex_Repes[i] = 0;//cuenta cuantas veces se repite en el evento el mismo indice del calo jet matcheado for debugging!!!!!!
+        for (UInt_t j=i+1; j<njet; j++)
+        {
+          if(ak5CaloJet_IndexMatch[i] ==ak5CaloJet_IndexMatch[j]) 
+           {
+             if (dRmin_matching[i] < 0.3 && dRmin_matching[j] < 0.3)
+             {             
+              caloIndex_Repes[i] =+ 1;
+              cout<< "  Repes  Summary " <<endl;
+              cout<< "indice del Calo jet repetido es: " << ak5CaloJet_IndexMatch[i] << endl;  
+              cout<< "se repite para los PF jets de indice: " << i << " (dRmin =  " << dRmin_matching[i] << ")  y " << j << " (dRmin = " <<dRmin_matching[j] << ") "<<endl; 
+             }
+           }
+        }
+       if (caloIndex_Repes[i] > 0) cout<< "en total se repite " << caloIndex_Repes[i] << "  veces" <<endl;   
+       } 
+       ////////////////////////// 
+ 
     // Number of tracks in the event
     goodtracks_inEvent = goodtracks_inEvent_index; 
     // Number of B-tag(IPTagInfo) selected tracks in the event

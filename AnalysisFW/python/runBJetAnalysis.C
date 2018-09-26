@@ -10,9 +10,9 @@ void runBJetAnalysis (TString foldername, int mctrue, TString rangeOfpt)
    bool    _ismc = mctrue;
   
    // Read the tree from an input filename = /fullpath/file.root
-   //TFile* infile  = new TFile( foldername, "read" );
-   //TTree* myInput  = (TTree*) infile -> Get( "ak5ak7/OpenDataTree");
-   
+/*   TFile* infile  = new TFile( foldername, "read" );
+   TTree* myInput  = (TTree*) infile -> Get( "ak5ak7/OpenDataTree");
+*/   
   // Create a TChain to read several output_*.root trees in the foldername folder.
   TChain* myInput = new TChain("ak5ak7/OpenDataTree", "");
   TString a = gSystem->GetFromPipe("ls " + foldername + "output_*.root | wc -l"); 
@@ -28,7 +28,7 @@ void runBJetAnalysis (TString foldername, int mctrue, TString rangeOfpt)
   // call the analysis functions
    BJetAnalysis BJetAnalysis(myInput); 
    BJetAnalysis.Loop(foldername, _ismc, rangeOfpt); 
- }
+}
 
 # ifndef __CINT__
 int main(int argc, char ** argv)

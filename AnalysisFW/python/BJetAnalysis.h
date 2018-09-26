@@ -1,7 +1,6 @@
 #ifndef BJetAnalysis_h
 #define BJetAnalysis_h
-//#include "JetAnalysisBase.h"
-//#include "DataOutput2Class.h"
+//#include "TreeClass_Data10000.h"
 //#include "TreeClass_QCD15to30.h"
 #include "ChainClass.h"
 #include "Constants.h"
@@ -15,13 +14,12 @@
 
 class BJetAnalysis : public ChainClass
 //class BJetAnalysis : public TreeClass_QCD15to30
-//class BJetAnalysis : public JetAnalysisBase
-//class BJetAnalysis : public DataOutput2Class 
+//class BJetAnalysis : public TreeClass_Data10000
 {
  public:
 
  BJetAnalysis (TChain* chain);
- //BJetAnalysis (TTree* tree);
+ // BJetAnalysis (TTree* tree);
 
  void  BeginJob         (TString filename,
                          bool _ismc);

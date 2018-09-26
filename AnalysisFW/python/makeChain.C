@@ -8,12 +8,12 @@
 #include "TROOT.h"
 
 
-void  test_init (TString foldername)
+void  makeChain (TString infoldername)
 {
   ////gSystem->cd(foldername);
   ////gSystem->Init();
-  ////int a = gSystem->Exec("ls " + foldername + "/output_*.root | wc");
-/*  TString a = gSystem->GetFromPipe("ls " + foldername + "/output_*.root | wc -l");
+  ////int a = gSystem->Exec("ls " + infoldername + "/output_*.root | wc");
+/*  TString a = gSystem->GetFromPipe("ls " + infoldername + "/output_*.root | wc -l");
   TString b = gSystem->pwd();
   cout << " a = " << a << endl; 
   cout << " typeid(a).name() = " << typeid(a).name() << endl;  
@@ -36,15 +36,15 @@ void  test_init (TString foldername)
   ////  cout << " typeid(e).name() = " << typeid(e).name() << endl;
 
 
-  // Create a TChain to read several output_*.root trees in the foldername folder.
+  // Create a TChain to read several output_*.root trees in the infoldername folder.
   TChain mychain ("ak5ak7/OpenDataTree");
-  TString a = gSystem->GetFromPipe("ls " + foldername + "output_*.root | wc -l");
+  TString a = gSystem->GetFromPipe("ls " + infoldername + "output_*.root | wc -l");
   int b = atoi( a );
   for (int nfile=0; nfile < b; nfile++)
    {
     TString numb;
     numb += nfile;
-    mychain.Add(foldername + "output_" + numb + ".root");
+    mychain.Add(infoldername + "output_" + numb + ".root");
    }
  int nentries = (Int_t) mychain.GetEntries();
  cout << "The chain has " << nentries << " entries" << endl;
@@ -58,17 +58,20 @@ void  test_init (TString foldername)
  */
 
  // Draw a variable in an histogram
+ TString b_variable = "jet_pt";
  //TString b_variable = "njet";
  //TString b_variable = "tracks_inEvent";
  //----------------------------------------------------------------------------
- // no cuts
+ // (no) cuts
  // =======
  // TString b_variable = "triggernames";
  // TString b_variable2 = "ntrg";
  // mychain.Scan("run:triggernames");
   //mychain.Scan("run:triggernames[1]");
-  //mychain.Scan("run:triggernames[1]",  "triggernames[1] != \"jt60\"");
-  //mychain.Draw(b_variable + ">>" + b_variable, "1>0");
+  //mychain.Scan("run:triggernames:triggers:jet_pt",  "1>0");
+  //mychain.Scan("run:triggernames:jet_pt",  "triggernames[1] != \"jt60\"");
+ mychain.Draw(b_variable + ">>" + b_variable, "triggers[1]&&jet_eta>-2.4&&jet_eta<2.4&&jet_pt>60&&jet_looseID");
+ //mychain.Draw(b_variable + ">>" + b_variable, "1>0");
  //
  // jet index dependent variables
  // =============================
@@ -103,6 +106,6 @@ void  test_init (TString foldername)
  cout << " Integral = " << myHisto->Integral() << endl;
  myHisto -> Draw();
 */ 
- mychain.MakeClass("ChainClass");   
+// mychain.MakeClass("ChainClass");   
 }
 

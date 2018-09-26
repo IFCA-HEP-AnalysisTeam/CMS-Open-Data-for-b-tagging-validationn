@@ -150,10 +150,16 @@ void MoveOverflows(TH1F* hist, Float_t xmin, Float_t xmax)
 //-----------------------------------------------------------------------------
 // Draw 
 //------------------------------------------------------------------------------
-void Plotter()
+void Plotter(TString inFolder, TString outFolder)
 {
-
-  bool DataNorm  = true;
+  
+  float lumi= 2.33; // (/fb) 2011 legacy runA 
+  float efflumifb = 0.000287; // (0.000287/fb)  HlT_jet60v* of 2011 legacy runA 
+  float efflumipb = 0.287; // (0.287/fb)  HlT_jet60v* of 2011 legacy runA 
+  TString sefflumipb = 0.287;  
+ 
+  bool effLumiNorm  = false;
+  bool dataNorm  = true;
   bool moveoverflow = true;
   
   bool setLinY = false; //massSV is a linear plot 
@@ -168,7 +174,7 @@ void Plotter()
   // Name of variables to plot
   TString vname [nplot] = { "jet_pt"             ,  "jet_phi",         "jet_eta", 
                             "seltrack_IP3Dsignif",  "seltrack_IP3D", 
-                            "nrSV"               ,  "flight3Dsignif",  "massSV",
+                            "nrSV"               ,  "flight3Dsignif",  "massSV" ,
                             "jet_CSV"            ,  "jet_JBP"      ,  "jet_JP",  "jet_TCHP", "jet_TCHE",
                             "tracks_Pt"          ,  "tracks_distanceToJetAxis",  "tracks_nrPixelHits",            
                             "avgTrackMultiplicity", "dRmin_matching" };
@@ -199,13 +205,13 @@ void Plotter()
   TString hnameData = "data";
 
   // Loop over nplot
-  for (int i = 0; i < nplot /*nplot*/; i++) { 
+  for (int i = 0; i < nplot ; i++) { 
      
-     TFile* infileData = new TFile ("Histo_" + vname[i] + "_Data.root", "read");
+     TFile* infileData = new TFile (inFolder + "/Histo_" + vname[i] + "_TotalData.root", "read");
      //TFile* infileData = new TFile ("testHistoTightID_9july/test_Histo_" + vname[i] + "_Data_CHECKING1.root", "read");
      TH1F* myHistoData = (TH1F*) infileData -> Get (hnameData);
 
-     TFile* infileMC   = new TFile ("Histo_" + vname[i] + "_MC.root", "read");
+     TFile* infileMC   = new TFile (inFolder + "/Histo_" + vname[i] + "_MC.root", "read");
      //TFile* infileMC   = new TFile ("testHistoTightID_9july/test_Histo_" + vname[i] + "_MC.root", "read");
      TH1F* myHistoMC[nhistoMC];
      
@@ -221,16 +227,19 @@ void Plotter()
          myHistoMC[j] = (TH1F*) infileMC -> Get (hnameMC[j]);
          
          // Normalize to unity
-         //if (UnityNorm && !DataNorm)  myHistoMC[j] -> Scale(1/integral);
-         if (DataNorm) myHistoMC[j] -> Scale(integralDat/integral);
-         //if (DataNorm && !UnityNorm) myHistoMC[j] -> Scale(1/integralDat);
+         //if (UnityNorm && !dataNorm)  myHistoMC[j] -> Scale(1/integral);
+         if (dataNorm) myHistoMC[j] -> Scale(integralDat/integral);
+         // we need to apply a correction factor of 1000 to match the mc crosssection (pb) with lumi /fb
+         if (effLumiNorm) myHistoMC[j] -> Scale(1000*efflumifb/lumi);
+         //if (dataNorm && !UnityNorm) myHistoMC[j] -> Scale(1/integralDat);
      }
-     
+     if (dataNorm) cout << " MC is normalized to Data " << endl; 
+     if (effLumiNorm) cout << " MC is normalized to this Lumi (/fb): " << efflumifb <<endl; 
      // Normalize to unity 
-     //if (UnityNorma && !DataNorma) myHistoData -> Scale(1/integralDat);
+     //if (UnityNorma && !dataNorma) myHistoData -> Scale(1/integralDat);
 
      //Create the directory to save the plots
-     gSystem->mkdir("plots/", kTRUE);
+     gSystem->mkdir(outFolder + "/", kTRUE);
      
      // Define the canvas
      TCanvas* currentCanvas = NULL;
@@ -328,6 +337,7 @@ void Plotter()
      }
 
      // Set legend
+     //_leg -> SetHeader("effective lumi HLT_Jet60 " + sefflumipb);  
      _leg -> AddEntry(myHistoData, "data" , "p");
      _leg -> AddEntry(myHistoMC[0], "b quark" , "f");
      _leg -> AddEntry(myHistoMC[3], "b from gluon splitting" , "f");
@@ -440,9 +450,9 @@ void Plotter()
      currentCanvas->Modified();
      currentCanvas->Update();
      // Save the canvas
-     currentCanvas -> Print("plots/"+ vname[i] + ".png");
-     currentCanvas -> Print("plots/"+ vname[i] + ".jpg");
-     currentCanvas -> Print("plots/"+ vname[i] + ".pdf");
+     currentCanvas -> Print(outFolder+"/"+ vname[i] + ".png");
+     currentCanvas -> Print(outFolder+"/"+ vname[i] + ".jpg");
+     currentCanvas -> Print(outFolder+"/"+ vname[i] + ".pdf");
   }
 }     
 

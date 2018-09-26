@@ -6,6 +6,7 @@
 // --------------------------------------------------------------------------------------
 // Constructor
 // --------------------------------------------------------------------------------------
+//BJetAnalysis::BJetAnalysis(TTree* tree) : TreeClass_Data10000(tree)
 //BJetAnalysis::BJetAnalysis(TTree* tree) : TreeClass_QCD15to30(tree)
 BJetAnalysis::BJetAnalysis(TChain* chain) : ChainClass(chain)
 {
@@ -64,9 +65,6 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
    }
   } 
 
-//float njet_ptCounter[nflavour][30];
-//float ntracksxjet_ptCounter[nflavour][30];
-//int   ntracksxjet[njet];
   // number of generated events (not stored in ntuples)
    if (filename.Contains("15to30"))   ngen = 9978850; //http://opendata.cern.ch/record/1366
    if (filename.Contains("30to50"))   ngen = 5837856; //http://opendata.cern.ch/record/1539
@@ -85,75 +83,38 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
  if (fChain == 0) return;
  nentries = (Int_t) fChain->GetEntries();
  cout<< "nentries = " << nentries << endl;
- // int badMCentries = 0; ////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ELIMINAR !!!!!!!!!!!!!!!!!!!!!!! QCD80to120
- //for (Long64_t jentry=0; jentry< 102317; jentry++) ////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ELIMINAR !!!!!!!!!!!!!!!!!!!!!!! QCD300to470
- //for (Long64_t jentry=102312; jentry< 102317; jentry++) ////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ELIMINAR !!!!!!!!!!!!!!!!!!!!!!! QCD300to470
- //cout << " before event loop " << endl;
  for (Long64_t jentry=0; jentry<nentries; jentry++) 
   {
    Long64_t ientry = LoadTree(jentry);
-   //cout << "  " << endl;
-   //cout << "  jentry = " << jentry <<endl;
-   //cout << "  " << endl;
    if (ientry < 0) break; 
- //  if (jentry == 261379)  continue; ////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ELIMINAR !!!!!!!!!!!!!!!!!!!!!!! QCD80to120 
- //  if (jentry == 1349586)  continue; ////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ELIMINAR !!!!!!!!!!!!!!!!!!!!!!! QCD80to120
- //  if (jentry == 1577233)  continue; ////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ELIMINAR !!!!!!!!!!!!!!!!!!!!!!! QCD80to120
- //  if (jentry == 102314) {cout << " jentry = " << jentry<< "  !!!!!!!!!!!" << endl;  continue;} ////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ELIMINAR !!!!!!!!!!!!!!!!!!!!!!! 
-   //if (event  ==  2882032) {cout << " event 2882032 !!!!!!!!!!!" << endl;  continue;} ////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ELIMINAR !!!!!!!!!!!!!!!!!!!!!!! 
-   //cout << " ismc before fChain->GetEntry(jentry) : " << ismc << endl; 
    fChain->GetEntry(jentry);
-   //cout << " ismc after fChain->GetEntry(jentry) : " << ismc << endl; 
- //  if (ismc == 0) {badMCentries += 1;continue; }  ////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ELIMINAR !!!!!!!!!!!!!!!!!!!!!!! QCD80to120
- //  ismc = 1; ////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ELIMINAR !!!!!!!!!!!!!!!!!!!!!!! QCD80to120 
   //print the progress
    PrintProgress(jentry, nentries);
   // set the event weigth 
    eventw = 1; // for data
    if (ismc) {
-               //cout << " entered in the if " << endl; 
-               eventw = (integratedLumi*mcweight)/ngen; //for mc 
-               //cout << " mcweight = " << mcweight << endl;
-               //cout << " ngen = " << ngen << endl;
-               //cout << " lumi = " << integratedLumi << endl;
+               eventw = (mcweight)/ngen; //for mc -> mcweigth is the xs (pb)
              }
-  // cout << "eventw = " << eventw << endl;
-  // cout << "eventw = " << (integratedLumi*mcweight)/ngen << endl;
-  
-  // set the passed trigger
-  //if (triggers[0] == false) continue; //triggernames != jt30
   if (triggers[1] == false) continue; //triggernames != jt60
-  //if (triggernames != jt60 || triggers[1] == false) continue;
   
   // Fill histograms
   // --------------------------------------------------------------------------------------
   
   // avgTrackMultiplicity per event variables
   int   ntracksxjet[njet];
- // cout << " event  =  " << event << endl;
- // cout << " pass jentry = " << jentry <<endl;
- // cout << " njet = " << njet <<endl;
- // cout << " jet_pt[0] = " << jet_pt[0] <<endl;
- // cout << " njet = " << njet << endl;
- // cout << " ngen = " << ngen << endl;
- /* cout << " nSVinEvent = " << nSVinEvent << endl;
-  cout << " seltracksInEvent = " << seltracksInEvent << endl;
-  cout << " tracks_inEvent = " << tracks_inEvent << endl;
-  cout << " jetPt[0] histo all flavours = " << jetPt[0] <<endl;
-  cout << " jetEta[0] histo all flavours = " << jetEta[0] <<endl;
- */ // loop over the jets in the event
+  // loop over the jets in the event
   for (int j = 0; j < njet; j++)
   {
    // baseline selection
-   if (jet_pt[j] < 60) continue;
+   if (jet_pt[j] <= 60) continue;
    if (jet_eta[j] > 2.4 || jet_eta[j] < -2.4) continue;
-   if (jet_looseID[j] == false) continue; // check with the loose
+   if (jet_looseID[j] == false) continue; // 
    //if (jet_tightID[j] == false) continue; // check with the loose
    
    
-   // all flavour (data and mc)
-     // only jet  index dependent variables
-  /* dRmin  [0] -> Fill (dRmin_matching[j], eventw);
+  // all flavour (data and mc)
+  // only jet  index dependent variables
+   dRmin  [0] -> Fill (dRmin_matching[j], eventw);
 
    jetPt  [0] -> Fill(jet_pt [j],  eventw);  
    jetEta [0] -> Fill(jet_eta[j],  eventw);  
@@ -176,7 +137,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
      IP3Dsignif [0] -> Fill(seltrack_IP3Dsig[k], eventw);
     }
    }
-  */ // selected secondary vertices variables
+   // selected secondary vertices variables
    if (nSVinEvent== 0) nrSV [0] -> Fill(nSVinEvent, eventw); // the nr.of SV in this jet is 0
    if (nSVinEvent > 0)
    {
@@ -196,7 +157,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
 
    // calculate the input of the selected-track-multiplicity per jet-pt histogram
      // loop over the jet pt bins
-  /* for (int m =60; m <= 350; m+= 10)
+   for (int m =60; m <= 350; m+= 10)
    { 
     //bin number
     int ibin = (m-60)/10 + 1; // start in ibin = 1 
@@ -225,20 +186,19 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
      //     ---------------------------------------------------------------------------------------------------------------------------------------
     }
    }
-  */
+  
 
    // set the flavour
    if (ismc)
    {
     int jetFlavour = -999; 
-    //float flavour = fabs(PartonF[j]);
     if (fabs(PartonF[j]) == 5) jetFlavour = 1; // "b_quark"
     if (fabs(PartonF[j]) == 4) jetFlavour = 2; // "c_quark"
     if (fabs(PartonF[j]) != 5 && fabs(PartonF[j]) != 4) jetFlavour = 3; // "lgluon"
     if (fabs(PartonF[j]) == 5 && nBHadrons[j] == 2) jetFlavour = 4;// "b_gsplitting"
-    if (jetFlavour < 0 ) cout << " Warning! jetFlavour = " << jetFlavour << " this does not work! " << endl;      
+    if (jetFlavour < 0 ) cout << " Warning! jetFlavour = " << jetFlavour << " => this does not work! " << endl;      
 
-  /*  dRmin  [jetFlavour] -> Fill (dRmin_matching[j], eventw);
+    dRmin  [jetFlavour] -> Fill (dRmin_matching[j], eventw);
 
     jetPt  [jetFlavour] -> Fill(jet_pt[j],   eventw); 
     jetEta [jetFlavour] -> Fill(jet_eta[j],  eventw);  
@@ -258,13 +218,13 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
       IP3Dsignif [jetFlavour] -> Fill(seltrack_IP3Dsig[k], eventw);
      }
     }
-  */
+
    // selected secondary vertices variables
     if (nSVinEvent== 0) nrSV [jetFlavour] -> Fill(nSVinEvent, eventw); // the nr.of SV in this jet is 0
     if (nSVinEvent > 0)
     {
      int nSVinJetf = 0;
-     for (int i = 0; i <= nSVinEvent; i++)
+     for (int i = 0; i < nSVinEvent; i++)
      { 
       //get the SV info of the selected jet
       if (jetSVIndex[i]==j)
@@ -277,7 +237,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
      nrSV [jetFlavour] -> Fill(nSVinJetf, eventw);
     }
     
- /*  for (int p = 0; p < goodtracks_inEvent; p++)
+   for (int p = 0; p < goodtracks_inEvent; p++)
    {
     if (goodtracks_jetIndex[p] == j)
     { 
@@ -303,7 +263,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
        ntracksxjet_ptCounter[jetFlavour][ibin] += ntracksxjet[j]*eventw;
      }  
    }
-  */
+  
  } // End of setting mc flavour
 
  } // End of the jet loop
@@ -312,7 +272,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
 
 
   // average track multiplicity histo
- /* for ( int s = 0; s < nflavour; s++)
+  for ( int s = 0; s < nflavour; s++)
   { 
     if (ismc == false && s > 0) break;
      
@@ -323,14 +283,14 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
      avgTrackMultiplicity[s]->SetBinContent(ibin,avg[ibin]); 
     }
   }
- */
+ 
   // Save histograms
   // --------------------------------------------------------------------------------------
     for (int fv = 0; fv < nflavour; fv ++)
     {
       if (ismc == false && fv > 0) break;  
 
-   /*   SaveHistograms (dRmin[fv], "dRmin_matching", _ptRange);
+      SaveHistograms (dRmin[fv], "dRmin_matching", _ptRange);
 
       SaveHistograms (jetPt[fv],  "jet_pt", _ptRange);  
       SaveHistograms (jetEta[fv], "jet_eta", _ptRange);  
@@ -350,12 +310,11 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
       SaveHistograms (trackPt[fv],   "tracks_Pt", _ptRange);  
       SaveHistograms (distanceToJetAxis[fv],   "tracks_distanceToJetAxis", _ptRange);  
 
-     */ SaveHistograms (flight3Dsignif[fv], "flight3Dsignif", _ptRange);  
+      SaveHistograms (flight3Dsignif[fv], "flight3Dsignif", _ptRange);  
       SaveHistograms (massSV[fv],         "massSV",         _ptRange);  
       SaveHistograms (nrSV[fv],           "nrSV",           _ptRange);
    
     }
- //cout << " badMCentries = " << badMCentries << endl; ////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ELIMINAR !!!!!!!!!!!!!!!!!!!!!!! QCD80to120 
  cout << " End Job " << endl;   
 } // End of Loop function
 
@@ -383,17 +342,8 @@ void BJetAnalysis::DefineHistograms(int iflv, int sflv)
   *        "b_quark", "c_quark", "lgluon", "b_gsplitting"
   *   if not ismc: hname correspond "data"
   */
- // cout << "  " << endl;  
- // cout << "  " << endl;  
- // cout << "  " << endl;  
- // cout << " defining histos " << endl;  
- // cout << " flavour " << iflv << endl;  
- // cout << " sflavour " << sflavour[sflv] << endl;  
- // cout << "  " << endl;  
- // cout << "  " << endl;  
- // cout << "  " << endl;
   // to cross-check
- /* dRmin [iflv] = new TH1F (sflavour[sflv], " " , 10, 0, 1); 
+  dRmin [iflv] = new TH1F (sflavour[sflv], " " , 10, 0, 1); 
   // jet variables
   jetPt [iflv] = new TH1F (sflavour[sflv], " " , 100,  0,  250);
   jetEta[iflv] = new TH1F (sflavour[sflv], " " , 50,  -5,  5);
@@ -406,17 +356,17 @@ void BJetAnalysis::DefineHistograms(int iflv, int sflv)
   nrPixelHits      [iflv] = new TH1F (sflavour[sflv], " ", 9, 0, 9); 
   trackPt          [iflv] = new TH1F (sflavour[sflv], " ", 150, 0, 15); 
   distanceToJetAxis[iflv] = new TH1F (sflavour[sflv], " ", 100, 0, 0.3); 
- */ // secondary vertex
+  // secondary vertex
   flight3Dsignif[iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 80); 
   massSV        [iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 8); 
   nrSV          [iflv] = new TH1F (sflavour[sflv], " ", 6, 0, 6); 
   // b-discriminants
-  /*TCHE[iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 30);  
+  TCHE[iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 30);  
   TCHP[iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 30);
   JP  [iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 2.5);
   JBP [iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 8);
   CSV [iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 1);
-*/ }
+ }
  
 // --------------------------------------------------------------------------------------
 // Save Histograms
@@ -427,12 +377,12 @@ void BJetAnalysis::SaveHistograms (TH1F* myHistogram, TString hRootName, TString
  * This function save the histograms with a readable name for plotter.C
  *  if ismc: ptRange correspond to the pthat of the sample
  *  if not ismc: ptRange correspond to "data"
+ *      Example:  Histo_jet_phi_pthat170to300_MC.root
+ *                Histo_jet_phi_Data.root  
  */
- // Histo_jet_phi_pthat170to300_MC.root
- // Histo_jet_phi_Data.root  
  TString hname = " ";
  if (ismc) hname = "Histo_" +  hRootName + "_" + ptRange + "_MC.root"; 
- else      hname = "Histo_" +  hRootName + "_Data.root" ; 
+ else      hname = "Histo_" +  hRootName + "_Data_20000.root" ; 
  TFile* OutFileName = new TFile( hname , "update"); 
  myHistogram -> Write();
  OutFileName -> Close();

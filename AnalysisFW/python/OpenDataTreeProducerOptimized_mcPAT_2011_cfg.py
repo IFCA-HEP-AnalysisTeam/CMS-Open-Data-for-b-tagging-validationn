@@ -48,7 +48,7 @@ runOnVM = False
 fileList = FileUtils.loadListFromFile(NAMEOFINPUTFILE)
 #####################################################
 #run partial dataset in local
-#fileList = FileUtils.loadListFromFile('CMS_MonteCarlo2011_Summer11LegDR_QCD_Pt-120to170_TuneZ2_7TeV_pythia6_AODSIM_PU_S13_START53_LV6-v1_00000_file_index.txt')
+#fileList = FileUtils.loadListFromFile('CMS_MonteCarlo2011_Summer11LegDR_QCD_Pt-50to80_TuneZ2_7TeV_pythia6_AODSIM_PU_S13_START53_LV6-v1_00000_file_index.txt')
 #####################################################
 # the next line is always uncommented
 process.source.fileNames = cms.untracked.vstring(*fileList)
@@ -165,10 +165,10 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 500
 # Output file
 #######################################################################################################################################
 #run partial dataset in local
-#process.TFileService = cms.Service("TFileService", fileName = cms.string("variablesTest/QCD_Pt-120to170.root"))
+#process.TFileService = cms.Service("TFileService", fileName = cms.string("variablesTest/QCD_Pt-50to80.root"))
 # run with the bash script Full dataset
-process.TFileService = cms.Service("TFileService", fileName = cms.string("/eos/user/b/bchazinq/QCDPt120to170/" + NAMEROOTOFOUTPUTROOT ))
-#######################################################################################################################################
+process.TFileService = cms.Service("TFileService", fileName = cms.string("/eos/user/b/bchazinq/QCDPt15to30_10003/" + NAMEROOTOFOUTPUTROOT ))
+########################################################################################################################################
 
 # To suppress long output at the end of the job
 #process.options.wantSummary = False   

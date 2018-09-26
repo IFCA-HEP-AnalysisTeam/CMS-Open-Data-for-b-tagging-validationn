@@ -24,6 +24,7 @@
 
 // Goblal values
 // ------------------------------------------------------------------------------------
- const double integratedLumi = 2.33; // (/fb) 2011 legacy runA
+ const double totalLumi = 2.33; // (/fb) total integrated lumi for 2011 legacy runA
+ const double effecLumi = 0.287; // (/pb) effective lumi for --hltpath HLT_Jet60_v*(1-6) of 2011 legacy runA
 
 #endif
