@@ -611,6 +611,8 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
      //################################################################
 
     float ak5CaloJet_IndexMatch [kMaxNjet]; // for debuging !!!!!
+    float ak5CaloJet_dRminValue [kMaxNjet]; // for debuging !!!!!
+    for (UInt_t kk = 0; kk<kMaxNjet; kk++) { ak5CaloJet_IndexMatch [kk] = -999; ak5CaloJet_dRminValue [kk] = -999; } // for debuging !!!!!
 
     for (auto i_ak5jet_orig = ak5_handle->begin(); i_ak5jet_orig != ak5_handle->end(); ++i_ak5jet_orig) {
         
@@ -1015,6 +1017,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
       cout <<" PFJet  " << ak5_index <<endl; // for debuging !!!!!
       cout <<" CaloJet  " << indexmin << endl; // for debuging !!!!!  
       ak5CaloJet_IndexMatch[ak5_index] = indexmin; // for debuging !!!!!
+      ak5CaloJet_dRminValue[ak5_index] = sqrt(dR2min); //for debuging !!!!!
       //cout <<"####################### Matching for bDiscriminators #######################"<<endl;  // for debuging !!!!!
       //cout <<"  PFJet index " << ak5_index << " CaloJet index " << indexmin <<endl;                // for debuging !!!!!
       //cout <<"###########################################################################"<<endl;  // for debuging !!!!!
@@ -1031,7 +1034,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
       } else 
         {
          cout <<"  " << endl; 
-         cout <<" Warning!! There is not matching between ak5CaloJets and the current ak5PFJets "<< ak5_index << "  => No b-tagging info available for the original PFJet " << endl;
+         cout <<" WarningTAGGER !! There is not matching between ak5CaloJets and the current ak5PFJets "<< ak5_index << "  => No b-tagging info available for the original PFJet " << endl;
          cout <<"                  best matching:   PFJet  " << ak5_index << " ; " << " CaloJet  "<< indexmin <<"; with  sqrt(dR2min) =  " << sqrt(dR2min) <<endl; 
          cout <<"  " << endl; 
         }  
@@ -1114,11 +1117,23 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
           //track_IPz [trackPV_index] = ???;
           seltracksInEvent_index ++; 
          }
-        } 
-       }  
-     //if (tagindexmin != indexmin) cout << " Recorcholis !! TagCollection Jets and TrackIPTagInfoCollection does not match one to one!! " << endl; 
-     //cout <<" " << endl;
-     //cout <<" selected PFJet number " << ak5_index << " tagindexmin " << tagindexmin <<endl;
+        }
+       if (sqrt(dR2min) < 0.3 && tagindexmin != indexmin) 
+        {
+         cout <<" " << endl;
+         cout << " RecorcholisIP !! TagCollection Jets and TrackIPTagInfoCollection does not match one to one!! " << endl; 
+         cout <<" PFJet  " << ak5_index << " match with CaloJet  " << tagindexmin << " instead of " << indexmin << " or " << ak5CaloJet_IndexMatch[ak5_index]<< " just to test)"<< endl;
+         cout <<" with a dRmin = "<< sqrt(dR2min_test) << " instead of " << sqrt(dR2min) << " or " << ak5CaloJet_dRminValue[ak5_index]<< " just to test" << endl; 
+         cout <<" " << endl;
+        }
+        if (sqrt(dR2min) > 0.3) cout << "CarefullIP !! PFJet "<< ak5_index << " Has no matching with TagCollection Calojets BUT Has matching with TrackIPTagInfoCollection Calojets" <<endl;   
+      }else 
+        {
+         cout <<"  " << endl; 
+         cout <<" WarningIP !! There is not matching between ak5CaloJets and the current ak5PFJets "<< ak5_index << "  => No trackIPTag info available for the original PFJet " << endl;
+         cout <<"                  best matching:   PFJet  " << ak5_index << " ; " << " CaloJet  "<< tagindexmin <<"; with  sqrt(dR2min) =  " << sqrt(dR2min_test) <<endl; 
+         cout <<"  " << endl; 
+        }  
  
     //################################################################
     // Secondary vertices 
@@ -1129,23 +1144,25 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
      float svindexmin = 999;
 
      nSVinJet[ak5_index] = 0;  
-     // loop over the SecondaryVertexTagInfoCollection and match the ak5CaloJets with at least one secondary vertex 
+     // loop over the SecondaryVertexTagInfoCollection and match the ak5CaloJets with at least one secondary vertex
      for(reco::SecondaryVertexTagInfoCollection::const_iterator iter = svTagInfoColl.begin(); iter != svTagInfoColl.end(); ++iter) 
      {
        if(iter->nVertices() > 0 )
        {
         float svdR2_test = reco::deltaR2 (jet_eta[ak5_index], jet_phi[ak5_index], iter->jet()->eta(), iter->jet()->phi());   
         if (svdR2_test < svdR2min_test) 
-        { 
+        {
          svdR2min_test = svdR2_test;
          svindexmin_test = svindex_test;
         }
        }
       svindex_test ++; 
      }
+    // if (svdR2min_test == 999) cout << " Los CaloJet FALLAN el corte de nVertices() > 0 " << endl; // for debuging !!!!! 
+     svindexmin = svindexmin_test;
      if (sqrt(svdR2min_test) < 0.3)
      {
-      svindexmin = svindexmin_test; 
+      //svindexmin = svindexmin_test; 
       unsigned int nVertices = (*svTagInfosHandle)[svindexmin].nVertices();  
       nSVinJet[ak5_index] = nVertices;
 
@@ -1167,8 +1184,26 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
          // std::cout<<"        invariant mass 2nd way of     " << (*svTagInfosHandle)[svindexmin].secondaryVertex(vtx).p4().mass() << " GeV"<<endl;
           nSVinEvent_index ++;
          }
-       }
-     //if (nSVinJet[ak5_index] > 0 && svindexmin != indexmin) cout << " Recorcholis !! TagCollection Jets and SecondaryVertexTagInfoCollection does not match one to one!! " << endl; 
+      if (sqrt(dR2min) < 0.3 && svindexmin != indexmin) 
+       { 
+         cout <<" " << endl;
+         cout << " RecorcholisSV !! TagCollection Jets and SecondaryVertexTagInfoCollection does not match one to one!! " << endl;  
+         cout <<" " << endl;
+         cout <<" PFJet  " << ak5_index << " match with svCaloJet  " << svindexmin << " instead of " << indexmin << endl;
+         cout <<" with a dRmin = "<< sqrt(svdR2min_test) << " instead of " << sqrt(dR2min) <<endl; 
+         cout <<" " << endl;
+       } 
+      if (sqrt(dR2min) > 0.3) cout << "CarefullSV !! PFJet "<< ak5_index << " Has no matching with TagCollection Calojets BUT Has matching with SecondaryVertexTagInfoCollectio Calojets" <<endl; 
+
+     }else 
+        {
+         cout <<"  " << endl;
+         cout <<" WarningSV !! There is not matching between ak5CaloJets and the current ak5PFJets "<< ak5_index << "  => No SecondaryVertexTagInfoCollection info available for the original PFJet " << endl;
+         if (svindexmin != 999 && svdR2min_test != 999) cout <<"                  best matching:   PFJet  " << ak5_index << " ; " << " svCaloJet  "<< svindexmin <<"; with  sqrt(dR2min) =  " << sqrt(svdR2min_test) <<endl;
+         else if (svdR2min_test == 999 || svindexmin == 999) cout << " Los CaloJet FALLAN 2 el corte de nVertices() > 0 " << endl; 
+         cout <<"  " << endl;
+        }
+
      
     /////////////////////////////////////////////////////////////////////////////////////////////////////////  
     
