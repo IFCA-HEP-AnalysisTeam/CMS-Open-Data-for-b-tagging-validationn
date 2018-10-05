@@ -62,6 +62,7 @@ class BJetAnalysis : public ChainClass
   TString filename; 
   TString ptRange;
   bool ismc;  
+  bool applyPUtrue;
   float eventw;     
   float ngen; 
       
@@ -76,6 +77,10 @@ class BJetAnalysis : public ChainClass
   TH1F* jetPt [nflavour];
   TH1F* jetEta[nflavour];
   TH1F* jetPhi[nflavour];
+
+ // number of Primary Vertex in the event
+  TH1F* nPV       [nflavour]; // before pileUp reweighting
+  TH1F* nPV_puRew [nflavour]; // after pileUp reweighting
  
  // selected tracks variables
   TH1F* IP3D                [nflavour]; 

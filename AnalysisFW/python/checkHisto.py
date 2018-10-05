@@ -52,6 +52,8 @@ if __name__ == '__main__':
             ####Si lo encuentra, imprimir que directorio es el culpable
             # else 
             #   print bcolors.WARNING, " This is the guilty!!\n" , bcolors.BOLD, theoutput, bcolors.ENDC
+        if (f.TestBit(r.TFile.kRecovered)):
+       	    print bcolors.WARNING, "the Recover procedure has been run when opening the fileand the Recover was successful" + bcolors.ENDC
         else:          
             print bcolors.OKGREEN, "File ", i, " is nice" + bcolors.ENDC
 

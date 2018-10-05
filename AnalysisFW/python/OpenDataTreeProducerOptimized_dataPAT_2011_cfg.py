@@ -153,7 +153,7 @@ process.p = cms.Path(
 
 # Change number of events here:
 #process.maxEvents.input = -1
-process.maxEvents.input = 10000
+process.maxEvents.input = 100000
 
 process.MessageLogger.cerr.FwkReport.reportEvery = 5000
 

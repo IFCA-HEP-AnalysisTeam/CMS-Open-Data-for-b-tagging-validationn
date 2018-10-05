@@ -22,7 +22,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
  filename = _dataPath;
  ismc = _ismc;
  if (ismc) ptRange = _ptRange;
- else ptRange = "";
+// else ptRange = ""; Using differnt files of data
 //// open the input file
 //// TFile* infile  = new TFile( filename, "read" );
 //// get the tree
@@ -75,8 +75,18 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
    if (filename.Contains("300to470")) ngen = 5975016; //http://opendata.cern.ch/record/1469 
    if (filename.Contains("470to600")) ngen = 3967154; //http://opendata.cern.ch/record/1553 
    //For data: http://opendata.cern.ch/record/21
-  
 
+  // Get the PUreweigthing histogram
+   applyPUtrue = true; // apply the PUreweighting 
+   TFile* truePUweigths; 
+   TH1D*  dummy;  
+   if(applyPUtrue) 
+     {
+   // Anadir lanzar excepcion si no esta el file !!!!!!!!!
+       truePUweigths = new TFile("truePUweigths.root", "read"); 
+   // Anadir lanzar excepcion si no esta el file !!!!!!!!!
+       dummy = (TH1D*) truePUweigths->Get("truePUweigth"); 
+     }
 
 // Loop over events
 // ----------------------------------------------------------------------------------
@@ -94,9 +104,27 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
    eventw = 1; // for data
    if (ismc) {
                eventw = (mcweight)/ngen; //for mc -> mcweigth is the xs (pb)
+               if (applyPUtrue) 
+               {
+                int mcPUbin = dummy->FindBin(mcPUinfo);
+                eventw *= dummy->GetBinContent(mcPUbin);
+               }      
              }
   if (triggers[1] == false) continue; //triggernames != jt60
   
+  // number of Primary Vertex in the event
+   if (applyPUtrue) 
+   { 
+     nPV_puRew [0] -> Fill (nPVinEvent, eventw);
+     if (ismc) {nPV [0] -> Fill (nPVinEvent, (mcweight)/ngen);}
+     else {nPV [0] -> Fill (nPVinEvent, 1);}
+   } 
+   else
+   {
+    nPV_puRew [0] -> Fill (nPVinEvent, 0);
+    nPV [0] -> Fill (nPVinEvent, eventw);
+   }
+ 
   // Fill histograms
   // --------------------------------------------------------------------------------------
   
@@ -109,10 +137,10 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
    if (jet_pt[j] <= 60) continue;
    if (jet_eta[j] > 2.4 || jet_eta[j] < -2.4) continue;
    if (jet_looseID[j] == false) continue; // 
-   //if (jet_tightID[j] == false) continue; // check with the loose
-   
-   
-  // all flavour (data and mc)
+   //if (jet_tightID[j] == false) continue; // check with the loose 
+ 
+  // All MC flavour and Data
+  // -------------------------
   // only jet  index dependent variables
    dRmin  [0] -> Fill (dRmin_matching[j], eventw);
 
@@ -188,7 +216,8 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
    }
   
 
-   // set the flavour
+   // set the MC  flavour
+   // --------------------- 
    if (ismc)
    {
     int jetFlavour = -999; 
@@ -286,9 +315,12 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
  
   // Save histograms
   // --------------------------------------------------------------------------------------
-    for (int fv = 0; fv < nflavour; fv ++)
+   SaveHistograms (nPV[0], "nPV",  _ptRange);
+   SaveHistograms (nPV_puRew[0], "nPV_puRew", _ptRange); 
+
+   for (int fv = 0; fv < nflavour; fv ++)
     {
-      if (ismc == false && fv > 0) break;  
+      if (ismc == false && fv > 0) break; 
 
       SaveHistograms (dRmin[fv], "dRmin_matching", _ptRange);
 
@@ -329,7 +361,7 @@ void BJetAnalysis::BeginJob(TString filename, bool _ismc)
  cout<< " ismc     = "<<ismc<<endl;
  //cout<< " nentries = "<<nentries;
  if (ismc) cout << " mc the ptRange = " << ptRange << endl;
- else cout << " Data ";  
+ else cout << " the Data file is  " << ptRange;  
 }
 
 // --------------------------------------------------------------------------------------
@@ -342,8 +374,11 @@ void BJetAnalysis::DefineHistograms(int iflv, int sflv)
   *        "b_quark", "c_quark", "lgluon", "b_gsplitting"
   *   if not ismc: hname correspond "data"
   */
+  // number of PV vertices
+  nPV_puRew [iflv] = new TH1F (sflavour[sflv], " ", 100, 0, 100); 
+  nPV       [iflv] = new TH1F (sflavour[sflv], " ", 100, 0, 100); 
   // to cross-check
-  dRmin [iflv] = new TH1F (sflavour[sflv], " " , 10, 0, 1); 
+  dRmin [iflv] = new TH1F (sflavour[sflv], " " , 10, 0, 1);
   // jet variables
   jetPt [iflv] = new TH1F (sflavour[sflv], " " , 100,  0,  250);
   jetEta[iflv] = new TH1F (sflavour[sflv], " " , 50,  -5,  5);
@@ -376,13 +411,13 @@ void BJetAnalysis::SaveHistograms (TH1F* myHistogram, TString hRootName, TString
  /*
  * This function save the histograms with a readable name for plotter.C
  *  if ismc: ptRange correspond to the pthat of the sample
- *  if not ismc: ptRange correspond to "data"
+ *  if not ismc: ptRange correspond to data file
  *      Example:  Histo_jet_phi_pthat170to300_MC.root
  *                Histo_jet_phi_Data.root  
  */
  TString hname = " ";
  if (ismc) hname = "Histo_" +  hRootName + "_" + ptRange + "_MC.root"; 
- else      hname = "Histo_" +  hRootName + "_Data_20000.root" ; 
+ else      hname = "Histo_" +  hRootName + "_Data_" + ptRange + ".root" ; 
  TFile* OutFileName = new TFile( hname , "update"); 
  myHistogram -> Write();
  OutFileName -> Close();

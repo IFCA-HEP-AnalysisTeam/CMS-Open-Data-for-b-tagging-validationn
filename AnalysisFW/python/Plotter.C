@@ -146,20 +146,171 @@ void MoveOverflows(TH1F* hist, Float_t xmin, Float_t xmax)
 
 } 
 
+// ----------------------------------------------------------------------------
+// Auxiliar -> to remove 
+// -------------------------------------------------------------------------
+void AuxiliarPlot (TString inFolder, TString outFolder)
+{
+  TFile* npV_MC       = new TFile( inFolder + "Histo_nPV_MC.root", "read");
+  TFile* npV_Data     = new TFile( inFolder + "Histo_nPV_TotalData.root", "read");
+  TFile* npV_rewMC = new TFile( inFolder + "Histo_nPV_puRew_MC.root", "read");
+  TH1F* nPVdata    =  (TH1F*)npV_Data->Get("data");
+  float nPVdata_Integral = nPVdata->Integral(); 
+  TH1F* nPVmc      =  (TH1F*)npV_MC->Get("allflavours");
+  float nPVmc_Integral = nPVmc ->Integral();
+  TH1F* nPVmc_rew  =  (TH1F*)npV_rewMC->Get("allflavours");
+  float nPVmc_rewIntegral = nPVmc_rew ->Integral();
+  //Normallize MC to data
+  nPVmc->Scale(nPVdata_Integral/nPVmc_Integral);
+  nPVmc_rew->Scale(nPVdata_Integral/nPVmc_rewIntegral);
 
+  // Define the canvas
+  TCanvas* currentCanvas = NULL;
+  TPad* pad1 = NULL;
+  TPad* pad2 = NULL;
+
+  currentCanvas = new TCanvas ("nPV_Histo_" , "", 900,600);
+  TLegend* _leg = myLegend ();
+  pad1 = new TPad();
+  pad1 = new TPad("pad1", "pad1", 0, 0.3, 1, 1.0);
+  pad1->SetTopMargin   (0.08);
+  pad1->SetBottomMargin(0.02);
+  pad1->SetLeftMargin(0.15);
+  pad1->Draw();
+
+  pad2 = new TPad("pad2", "pad2", 0, 0.0, 1, 0.31);
+  pad2->SetTopMargin   (0.08);//0.09, 0.08
+  pad2->SetBottomMargin(0.35);
+  pad2->SetLeftMargin(0.15);
+  pad2->Draw();
+
+  pad1->cd();
+  gStyle->SetOptStat("");
+
+  //axis title
+  TAxis* xaxis = (TAxis*)nPVdata->GetXaxis();
+  xaxis->SetTitleSize(.10);
+  xaxis->SetTitle("number of PV");
+  xaxis->SetLabelSize(0.08);
+
+  _leg -> AddEntry(nPVdata,   "data", "p" );
+  _leg -> AddEntry(nPVmc,     "allmc before reweighting", "p");
+  _leg -> AddEntry(nPVmc_rew, "allmc after reweigthing", "p");
+  //Cosmetics
+  nPVdata -> SetMarkerStyle (kFullCircle);
+  nPVdata -> SetMarkerColor  (kBlack);
+  nPVdata -> SetMarkerSize(0.8);
+  nPVmc -> SetMarkerStyle (kFullCircle);
+  nPVmc -> SetMarkerColor  (kGreen + 1);
+  nPVmc -> SetMarkerSize(0.8);
+  nPVmc_rew -> SetMarkerStyle (kFullCircle);
+  nPVmc_rew -> SetMarkerColor  (kRed + 1);
+  nPVmc_rew -> SetMarkerSize(0.8);
+
+  //draw
+  nPVdata->Draw();
+  nPVmc->Draw("same");
+  nPVmc_rew->Draw("same");
+ 
+  nPVdata->GetYaxis()->SetTitle("#bf{entries}");
+  nPVdata -> GetYaxis()->SetTitleSize(0.05);
+  nPVdata -> GetYaxis()->SetTitleOffset(0.55);
+  nPVdata -> GetYaxis()->CenterTitle();
+
+  // draw header
+  DrawLatex(61, 0.165, 0.945, 0.050, 11,  "CMS 2011");
+  DrawLatex(52, 0.282, 0.945, 0.030, 11, "Public Data");
+  DrawLatex(42, 0.895, 0.945, 0.050, 31, Form("%.2f fb^{-1} (7TeV)", 2.33));
+  _leg ->Draw();
+
+  // pad2 : Data/MC 
+  pad2->cd();
+  TH1F* ratio = (TH1F*)nPVdata->Clone("ratio");
+  TH1F* rewratio = (TH1F*)nPVdata->Clone("rewratio");
+
+  ratio->SetTitle("");
+  float rymin =0.50, rymax =1.50;
+  for (Int_t ibin=1; ibin<=ratio->GetNbinsX(); ibin++) 
+   {
+    float ratioVal = nPVmc->GetBinContent(ibin) != 0 ? (nPVdata->GetBinContent(ibin)/nPVmc->GetBinContent(ibin)) : -999;
+    float ratioErr = nPVdata->GetBinContent(ibin) != 0 ? (nPVdata->GetBinError(ibin)/nPVmc->GetBinContent(ibin)) : 0;
+    ratio -> SetBinContent(ibin, ratioVal);
+    ratio -> SetBinError(ibin, ratioErr);
+
+    float rewratioVal = nPVmc_rew->GetBinContent(ibin) != 0 ? (nPVdata->GetBinContent(ibin)/nPVmc_rew->GetBinContent(ibin)) : -999;
+    float rewratioErr = nPVdata->GetBinContent(ibin) != 0 ? (nPVdata->GetBinError(ibin)/nPVmc_rew->GetBinContent(ibin)) : 0;
+    rewratio -> SetBinContent(ibin, rewratioVal);
+    rewratio -> SetBinError(ibin, rewratioErr);
+   }
+  // cosmetics 
+  ratio->SetMarkerColor(1);
+  ratio->SetMarkerSize(0.8);
+  ratio->SetMarkerStyle(kFullSquare);
+  ratio->SetMarkerColor(kGreen + 1);
+  rewratio->SetMarkerStyle(kFullCircle);
+  rewratio->SetMarkerColor(kRed + 1);
+  ratio->GetYaxis()->SetRangeUser(rymin, rymax);
+
+  // ratio axis title
+  TAxis* yaxis2 = (TAxis*)ratio->GetYaxis();
+  yaxis2->SetLabelSize(.08);
+  yaxis2->SetTitle("#bf{Data/MC}");
+  yaxis2->SetTitleSize(.09);
+  yaxis2->SetTitleOffset(0.3);
+  yaxis2->CenterTitle();
+
+  //draw
+  ratio->Draw("hist ep");
+  rewratio->Draw("same, hist ep");
+  currentCanvas ->Update();
+  pad2->Update();
+
+
+  // draw line in ratio=1
+  float xlow; float xhigh; float rbins;  
+  /*if(adjustXlimits)
+  {
+  // apply the range user
+   xlow  = ratio->GetBinLowEdge(binmin);
+   xhigh = ratio->GetBinLowEdge(binmax) + ratio->GetBinWidth(binmax); 
+  }else{
+  // default range
+  rbins = ratio->GetNbinsX(); 
+  xlow  = ratio->GetBinLowEdge(1);
+  xhigh = ratio->GetBinLowEdge(rbins) + ratio->GetBinWidth(rbins); 
+  }*/
+  // default range
+  rbins = ratio->GetNbinsX(); 
+  xlow  = ratio->GetBinLowEdge(1);
+  xhigh = ratio->GetBinLowEdge(rbins) + ratio->GetBinWidth(rbins);
+  // Set the line  
+  TLine *line=new TLine(xlow,1.0,xhigh,1.);
+  line->SetLineColor(1);
+  line->SetLineWidth(2);
+  line->SetLineStyle(kDotted);
+  line->Draw("same");
+  currentCanvas->Modified();
+  currentCanvas->Update();
+
+  // Save the canvas
+  currentCanvas -> Print(outFolder+"/nPV_nPVrew" + ".png");
+  currentCanvas -> Print(outFolder+"/nPV_nPVrew" + ".jpg");
+  currentCanvas -> Print(outFolder+"/nPV_nPVrew" + ".pdf");
+
+}
 //-----------------------------------------------------------------------------
 // Draw 
 //------------------------------------------------------------------------------
 void Plotter(TString inFolder, TString outFolder)
 {
   
-  float lumi= 2.33; // (/fb) 2011 legacy runA 
+  //float lumi= 2.33; // (/fb) 2011 legacy runA 
   float efflumifb = 0.000287; // (0.000287/fb)  HlT_jet60v* of 2011 legacy runA 
-  float efflumipb = 0.287; // (0.287/fb)  HlT_jet60v* of 2011 legacy runA 
+  float efflumipb = 0.287; // (0.287/pb)  HlT_jet60v* of 2011 legacy runA 
   TString sefflumipb = 0.287;  
  
-  bool effLumiNorm  = false;
-  bool dataNorm  = true;
+  bool effLumiNorm  = true;
+  bool dataNorm  = false;
   bool moveoverflow = true;
   
   bool setLinY = false; //massSV is a linear plot 
@@ -170,26 +321,30 @@ void Plotter(TString inFolder, TString outFolder)
   
 // Number of variables to plot
   const int nplot =18;
+  //const int nplot =20;
 
   // Name of variables to plot
-  TString vname [nplot] = { "jet_pt"             ,  "jet_phi",         "jet_eta", 
-                            "seltrack_IP3Dsignif",  "seltrack_IP3D", 
-                            "nrSV"               ,  "flight3Dsignif",  "massSV" ,
-                            "jet_CSV"            ,  "jet_JBP"      ,  "jet_JP",  "jet_TCHP", "jet_TCHE",
-                            "tracks_Pt"          ,  "tracks_distanceToJetAxis",  "tracks_nrPixelHits",            
-                            "avgTrackMultiplicity", "dRmin_matching" };
+  TString vname [nplot] = { //"nPV_puRew"           ,  "nPV"                     ,
+                            "jet_pt"              ,  "jet_phi"                 ,  "jet_eta"           , 
+                            "seltrack_IP3Dsignif" ,  "seltrack_IP3D"           , 
+                            "nrSV"                ,  "flight3Dsignif"          ,  "massSV"            ,
+                            "jet_CSV"             ,  "jet_JBP"                 ,  "jet_JP"            , "jet_TCHP" , "jet_TCHE" ,
+                            "tracks_Pt"           ,  "tracks_distanceToJetAxis",  "tracks_nrPixelHits",            
+                            "avgTrackMultiplicity",  "dRmin_matching" };
 
-  TString xname [nplot] = {"#bf{jet p_{T}}"      ,   "#bf{jet #phi}"         , "#bf{jet #eta}", 
+  TString xname [nplot] = {//"#bf{nPV after PUreweigth}",   "#bf{nPV}"                   ,   
+                           "#bf{jet p_{T}}"           ,   "#bf{jet #phi}"              , "#bf{jet #eta}"         , 
                            "#bf{3D IP significance}"  ,   "#bf{3D IP}"                 , 
-                           "#bf{nr.of SV}"            ,   "#bf{3D flight significance}", "#bf{SV mass}",  
-                           "#bf{CSV discriminator}"   ,   "#bf{JBP discriminator}"     , "#bf{JP discriminator}","#bf{TCHP discriminator}", "#bf{TCHE discriminator}",
+                           "#bf{nr.of SV}"            ,   "#bf{3D flight significance}", "#bf{SV mass}"          ,  
+                           "#bf{CSV discriminator}"   ,   "#bf{JBP discriminator}"     , "#bf{JP discriminator}" , "#bf{TCHP discriminator}", "#bf{TCHE discriminator}",
                            "#bf{track p_{T}}"         ,   "#bf{distance to jet axis}"  , "#bf{nr. of pixel hits}",
                            "#bf{jet p_{T}}"           ,    "dRminak5(CalovsPF)"};
 
-  TString units [nplot] = { "#bf{[GeV/c]}",    "#bf{[rad]}",          ""       ,        
+  TString units [nplot] = { //""            ,    ""          ,
+                            "#bf{[GeV/c]}",    "#bf{[rad]}",          ""       ,        
                               ""          ,    "#bf{[cm]}" , 
                               ""          ,       ""       ,     "#bf{[GeV/c]}",
-                              ""          ,       ""       ,          ""       ,    ""  ,   ""
+                              ""          ,       ""       ,          ""       ,    ""  ,   "" ,
                             "#bf{[GeV/c]}",    "#bf{[cm]}" ,          ""       , 
                             "#bf{[GeV/c]}"        ""};
  
@@ -217,24 +372,32 @@ void Plotter(TString inFolder, TString outFolder)
      
      // Integral
      float integralDat = myHistoData -> Integral();
-     std::cout << "Integral dats :" << integralDat << std::endl;
+     cout<< " " <<endl; 
+     std::cout << "Integral data :" << integralDat << std::endl;
      TH1F* allMC = (TH1F*) infileMC -> Get ("allflavours");
      float integral = allMC -> Integral();
-     std::cout << "Integral mc" << integral << std::endl;
+     std::cout << "Integral mc" << integral << std::endl; 
+     cout<< " " <<endl; 
    
      // Loop over nhistoMC 
-     for (int j = 0; j < nhistoMC; j++){
+     for (int j = 0; j < nhistoMC; j++)
+     {
          myHistoMC[j] = (TH1F*) infileMC -> Get (hnameMC[j]);
-         
-         // Normalize to unity
-         //if (UnityNorm && !dataNorm)  myHistoMC[j] -> Scale(1/integral);
-         if (dataNorm) myHistoMC[j] -> Scale(integralDat/integral);
-         // we need to apply a correction factor of 1000 to match the mc crosssection (pb) with lumi /fb
-         if (effLumiNorm) myHistoMC[j] -> Scale(1000*efflumifb/lumi);
-         //if (dataNorm && !UnityNorm) myHistoMC[j] -> Scale(1/integralDat);
+         // Not normalize
+         if (vname[i] == "avgTrackMultiplicity" || vname[i] == "dRmin_matching" ) { dataNorm = false; effLumiNorm = true;}
+
+         if ((dataNorm== true || effLumiNorm == true) && (vname[i] == "avgTrackMultiplicity" || vname[i] == "dRmin_matching" )) cout << " Warning !! The figure " << vname[i] << " is reescaled !!" <<endl; //for debuging !!!! 
+     cout<< " " <<endl; 
+            //if (vname[i] == "avgTrackMultiplicity" || vname[i] == "dRmin_matching" ) cout << " Warning !! The figure " << vname[i] << " is reescaled !!" <<endl; //for debuging !!!!
+            if (dataNorm) myHistoMC[j] -> Scale(integralDat/integral);
+            // we need to apply a correction factor of 1000 to match the mc crosssection (pb) with lumi /fb
+            // if (effLumiNorm) myHistoMC[j] -> Scale(1000*efflumifb/lumi); //for plots without PUreweigthing applied
+            if (effLumiNorm) myHistoMC[j] -> Scale(efflumipb);
      }
-     if (dataNorm) cout << " MC is normalized to Data " << endl; 
-     if (effLumiNorm) cout << " MC is normalized to this Lumi (/fb): " << efflumifb <<endl; 
+     if (dataNorm) cout << "The figure " << vname[i] <<" has the MC normalized to Data " << endl; 
+     else if (effLumiNorm) cout << "The figure "<< vname[i] <<" has the MC is normalized to this Lumi (/pb): " << efflumipb <<endl;
+     else cout << "The figure "<< vname[i] <<" has the MC NOT normalized. "  <<endl; 
+     cout<< " " <<endl; 
      // Normalize to unity 
      //if (UnityNorma && !dataNorma) myHistoData -> Scale(1/integralDat);
 
@@ -279,7 +442,6 @@ void Plotter(TString inFolder, TString outFolder)
      xaxis->SetTitle(xname[i] +units[i]);
      xaxis->SetLabelSize(0.08);
 
-   cout << " to adjust the axis" <<endl;  
      // Adjust xaxis and yaxis
 
      //set the maximun and minimum on the y axis
@@ -344,7 +506,6 @@ void Plotter(TString inFolder, TString outFolder)
      _leg -> AddEntry(myHistoMC[1], "c quark" , "f");
      _leg -> AddEntry(myHistoMC[2], "uds quark or gluon" , "f");
  
-     std::cout << "2" <<std::endl;   
      // Stack the MC histograms
      THStack* st1 = new THStack(vname[i], "");
      st1 -> Add(myHistoMC[0]);
@@ -352,7 +513,6 @@ void Plotter(TString inFolder, TString outFolder)
      st1 -> Add(myHistoMC[1]);
      st1 -> Add(myHistoMC[2]);
 
-     std::cout << "3" <<std::endl;   
      //currentCanvas -> cd();
      //Set log Y scale
      //gPad-> SetLogy();
@@ -379,7 +539,6 @@ void Plotter(TString inFolder, TString outFolder)
      st1 -> GetYaxis()->SetTitleSize(0.05);
      st1 -> GetYaxis()->SetTitleOffset(0.55);
      st1 -> GetYaxis()->CenterTitle();
-     std::cout << "4" <<std::endl;   
      // apply the range user
      if(adjustXlimits) st1 -> GetXaxis()->SetRangeUser(myHistoData->GetBinLowEdge(binmin), myHistoData->GetBinLowEdge(binmax)+myHistoData->GetBinWidth(binmax));
      //pad1->GetFrame()->DrawClone();
@@ -390,9 +549,8 @@ void Plotter(TString inFolder, TString outFolder)
      DrawLatex(52, 0.282, 0.945, 0.030, 11, "Public Data");
      DrawLatex(42, 0.895, 0.945, 0.050, 31, Form("%.2f fb^{-1} (7TeV)", 2.33));
      _leg ->Draw(); 
-     std::cout << "5" <<std::endl;   
      //--------------------------------------------------------------------------
-     // pad2 : Data/MC 
+     // pad2 : Data/MC ratio 
      //--------------------------------------------------------------------------
      pad2->cd();
      TH1F* ratio = (TH1F*)myHistoData->Clone("ratio");
@@ -404,12 +562,10 @@ void Plotter(TString inFolder, TString outFolder)
        float ratioErr = myHistoData->GetBinContent(ibin)  != 0 ? (myHistoData->GetBinError(ibin)/myHistoMC[4]->GetBinContent(ibin))    :    0;
       // if (myHistoMC[0]->GetBinContent(ibin) != 0) 
       //    ratioVal = myHistoData->GetBinContent(ibin)/myHistoMC[0]->GetBinContent(ibin);
-       std::cout << "variable=  " << vname[i] << "  bin= " << ibin << "  data=  " << myHistoData->GetBinContent(ibin) 
-       << "  mc=  "<< myHistoMC[4]->GetBinContent(ibin) << "  ratio  =  " << ratioVal <<std::endl; 
+      //  std::cout << "variable=  " << vname[i] << "  bin= " << ibin << "  data=  " << myHistoData->GetBinContent(ibin) << "  mc=  "<< myHistoMC[4]->GetBinContent(ibin) << "  ratio  =  " << ratioVal <<std::endl; 
        ratio -> SetBinContent(ibin, ratioVal);
        ratio -> SetBinError(ibin, ratioErr);
       }
-     std::cout << "5" <<std::endl;   
      // cosmetics
      ratio->SetMarkerColor(1);
      ratio->SetMarkerSize(0.8);

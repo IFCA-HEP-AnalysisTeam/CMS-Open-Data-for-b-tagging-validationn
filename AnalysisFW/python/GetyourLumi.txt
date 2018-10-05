@@ -5,7 +5,12 @@ export PATH=$HOME/.local/bin:/afs/cern.ch/cms/lumi/brilconda-1.1.7/bin:$PATH
 // brilcalc --version 3.3.2
 brilcalc lumi --end 173692 -u /fb  -i Cert_160404-180252_7TeV_ReRecoNov08_Collisions11_JSON.txt > lumitest2.txt
 
-//Calculate PileUp distribution for a HLTpath
+// https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupJSONFileforData#Calculating_Your_Pileup_Distribu 
+//Calculate 2011 PileUp distribution
+ pileupCalc.py -i Cert_160404-180252_7TeV_ReRecoNov08_Collisions11_JSON.txt --inputLumiJSON  pileup_2011_JSON_pixelLumi.txt --calcMode true --minBiasXsec 68000 --maxPileupBin 100 --numPileupBins 100 PU_hdata.root
+
+
+//Calculate 2011 PileUp distribution for a HLTpath
 brilcalc lumi -b "STABLE BEAMS" --type pxl -u /pb -i Cert_160404-180252_7TeV_ReRecoNov08_Collisions11_JSON.txt --hltpath HLT_Jet60* --byls -o My_HLT_jet60_luminosity.csv
 
 pileupReCalc_HLTpaths.py -i My_HLT_jet60_luminosity.csv --inputLumiJSON pileup_2011_JSON_pixelLumi.txt  -o My_HLT_Jet60_corrected_PileupJSON.txt
@@ -13,11 +18,13 @@ pileupReCalc_HLTpaths.py -i My_HLT_jet60_luminosity.csv --inputLumiJSON pileup_2
 pileupCalc.py -i Cert_160404-180252_7TeV_ReRecoNov08_Collisions11_JSON.txt --inputLumiJSON  My_HLT_Jet60_corrected_PileupJSON.txt --calcMode true --minBiasXsec 68000 --maxPileupBin 100 --numPileupBins 100 HLT_Jet60_PU_hdata.root > HLT_Jet60_printOutPUdata.txt
 
 
-//Calculate PileUp distribution for a HLTpath & RunAofJSONfile
+//Calculate 2011 PileUp distribution for a HLTpath & RunAofJSONfile
 brilcalc lumi --end 173692 --type pxl -u/pb -i Cert_160404-180252_7TeV_ReRecoNov08_Collisions11_JSON.txt --hltpath "HLT_Jet60*" --byls -o My_HLT_jet60_RunA_luminosity.csv
 
 pileupReCalc_HLTpaths.py -i My_HLT_jet60_RunA_luminosity.csv --inputLumiJSON pileup_2011_JSON_pixelLumi.txt  -o My_HLT_Jet60_RunA_corrected_PileupJSON.txt
 
-pileupCalc.py -i onlyRunA_OpenData_Cert_160404-180252_7TeV_ReRecoNov08_Collisions11_JSON.txt --inputLumiJSON  My_HLT_Jet60_RunA_corrected_PileupJSON.txt --calcMode true --minBiasXsec 68000 --maxPileupBin 100 --numPileupBins 100 HLT_Jet60_RunA_PU_hdata.root > HLT_Jet60_RunA_printOutPUdata.txt
+pileupCalc.py -i Cert_160404-180252_7TeV_ReRecoNov08_Collisions11_JSON.txt --inputLumiJSON  My_HLT_Jet60_RunA_corrected_PileupJSON.txt --calcMode true --minBiasXsec 68000 --maxPileupBin 100 --numPileupBins 100 HLT_Jet60_RunA_PU_hdata.root > HLT_Jet60_RunA_printOutPUdata.txt
+
+#pileupCalc.py -i onlyRunA_OpenData_Cert_160404-180252_7TeV_ReRecoNov08_Collisions11_JSON.txt --inputLumiJSON  My_HLT_Jet60_RunA_corrected_PileupJSON.txt --calcMode true --minBiasXsec 68000 --maxPileupBin 100 --numPileupBins 100 HLT_Jet60_RunA_PU_hdata.root > HLT_Jet60_RunA_printOutPUdata.txt
 
 

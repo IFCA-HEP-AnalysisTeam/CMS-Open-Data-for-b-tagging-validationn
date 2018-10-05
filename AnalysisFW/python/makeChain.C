@@ -58,7 +58,7 @@ void  makeChain (TString infoldername)
  */
 
  // Draw a variable in an histogram
- TString b_variable = "jet_pt";
+ //TString b_variable = "jet_pt";
  //TString b_variable = "njet";
  //TString b_variable = "tracks_inEvent";
  //----------------------------------------------------------------------------
@@ -70,7 +70,7 @@ void  makeChain (TString infoldername)
   //mychain.Scan("run:triggernames[1]");
   //mychain.Scan("run:triggernames:triggers:jet_pt",  "1>0");
   //mychain.Scan("run:triggernames:jet_pt",  "triggernames[1] != \"jt60\"");
- mychain.Draw(b_variable + ">>" + b_variable, "triggers[1]&&jet_eta>-2.4&&jet_eta<2.4&&jet_pt>60&&jet_looseID");
+ //mychain.Draw(b_variable + ">>" + b_variable, "triggers[1]&&jet_eta>-2.4&&jet_eta<2.4&&jet_pt>60&&jet_looseID");
  //mychain.Draw(b_variable + ">>" + b_variable, "1>0");
  //
  // jet index dependent variables
@@ -106,6 +106,6 @@ void  makeChain (TString infoldername)
  cout << " Integral = " << myHisto->Integral() << endl;
  myHisto -> Draw();
 */ 
-// mychain.MakeClass("ChainClass");   
+ mychain.MakeClass("ChainClass");   
 }
 

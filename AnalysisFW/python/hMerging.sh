@@ -13,30 +13,33 @@ FOLDER="$1"
 pushd $FOLDER
 
 #mc
-#rm -rf Histo_*_MC.root
 
-#hadd -f -k Histo_avgTrackMultiplicity_MC.root        Histo_avgTrackMultiplicity_pthat*_MC.root 
-#hadd -f -k Histo_dRmin_matching_MC.root              Histo_dRmin_matching_pthat*_MC.root 
-#hadd -f -k Histo_flight3Dsignif_MC.root              Histo_flight3Dsignif_pthat*_MC.root 
-#hadd -f -k Histo_jet_CSV_MC.root                     Histo_jet_CSV_pthat*_MC.root 
-#hadd -f -k Histo_jet_JBP_MC.root                     Histo_jet_JBP_pthat*_MC.root 
-#hadd -f -k Histo_jet_JP_MC.root                      Histo_jet_JP_pthat*_MC.root 
-#hadd -f -k Histo_jet_TCHE_MC.root                    Histo_jet_TCHE_pthat*_MC.root 
-#hadd -f -k Histo_jet_TCHP_MC.root                    Histo_jet_TCHP_pthat*_MC.root 
-#hadd -f -k Histo_jet_eta_MC.root                     Histo_jet_eta_pthat*_MC.root 
-#hadd -f -k Histo_jet_phi_MC.root                     Histo_jet_phi_pthat*_MC.root 
-#hadd -f -k Histo_jet_pt_MC.root                      Histo_jet_pt_pthat*_MC.root 
-#hadd -f -k Histo_massSV_MC.root                      Histo_massSV_pthat*_MC.root 
-#hadd -f -k Histo_nrSV_MC.root                        Histo_nrSV_pthat*_MC.root 
-#hadd -f -k Histo_seltrack_IP3D_MC.root               Histo_seltrack_IP3D_pthat*_MC.root 
-#hadd -f -k Histo_seltrack_IP3Dsignif_MC.root         Histo_seltrack_IP3Dsignif_pthat*_MC.root 
-#hadd -f -k Histo_tracks_Pt_MC.root                   Histo_tracks_Pt_pthat*_MC.root 
-#hadd -f -k Histo_tracks_distanceToJetAxis_MC.root    Histo_tracks_distanceToJetAxis_pthat*_MC.root 
-#hadd -f -k Histo_tracks_nrPixelHits_MC.root          Histo_tracks_nrPixelHits_pthat*_MC.root 
+hadd -f -k Histo_nPV_MC.root                         Histo_nPV_pthat*_MC.root 
+hadd -f -k Histo_nPV_puRew_MC.root                   Histo_nPV_puRew_pthat*_MC.root 
+hadd -f -k Histo_avgTrackMultiplicity_MC.root        Histo_avgTrackMultiplicity_pthat*_MC.root 
+hadd -f -k Histo_dRmin_matching_MC.root              Histo_dRmin_matching_pthat*_MC.root 
+hadd -f -k Histo_flight3Dsignif_MC.root              Histo_flight3Dsignif_pthat*_MC.root 
+hadd -f -k Histo_jet_CSV_MC.root                     Histo_jet_CSV_pthat*_MC.root 
+hadd -f -k Histo_jet_JBP_MC.root                     Histo_jet_JBP_pthat*_MC.root 
+hadd -f -k Histo_jet_JP_MC.root                      Histo_jet_JP_pthat*_MC.root 
+hadd -f -k Histo_jet_TCHE_MC.root                    Histo_jet_TCHE_pthat*_MC.root 
+hadd -f -k Histo_jet_TCHP_MC.root                    Histo_jet_TCHP_pthat*_MC.root 
+hadd -f -k Histo_jet_eta_MC.root                     Histo_jet_eta_pthat*_MC.root 
+hadd -f -k Histo_jet_phi_MC.root                     Histo_jet_phi_pthat*_MC.root 
+hadd -f -k Histo_jet_pt_MC.root                      Histo_jet_pt_pthat*_MC.root 
+hadd -f -k Histo_massSV_MC.root                      Histo_massSV_pthat*_MC.root 
+hadd -f -k Histo_nrSV_MC.root                        Histo_nrSV_pthat*_MC.root 
+hadd -f -k Histo_seltrack_IP3D_MC.root               Histo_seltrack_IP3D_pthat*_MC.root 
+hadd -f -k Histo_seltrack_IP3Dsignif_MC.root         Histo_seltrack_IP3Dsignif_pthat*_MC.root 
+hadd -f -k Histo_tracks_Pt_MC.root                   Histo_tracks_Pt_pthat*_MC.root 
+hadd -f -k Histo_tracks_distanceToJetAxis_MC.root    Histo_tracks_distanceToJetAxis_pthat*_MC.root 
+hadd -f -k Histo_tracks_nrPixelHits_MC.root          Histo_tracks_nrPixelHits_pthat*_MC.root 
 
 #data
-rm -rf Histo_*_TotalData.root
-
+#rm -rf Histo_*_TotalData.root
+#
+hadd -f -k Histo_nPV_TotalData.root                          Histo_nPV_Data_*.root 
+hadd -f -k Histo_nPV_puRew_TotalData.root                    Histo_nPV_puRew_Data_*.root 
 hadd -f -k Histo_avgTrackMultiplicity_TotalData.root         Histo_avgTrackMultiplicity_Data_*.root 
 hadd -f -k Histo_dRmin_matching_TotalData.root               Histo_dRmin_matching_Data_*.root 
 hadd -f -k Histo_flight3Dsignif_TotalData.root               Histo_flight3Dsignif_Data_*.root 
