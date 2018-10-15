@@ -128,8 +128,6 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
   // Fill histograms
   // --------------------------------------------------------------------------------------
   
-  // avgTrackMultiplicity per event variables
-  int   ntracksxjet[njet];
   // loop over the jets in the event
   for (int j = 0; j < njet; j++)
   {
@@ -183,52 +181,36 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
    CSV    [0] -> Fill(jet_CSV[j],  eventw); 
 
    // selected tracks variables
-   ntracksxjet[j] = 0;
    for (int k = 0; k < seltracksInEvent; k++)
    {
     //get the track info of the selected jet
     if (jetSeltrackIndex[k]==j)
-    { 
-     ntracksxjet[j] += 1 ;
+    {
+     // calculate the input of the selected-track-multiplicity per jet-pt histogram
+     int ptbin = avgTrackMultiplicity->FindBin(jet_pt[j]) 
+     njet_ptCounter[0][ptbin] += 1*eventw;
+     ntracksxjet_ptCounter[0][ptbin] += seltracksInJet[j]*eventw;
+     // Fill 3D-IP histograms
      IP3D [0] -> Fill(seltrack_IP3D[k], eventw);
      IP3Dsignif [0] -> Fill(seltrack_IP3Dsig[k], eventw);
     }
    }
-   // selected secondary vertices variables
- //  for (int nsv = 0; nsv <nSVinJet[j]; nsv++) // alternative
- //  {
+ 
+  // selected secondary vertices variables
     nrSV [0] -> Fill(nSVinJet[j], eventw); // the nr.of SV in this jet
-   //if (nSVinEvent== 0) nrSV [0] -> Fill(nSVinEvent, eventw); // the nr.of SV in this jet is 0
    if (nSVinJet[j] > 0)
    {
-    //int nSVinJet = 0;
     for (int i =0; i < nSVinEvent; i++)
     { 
      //get the SV info of the selected jet
      if (jetSVIndex[i]==j)
      {
-      //nSVinJet += 1;
       massSV[0] -> Fill(svmass[i], eventw);
       flight3Dsignif[0] -> Fill(flight3DSignificance[i], eventw);
      } 
     }
-   // nrSV [0] -> Fill(nSVinJet, eventw);
    }
 
-   // calculate the input of the selected-track-multiplicity per jet-pt histogram
-     // loop over the jet pt bins
-   for (int m =60; m <= 350; m+= 10)
-   { 
-    //bin number
-    int ibin = (m-60)/10 + 1; // start in ibin = 1 
-    //select the jets for the current pt bin 
-    if(jet_pt[j] < m+10 && jet_pt[j] >= m ) 
-     { 
-      // save the global variables to fill the histogram  
-       njet_ptCounter[0][ibin] += 1*eventw;
-       ntracksxjet_ptCounter[0][ibin] += ntracksxjet[j]*eventw;
-     }  
-    } 
    
     // set the ordinary tracks cuts 
    for (int p = 0; p < goodtracks_inEvent; p++)
@@ -275,27 +257,29 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
      if (jetSeltrackIndex[k]==j)
       //match with the selected jet
      { 
+      // calculate the input of the selected-track-multiplicity per jet-pt histogram
+      int ptbin = avgTrackMultiplicity->FindBin(jet_pt[j]) 
+      njet_ptCounter[jetFlavour][ptbin] += 1*eventw;
+      ntracksxjet_ptCounter[jetFlavour][ptbin] += seltracksInJet[j]*eventw;
+      // Fill 3D-IP histograms
       IP3D [jetFlavour] -> Fill(seltrack_IP3D[k], eventw);
       IP3Dsignif [jetFlavour] -> Fill(seltrack_IP3Dsig[k], eventw);
      }
     }
 
    // selected secondary vertices variables
-    if (nSVinEvent== 0) nrSV [jetFlavour] -> Fill(nSVinEvent, eventw); // the nr.of SV in this jet is 0
-    if (nSVinEvent > 0)
+    nrSV [jetFlavour] -> Fill(nSVinJet[j], eventw); // the nr.of SV in this jet
+    if (nSVinJet[j] > 0)
     {
-     int nSVinJetf = 0;
      for (int i = 0; i < nSVinEvent; i++)
      { 
       //get the SV info of the selected jet
       if (jetSVIndex[i]==j)
       {
-       nSVinJetf += 1;
        massSV[jetFlavour] -> Fill(svmass[i], eventw);
        flight3Dsignif[jetFlavour] -> Fill(flight3DSignificance[i], eventw);
       }
      }
-     nrSV [jetFlavour] -> Fill(nSVinJetf, eventw);
     }
     
    for (int p = 0; p < goodtracks_inEvent; p++)
@@ -308,25 +292,8 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
      // see previous note for distanceToJetAxis variable
     }
    }
-   
-   // calculate the input of the selected-track-multiplicity per jet-pt histogram
-   // loop over the jet pt bins
-   // int ibin= int(jet_pt-60)/10 +1; if (ibin <=350) {njet_ptCounter[jetFlavour][ibin] += 1*eventw;ntracksxjet_ptCounter[jetFlavour][ibin] += ntracksxjet[j]*eventw;}
-   for (int m =60; m <= 350; m+= 10)
-   { 
-    //bin number
-    int ibin = (m-60)/10 + 1; // start in ibin = 1 
-    //select the jets for the current pt bin 
-    if(jet_pt[j] < m+10 && jet_pt[j] >= m ) 
-     { 
-      // save the global variables to fill the histogram  
-       njet_ptCounter[jetFlavour][ibin] += 1*eventw;
-       ntracksxjet_ptCounter[jetFlavour][ibin] += ntracksxjet[j]*eventw;
-     }  
-   }
   
- } // End of setting mc flavour
-
+  } // End of setting mc flavour
  } // End of the jet loop
 } // End of the event loop
  cout << " after event loop " << endl;
@@ -418,7 +385,7 @@ void BJetAnalysis::DefineHistograms(int iflv, int sflv)
   // selected tracks variables
   IP3D                [iflv] = new TH1F (sflavour[sflv], " " , 100, -0.1, 0.1);  
   IP3Dsignif          [iflv] = new TH1F (sflavour[sflv], " " , 100, -35, 35);  
-  avgTrackMultiplicity[iflv] = new TH1F (sflavour[sflv], " " , 30, 60, 350);
+  avgTrackMultiplicity[iflv] = new TH1F (sflavour[sflv], " " , 30, 60, 360);
   // ordinary tracks
   nrPixelHits      [iflv] = new TH1F (sflavour[sflv], " ", 9, 0, 9); 
   trackPt          [iflv] = new TH1F (sflavour[sflv], " ", 150, 0, 15); 
