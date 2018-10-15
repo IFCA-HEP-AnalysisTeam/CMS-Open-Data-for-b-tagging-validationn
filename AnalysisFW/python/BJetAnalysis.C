@@ -138,6 +138,35 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
    if (jet_eta[j] > 2.4 || jet_eta[j] < -2.4) continue;
    if (jet_looseID[j] == false) continue; // 
    //if (jet_tightID[j] == false) continue; // check with the loose 
+
+   //for debuging !!!
+   //#############################################################
+   //if(nSVinEvent>1)
+   //{
+   //  cout << " #### event number = " << event << "####" <<endl;  
+   //  cout << "  " <<endl;  
+   //  cout << " njet = " << njet << endl;
+   //  cout << " nSVinEvent = "<< nSVinEvent << endl; 
+   //  cout << " The jet_index = " << j << " with  jet_pt[" << j << "] = " << jet_pt[j] << "; " << endl; 
+   //  for (int i = 0; i <nSVinEvent; i++)
+   //  {
+   //    cout << " " << endl;  
+   //    cout << " The jet SV Index = " << jetSVIndex[i] << endl;
+   //    cout << " " << endl;  
+   //    if (jetSVIndex[i]== j)
+   //     {
+   //       cout << "  -> match jetSVIndex[i]== j ; ";      
+   //       cout << "      -> The jet_pt[jetSVIndex] = " << "jet_pt[" << jetSVIndex[i] << "] = " << jet_pt[jetSVIndex[i]] <<endl;
+   //       cout << "      -> The  svmass [" << i << "] = " <<  svmass[i] << endl;
+   //       cout << " " << endl;  
+   //     }
+   //    else cout << " -> no match  jetSVIndex[i] != j" << endl;
+   //  }
+   //  cout << " " << endl;  
+   //  cout << " #######################################" <<endl;  
+   //}
+   //#############################################################
+
  
   // All MC flavour and Data
   // -------------------------
@@ -166,21 +195,24 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
     }
    }
    // selected secondary vertices variables
-   if (nSVinEvent== 0) nrSV [0] -> Fill(nSVinEvent, eventw); // the nr.of SV in this jet is 0
-   if (nSVinEvent > 0)
+ //  for (int nsv = 0; nsv <nSVinJet[j]; nsv++) // alternative
+ //  {
+    nrSV [0] -> Fill(nSVinJet[j], eventw); // the nr.of SV in this jet
+   //if (nSVinEvent== 0) nrSV [0] -> Fill(nSVinEvent, eventw); // the nr.of SV in this jet is 0
+   if (nSVinJet[j] > 0)
    {
-    int nSVinJet = 0;
+    //int nSVinJet = 0;
     for (int i =0; i < nSVinEvent; i++)
     { 
      //get the SV info of the selected jet
      if (jetSVIndex[i]==j)
      {
-      nSVinJet += 1;
+      //nSVinJet += 1;
       massSV[0] -> Fill(svmass[i], eventw);
       flight3Dsignif[0] -> Fill(flight3DSignificance[i], eventw);
      } 
     }
-    nrSV [0] -> Fill(nSVinJet, eventw);
+   // nrSV [0] -> Fill(nSVinJet, eventw);
    }
 
    // calculate the input of the selected-track-multiplicity per jet-pt histogram

@@ -877,7 +877,8 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         chemfJet[ak5_index] = i_ak5jet->chargedEmEnergyFraction() * jec;
         chmJet[ak5_index]   = i_ak5jet->chargedMultiplicity (); 
         // Loose WP
-        bool looseID = i_ak5jet->pt() > 10.0 && fabs(i_ak5jet->eta()) < 2.4 && chf[ak5_index] > 0.0 &&  nhfJet[ak5_index] < 0.99 && chmJet[ak5_index] > 0.0 && nemfJet[ak5_index] < 0.99 &&  chemfJet[ak5_index] < 0.99 && npr > 1; 
+       bool looseID = i_ak5jet->pt() > 10.0 && fabs(i_ak5jet->eta()) < 2.4 && chf[ak5_index] > 0.0 &&  nhfJet[ak5_index] < 1.00 && chmJet[ak5_index] > 0.0 && nemfJet[ak5_index] < 1.00 &&  chemfJet[ak5_index] <1.00 && npr > 1; // Caroline cut
+        //bool looseID = i_ak5jet->pt() > 10.0 && fabs(i_ak5jet->eta()) < 2.4 && chf[ak5_index] > 0.0 &&  nhfJet[ak5_index] < 0.99 && chmJet[ak5_index] > 0.0 && nemfJet[ak5_index] < 0.99 &&  chemfJet[ak5_index] < 0.99 && npr > 1; //Original cut
         jet_looseID[ak5_index] = looseID; 
         
  
@@ -1047,7 +1048,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
      cout << "Found " << ip.size() << " TagInfo" << endl;
      cout << " " << endl; 
      */
-     seltracksInJet[ak5_index] = 0;
+     seltracksInJet[ak5_index] = 99999999; // 9e8
      unsigned tagindex_test = 0; 
      float dR2min_test = 999; 
      unsigned indexmin_test = 999;
@@ -1143,19 +1144,18 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
      unsigned svindexmin_test = 999;
      float svindexmin = 999;
 
-     nSVinJet[ak5_index] = 0;  
-     // loop over the SecondaryVertexTagInfoCollection and match the ak5CaloJets with at least one secondary vertex
+     nSVinJet[ak5_index] = 99999999;  // loop over the SecondaryVertexTagInfoCollection and match the ak5CaloJets with at least one secondary vertex
      for(reco::SecondaryVertexTagInfoCollection::const_iterator iter = svTagInfoColl.begin(); iter != svTagInfoColl.end(); ++iter) 
      {
-       if(iter->nVertices() > 0 )
-       {
+      // if(iter->nVertices() > 0 )
+      // {
         float svdR2_test = reco::deltaR2 (jet_eta[ak5_index], jet_phi[ak5_index], iter->jet()->eta(), iter->jet()->phi());   
         if (svdR2_test < svdR2min_test) 
         {
          svdR2min_test = svdR2_test;
          svindexmin_test = svindex_test;
         }
-       }
+      // }
       svindex_test ++; 
      }
     // if (svdR2min_test == 999) cout << " Los CaloJet FALLAN el corte de nVertices() > 0 " << endl; // for debuging !!!!! 
@@ -1189,7 +1189,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
          cout <<" " << endl;
          cout << " RecorcholisSV !! TagCollection Jets and SecondaryVertexTagInfoCollection does not match one to one!! " << endl;  
          cout <<" " << endl;
-         cout <<" PFJet  " << ak5_index << " match with svCaloJet  " << svindexmin << " instead of " << indexmin << endl;
+         cout <<" PFJet  " << ak5_index << " match with rsvCaloJet  " << svindexmin << " instead of " << indexmin << endl;
          cout <<" with a dRmin = "<< sqrt(svdR2min_test) << " instead of " << sqrt(dR2min) <<endl; 
          cout <<" " << endl;
        } 
@@ -1199,7 +1199,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         {
          cout <<"  " << endl;
          cout <<" WarningSV !! There is not matching between ak5CaloJets and the current ak5PFJets "<< ak5_index << "  => No SecondaryVertexTagInfoCollection info available for the original PFJet " << endl;
-         if (svindexmin != 999 && svdR2min_test != 999) cout <<"                  best matching:   PFJet  " << ak5_index << " ; " << " svCaloJet  "<< svindexmin <<"; with  sqrt(dR2min) =  " << sqrt(svdR2min_test) <<endl;
+         if (svindexmin != 999 && svdR2min_test != 999) cout <<"                  best matching:   PFJet  " << ak5_index << " ; " << " wsvCaloJet  "<< svindexmin <<"; with  sqrt(dR2min) =  " << sqrt(svdR2min_test) <<endl;
          else if (svdR2min_test == 999 || svindexmin == 999) cout << " Los CaloJet FALLAN 2 el corte de nVertices() > 0 " << endl; 
          cout <<"  " << endl;
         }
