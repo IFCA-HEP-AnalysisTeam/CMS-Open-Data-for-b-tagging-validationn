@@ -88,7 +88,8 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     static const UInt_t kMaxNjet = 64;
     static const UInt_t kMaxNtrg = 32;
     static const UInt_t kMaxNtracks = 1000;
-    static const UInt_t kMaxNsv = 50; 
+    static const UInt_t kMaxNsv = 100; 
+    static const UInt_t kMaxNbQ = 64;
 
 
     // PF jets
@@ -119,11 +120,6 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     // tracks (associated to ak5PFJets)  
     
     UInt_t goodtracks_inEvent;// number of  tracks in the event
-    // to remove:
-    // ::::::::::::::
-    //Int_t  tracks_inJet[kMaxNjet];// number of  tracks in the jet
-    //Int_t  goodtracks_inJet[kMaxNjet];// number of  tracks in the jet after basic cut after basic cuts
-    // ::::::::::::::
     Int_t  goodtracks_jetIndex         [kMaxNtracks];// selected jet index associated to the track
     Int_t  goodtracks_nValidPixelHits   [kMaxNtracks]; 
     //Int_t tracks_nValidTrackerHits [kMaxNtracks]; 
@@ -163,11 +159,22 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     ///////////////////////////
     UInt_t nSVinEvent;
     Int_t  nSVinJet              [kMaxNjet];
+    Float_t flight3DSignificance_oldCode [kMaxNjet];
+    Float_t svmass_1stVtx [kMaxNjet];
     Int_t  jetSVIndex            [kMaxNsv];  
     Float_t svmass               [kMaxNsv];
     Float_t flight3DSignificance [kMaxNsv];
     
     ///////////////////////////
+
+    // for debuging !!!
+    //////////////////////////////////////
+    /*static const UInt_t kMaxNCalo = 200;
+    UInt_t nCalo; 
+    Float_t jetCalo_pt_preMatch [kMaxNCalo];  
+    Float_t jetCalo_pt_postMatch [kMaxNjet];  
+    *//////////////////////////////////////
+
 
     // PF jets
     UInt_t njet_ak7;
@@ -181,19 +188,19 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
 
     // Jet composition
     Float_t chf[kMaxNjet];
-   	Float_t nhf[kMaxNjet];
-   	Float_t phf[kMaxNjet];
-   	Float_t elf[kMaxNjet];
-   	Float_t muf[kMaxNjet];
-   	Float_t hf_hf[kMaxNjet];
-   	Float_t hf_phf[kMaxNjet];
-   	Int_t hf_hm[kMaxNjet];
-   	Int_t hf_phm[kMaxNjet];
-   	Int_t chm[kMaxNjet];
-   	Int_t nhm[kMaxNjet];
-   	Int_t phm[kMaxNjet];
-   	Int_t elm[kMaxNjet];
-   	Int_t mum[kMaxNjet];   
+    Float_t nhf[kMaxNjet];
+    Float_t phf[kMaxNjet];
+    Float_t elf[kMaxNjet];
+    Float_t muf[kMaxNjet];
+    Float_t hf_hf[kMaxNjet];
+    Float_t hf_phf[kMaxNjet];
+    Int_t hf_hm[kMaxNjet];
+    Int_t hf_phm[kMaxNjet];
+    Int_t chm[kMaxNjet];
+    Int_t nhm[kMaxNjet];
+    Int_t phm[kMaxNjet];
+    Int_t elm[kMaxNjet];
+    Int_t mum[kMaxNjet];   
     Float_t beta[kMaxNjet];   
     Float_t bstar[kMaxNjet];
    
@@ -213,12 +220,21 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     Float_t gen_phi[kMaxNjet];
     Float_t gen_E[kMaxNjet];
 
+    // Generated particles
+    UInt_t nbQuarks;
+    Float_t bQuark_pt     [kMaxNbQ];
+    Float_t bQuark_eta    [kMaxNbQ];
+    Float_t bQuark_phi    [kMaxNbQ];
+    Int_t bQuark_pdgID  [kMaxNbQ];
+    Int_t bQuark_status [kMaxNbQ];
+    
+
     // Event identification
     UInt_t run;
     UInt_t lumi;
     ULong64_t event;
     // PileUp info
-    float mcPUinfo;
+    Int_t mcPUtrue;
     // number of PV
     Int_t nPVinEvent;
    

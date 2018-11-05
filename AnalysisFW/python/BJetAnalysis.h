@@ -6,6 +6,7 @@
 #include "Constants.h"
 #include <TTree.h>
 #include <TH1.h>
+#include <TH2.h>
 #include <TMath.h>
 #include <TChain.h>
 #include <fstream>
@@ -38,7 +39,10 @@ class BJetAnalysis : public ChainClass
                          TString hRootName, 
                          TString ptRange);
 
-
+ void  Save2DHistograms (TH2D* myHistogram, 
+                         TString hRootName, 
+                         TString ptRange);
+ 
  void   PrintProgress   (Long64_t counter,
                          Long64_t total);
 
@@ -86,6 +90,7 @@ class BJetAnalysis : public ChainClass
   TH1F* IP3D                [nflavour]; 
   TH1F* IP3Dsignif          [nflavour]; 
   TH1F* avgTrackMultiplicity[nflavour];
+  TH2D* trackMultiplicity2D [nflavour];
 
  // ordinary tracks
   TH1F* nrPixelHits      [nflavour]; 

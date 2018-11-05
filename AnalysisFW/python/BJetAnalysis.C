@@ -132,8 +132,10 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
   for (int j = 0; j < njet; j++)
   {
    // baseline selection
-   if (jet_pt[j] <= 60) continue;
-   if (jet_eta[j] > 2.4 || jet_eta[j] < -2.4) continue;
+   if (jet_pt[j] < 80 || jet_pt[j] > 470) continue;
+   //if (jet_pt[j] <= 60) continue;
+   if (fabs(jet_eta[j]) > 2.4) continue;
+   //if (jet_eta[j] > 2.4 || jet_eta[j] < -2.4) continue;
    if (jet_looseID[j] == false) continue; // 
    //if (jet_tightID[j] == false) continue; // check with the loose 
 
@@ -186,8 +188,10 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
     //get the track info of the selected jet
     if (jetSeltrackIndex[k]==j)
     {
+     // 2D track multiplicity per jet-pt histogram
+     trackMultiplicity2D[0] -> Fill (jet_pt[j], seltracksInJet[j], eventw);
      // calculate the input of the selected-track-multiplicity per jet-pt histogram
-     int ptbin = avgTrackMultiplicity->FindBin(jet_pt[j]) 
+     int ptbin = avgTrackMultiplicity[0]->FindBin(jet_pt[j]);
      njet_ptCounter[0][ptbin] += 1*eventw;
      ntracksxjet_ptCounter[0][ptbin] += seltracksInJet[j]*eventw;
      // Fill 3D-IP histograms
@@ -237,7 +241,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
     int jetFlavour = -999; 
     if (fabs(PartonF[j]) == 5) jetFlavour = 1; // "b_quark"
     if (fabs(PartonF[j]) == 4) jetFlavour = 2; // "c_quark"
-    if (fabs(PartonF[j]) != 5 && fabs(PartonF[j]) != 4) jetFlavour = 3; // "lgluon"
+    if (fabs(PartonF[j]) < 4 || fabs(PartonF[j]) == 21) jetFlavour = 3; // "lgluon"
     if (fabs(PartonF[j]) == 5 && nBHadrons[j] == 2) jetFlavour = 4;// "b_gsplitting"
     if (jetFlavour < 0 ) cout << " Warning! jetFlavour = " << jetFlavour << " => this does not work! " << endl;      
 
@@ -257,8 +261,10 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
      if (jetSeltrackIndex[k]==j)
       //match with the selected jet
      { 
+      // 2D track multiplicity per jet-pt histogram
+      trackMultiplicity2D[jetFlavour] -> Fill (jet_pt[j], seltracksInJet[j], eventw);
       // calculate the input of the selected-track-multiplicity per jet-pt histogram
-      int ptbin = avgTrackMultiplicity->FindBin(jet_pt[j]) 
+      int ptbin = avgTrackMultiplicity[jetFlavour]->FindBin(jet_pt[j]); 
       njet_ptCounter[jetFlavour][ptbin] += 1*eventw;
       ntracksxjet_ptCounter[jetFlavour][ptbin] += seltracksInJet[j]*eventw;
       // Fill 3D-IP histograms
@@ -336,6 +342,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
       SaveHistograms (IP3D[fv],  "seltrack_IP3D", _ptRange);  
       SaveHistograms (IP3Dsignif[fv], "seltrack_IP3Dsignif", _ptRange);  
       SaveHistograms (avgTrackMultiplicity[fv], "avgTrackMultiplicity", _ptRange);  
+      Save2DHistograms (trackMultiplicity2D[fv],  "trackMultiplicity2D", _ptRange);  
 
       SaveHistograms (nrPixelHits[fv],   "tracks_nrPixelHits", _ptRange);  
       SaveHistograms (trackPt[fv],   "tracks_Pt", _ptRange);  
@@ -386,6 +393,8 @@ void BJetAnalysis::DefineHistograms(int iflv, int sflv)
   IP3D                [iflv] = new TH1F (sflavour[sflv], " " , 100, -0.1, 0.1);  
   IP3Dsignif          [iflv] = new TH1F (sflavour[sflv], " " , 100, -35, 35);  
   avgTrackMultiplicity[iflv] = new TH1F (sflavour[sflv], " " , 30, 60, 360);
+  trackMultiplicity2D [iflv] = new TH2D (sflavour[sflv], " " , 30, 60, 360, 1000, 0, 1000);
+ 
   // ordinary tracks
   nrPixelHits      [iflv] = new TH1F (sflavour[sflv], " ", 9, 0, 9); 
   trackPt          [iflv] = new TH1F (sflavour[sflv], " ", 150, 0, 15); 
@@ -421,6 +430,27 @@ void BJetAnalysis::SaveHistograms (TH1F* myHistogram, TString hRootName, TString
  myHistogram -> Write();
  OutFileName -> Close();
 }
+
+// --------------------------------------------------------------------------------------
+// Save 2D Histograms
+// --------------------------------------------------------------------------------------
+void BJetAnalysis::Save2DHistograms (TH2D* myHistogram, TString hRootName, TString ptRange)
+{
+ /*
+ * This function save the histograms with a readable name for plotter.C
+ *  if ismc: ptRange correspond to the pthat of the sample
+ *  if not ismc: ptRange correspond to data file
+ *      Example:  Histo_jet_phi_pthat170to300_MC.root
+ *                Histo_jet_phi_Data.root  
+ */
+ TString hname = " ";
+ if (ismc) hname = "Histo_" +  hRootName + "_" + ptRange + "_MC_2D.root"; 
+ else      hname = "Histo_" +  hRootName + "_Data_" + ptRange + "_2D.root" ; 
+ TFile* OutFileName = new TFile( hname , "update"); 
+ myHistogram -> Write();
+ OutFileName -> Close();
+}
+
 
 //------------------------------------------------------------------------------
 // PrintProgress

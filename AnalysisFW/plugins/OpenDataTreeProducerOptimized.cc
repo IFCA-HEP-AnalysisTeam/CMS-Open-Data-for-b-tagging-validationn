@@ -115,7 +115,11 @@ OpenDataTreeProducerOptimized::OpenDataTreeProducerOptimized(edm::ParameterSet c
 	m_ipassoc = cfg.getParameter<edm::InputTag>("ipassociation");
 
 	// test flavour
-	if (mIsMCarlo){mJetFlavourInfos = cfg.getParameter<edm::InputTag>("jetFlavourInfos");}
+	if (mIsMCarlo)
+         {
+          mJetFlavourInfos = cfg.getParameter<edm::InputTag>("jetFlavourInfos");
+          //mGenParticles = = cfg.getParameter<edm::InputTag>("genParticles");
+         }
 	// test SV
 	secondaryVertexTagInfos_  = cfg.getParameter<edm::InputTag>("secondaryVertexTagInfos"); 
 }
@@ -126,41 +130,8 @@ void OpenDataTreeProducerOptimized::beginJob() {
 
 	mTree = fs->make< TTree >("OpenDataTree", "OpenDataTree");
 
-	// Variables of the flat tuple
-	mTree->Branch("njet", &njet, "njet/i");
-	mTree->Branch("jet_pt", jet_pt, "jet_pt[njet]/F");
-	mTree->Branch("jet_eta", jet_eta, "jet_eta[njet]/F");
-	mTree->Branch("jet_phi", jet_phi, "jet_phi[njet]/F");
-	mTree->Branch("jet_E", jet_E, "jet_E[njet]/F");   
-	mTree->Branch("jet_tightID", jet_tightID, "jet_tightID[njet]/O");
-	mTree->Branch("jet_area", jet_area, "jet_area[njet]/F");
-	mTree->Branch("jet_jes", jet_jes, "jet_jes[njet]/F");
-	mTree->Branch("jet_igen", jet_igen, "jet_igen[njet]/I");
-	// b discriminant
-	mTree->Branch("jet_CSV", jet_CSV, "jet_CSV[njet]/F");
-	mTree->Branch("jet_JP", jet_JP, "jet_JP[njet]/F");
-	mTree->Branch("jet_JBP", jet_JBP, "jet_JBP[njet]/F");
-	mTree->Branch("jet_TCHP", jet_TCHP, "jet_TCHP[njet]/F");
-	mTree->Branch("jet_TCHE", jet_TCHE, "jet_TCHE[njet]/F");
-	mTree->Branch("dRmin_matching", dRmin_matching, "dRmin_matching[njet]/F");
-
-	// AK7 variables
-	mTree->Branch("njet_ak7", &njet_ak7, "njet_ak7/i");
-	mTree->Branch("jet_pt_ak7", jet_pt_ak7, "jet_pt_ak7[njet_ak7]/F");
-	mTree->Branch("jet_eta_ak7", jet_eta_ak7, "jet_eta_ak7[njet_ak7]/F");
-	mTree->Branch("jet_phi_ak7", jet_phi_ak7, "jet_phi_ak7[njet_ak7]/F");
-	mTree->Branch("jet_E_ak7", jet_E_ak7, "jet_E_ak7[njet_ak7]/F");
-	mTree->Branch("jet_area_ak7", jet_area_ak7, "jet_area_ak7[njet_ak7]/F");
-	mTree->Branch("jet_jes_ak7", jet_jes_ak7, "jet_jes_ak7[njet_ak7]/F");
-	mTree->Branch("ak7_to_ak5", ak7_to_ak5, "ak7_to_ak5[njet_ak7]/I");
-
-	mTree->Branch("ngen", &ngen, "ngen/i");
-	mTree->Branch("gen_pt", gen_pt, "gen_pt[ngen]/F");
-	mTree->Branch("gen_eta", gen_eta, "gen_eta[ngen]/F");
-	mTree->Branch("gen_phi", gen_phi, "gen_phi[ngen]/F");
-	mTree->Branch("gen_E", gen_E, "gen_E[ngen]/F");
-
-	mTree->Branch("run", &run, "run/i");
+	// event variables
+        mTree->Branch("run", &run, "run/i");
 	mTree->Branch("lumi", &lumi, "lumi/i");
 	mTree->Branch("event", &event, "event/l");
 	mTree->Branch("ntrg", &ntrg, "ntrg/i");
@@ -172,10 +143,23 @@ void OpenDataTreeProducerOptimized::beginJob() {
 	mTree->Branch("rho", &rho, "rho/F");
 	mTree->Branch("pthat", &pthat, "pthat/F");
 	mTree->Branch("mcweight", &mcweight, "mcweight/F");
-	mTree->Branch("mcPUinfo", &mcPUinfo, "mcPUinfo/F");
+	mTree->Branch("mcPUtrue", &mcPUtrue, "mcPUtrue/i");
 	mTree->Branch("nPVinEvent", &nPVinEvent, "nPVinEvent/i");
+	
 
-	mTree->Branch("chf", chf, "chf[njet]/F");   
+        // AK5 variables
+
+        mTree->Branch("njet", &njet, "njet/i");
+	mTree->Branch("jet_pt", jet_pt, "jet_pt[njet]/F");
+	mTree->Branch("jet_eta", jet_eta, "jet_eta[njet]/F");
+	mTree->Branch("jet_phi", jet_phi, "jet_phi[njet]/F");
+	mTree->Branch("jet_E", jet_E, "jet_E[njet]/F");   
+	mTree->Branch("jet_tightID", jet_tightID, "jet_tightID[njet]/O");
+	mTree->Branch("jet_area", jet_area, "jet_area[njet]/F");
+	mTree->Branch("jet_jes", jet_jes, "jet_jes[njet]/F");
+	mTree->Branch("jet_igen", jet_igen, "jet_igen[njet]/I");
+	
+        mTree->Branch("chf", chf, "chf[njet]/F");   
 	mTree->Branch("nhf", nhf, "nhf[njet]/F");   
 	mTree->Branch("phf", phf, "phf[njet]/F");   
 	mTree->Branch("elf", elf, "elf[njet]/F");   
@@ -191,57 +175,89 @@ void OpenDataTreeProducerOptimized::beginJob() {
 	mTree->Branch("mum", mum, "mum[njet]/i");
 	mTree->Branch("beta", beta, "beta[njet]/F");   
 	mTree->Branch("bstar", bstar, "bstar[njet]/F");
-
-	//loose WP for commisionning
+	
+         //loose ID 
 	mTree->Branch("nhfJet", nhfJet, "nhfJet[njet]/F");
 	mTree->Branch("nemfJet", nemfJet, "nemfJet[njet]/F");
 	mTree->Branch("chemfJet", chemfJet, "chemfJet[njet]/F");
 	mTree->Branch("chmJet", chmJet, "chmJet[njet]/i"); 
 	mTree->Branch("jet_looseID", jet_looseID, "jet_looseID[njet]/O");
 
-	// Test flavour  
-	// mTree->Branch("ptF",     ptF,    "ptF[njet]/F");    
-	// mTree->Branch("etaF",    etaF,   "etaF[njet]/F");    
-	// mTree->Branch("phiF",    phiF,   "phiF[njet]/F");    
+	 // MC flavour  
 	mTree->Branch("HadronF", HadronF,"HadronF[njet]/F");    
 	mTree->Branch("PartonF", PartonF,"PartonF[njet]/F");    
-	mTree->Branch("nBHadrons", nBHadrons,"nBHadrons[njet]/F");   
-	// Secondary Vertex
+	mTree->Branch("nBHadrons", nBHadrons,"nBHadrons[njet]/F");
+          
+	 // b discriminantor (associated to ak5CaloJets) 
+	mTree->Branch("jet_CSV", jet_CSV, "jet_CSV[njet]/F");
+	mTree->Branch("jet_JP", jet_JP, "jet_JP[njet]/F");
+	mTree->Branch("jet_JBP", jet_JBP, "jet_JBP[njet]/F");
+	mTree->Branch("jet_TCHP", jet_TCHP, "jet_TCHP[njet]/F");
+	mTree->Branch("jet_TCHE", jet_TCHE, "jet_TCHE[njet]/F");
+	mTree->Branch("dRmin_matching", dRmin_matching, "dRmin_matching[njet]/F");
+	
+	 // Secondary Vertex (associated to ak5CaloJets)
 	mTree->Branch("nSVinEvent",  &nSVinEvent, "nSVinEvent/i");    
 	mTree->Branch("nSVinJet",  &nSVinJet, "nSVinJet[njet]/i");    
+	mTree->Branch("svmass_1stVtx",      svmass_1stVtx,    "svmass_1stVtx[njet]/F");
+	mTree->Branch("flight3DSignificance_oldCode", flight3DSignificance_oldCode, "flight3DSignificance_oldCode[njet]/F");    
 	mTree->Branch("jetSVIndex",  &jetSVIndex, "jetSVIndex[nSVinEvent]/i");    
 	mTree->Branch("svmass",      svmass,    "svmass[nSVinEvent]/F");
 	mTree->Branch("flight3DSignificance", flight3DSignificance, "flight3DSignificance[nSVinEvent]/F");    
-	// B-tag(IPTagInfo) selected tracks (associated to ak5CaloJets)
+
+	 // IPTagInfo selected tracks (associated to ak5CaloJets)
 	mTree->Branch("seltracksInEvent", &seltracksInEvent, "seltracksInEvent/I");
-	mTree->Branch("seltracksInJet", &seltracksInJet, "seltracksInJet[njet]/i");
 	mTree->Branch("jetSeltrackIndex", jetSeltrackIndex, "jetSeltrackIndex[seltracksInEvent]/i"); 
-	mTree->Branch("seltrack_pt", seltrack_pt, "seltrack_pt[seltracksInEvent]/F");
-	mTree->Branch("seltrack_nValidPixelHits", seltrack_nValidPixelHits, "seltrack_nValidPixelHits[seltracksInEvent]/i");
-	mTree->Branch("seltrack_nValidTrackerHits", seltrack_nValidTrackerHits, "seltrack_nValidTrackerHits[seltracksInEvent]/i");
-	mTree->Branch("seltrack_IP2D", seltrack_IP2D, "seltrack_IP2D [seltracksInEvent]/F");
-	mTree->Branch("seltrack_IP2Dsig", seltrack_IP2Dsig, "seltrack_IP2Dsig [seltracksInEvent]/F");
 	mTree->Branch("seltrack_IP3D", seltrack_IP3D, "seltrack_IP3D [seltracksInEvent]/F");
 	mTree->Branch("seltrack_IP3Dsig", seltrack_IP3Dsig, "seltrack_IP3Dsig [seltracksInEvent]/F");
-	mTree->Branch("seltrack_distToJetAxis", seltrack_distToJetAxis, "seltrack_distToJetAxis [seltracksInEvent]/F");
-	//  mTree->Branch("track_IPz", "track_IPz", "track_IPz [seltracksInEvent]/F");
+	mTree->Branch("seltracksInJet", &seltracksInJet, "seltracksInJet[njet]/i");
+	//mTree->Branch("seltrack_pt", seltrack_pt, "seltrack_pt[seltracksInEvent]/F");
+	//mTree->Branch("seltrack_distToJetAxis", seltrack_distToJetAxis, "seltrack_distToJetAxis [seltracksInEvent]/F");
+	//mTree->Branch("seltrack_nValidPixelHits", seltrack_nValidPixelHits, "seltrack_nValidPixelHits[seltracksInEvent]/i");
+	//mTree->Branch("seltrack_nValidTrackerHits", seltrack_nValidTrackerHits, "seltrack_nValidTrackerHits[seltracksInEvent]/i");
+	//mTree->Branch("seltrack_IP2D", seltrack_IP2D, "seltrack_IP2D [seltracksInEvent]/F");
+	//mTree->Branch("seltrack_IP2Dsig", seltrack_IP2Dsig, "seltrack_IP2Dsig [seltracksInEvent]/F");
 
-	// tracks (associated to ak5PFJets)
+	 // IPTagInfo general good tracks (associated to ak5CaloJets)
 	mTree->Branch("goodtracks_inEvent", &goodtracks_inEvent, "goodtracks_inEvent/i");
-	// to remove:
-	// ::::::::::::::
-	// mTree->Branch("tracks_inJet", &tracks_inJet, "tracks_inJet[njet]/i");
-	// mTree->Branch("goodtracks_inJet", &goodtracks_inJet, "goodtracks_inJet[njet]/i");
-	// ::::::::::::::
 	mTree->Branch("goodtracks_jetIndex", goodtracks_jetIndex, "goodtracks_jetIndex[goodtracks_inEvent]/i");
 	mTree->Branch("goodtracks_nValidPixelHits", goodtracks_nValidPixelHits, "goodtracks_nValidPixelHits[goodtracks_inEvent]/i");
-	// mTree->Branch("tracks_nValidTrackerHits", tracks_nValidTrackerHits, "tracks_nValidTrackerHits[tracks_inEvent]/i");
 	mTree->Branch("goodtracks_pt", goodtracks_pt, "goodtracks_pt[goodtracks_inEvent]/F");
-	// mTree->Branch("tracks_chi2", tracks_chi2, "tracks_chi2[tracks_inEvent]/F");
-	// mTree->Branch("tracks_IPz", tracks_IPz, "tracks_IPz[tracks_inEvent]/F");
-	// mTree->Branch("tracks_IP2D", tracks_IP2D, "tracks_IP2D[tracks_inEvent]/F");
 	mTree->Branch("goodtracks_distToJetAxis", goodtracks_distToJetAxis, "goodtracks_distToJetAxis[goodtracks_inEvent]/D");
-	// mTree->Branch("tracks_decayLength", tracks_decayLength, "tracks_decayLength[tracks_inEvent]/D");
+        
+         // Generated Particle variables
+	mTree->Branch("ngen", &ngen, "ngen/i");
+	mTree->Branch("gen_pt", gen_pt, "gen_pt[ngen]/F");
+	mTree->Branch("gen_eta", gen_eta, "gen_eta[ngen]/F");
+	mTree->Branch("gen_phi", gen_phi, "gen_phi[ngen]/F");
+	mTree->Branch("gen_E", gen_E, "gen_E[ngen]/F");
+        
+	mTree->Branch("nbQuarks", &nbQuarks, "nbQuarks/i");
+	mTree->Branch("bQuark_pt", &bQuark_pt, "bQuark_pt[nbQuarks]/F");
+	mTree->Branch("bQuark_eta", &bQuark_eta, "bQuark_eta[nbQuarks]/F");
+	mTree->Branch("bQuark_phi", &bQuark_phi, "bQuark_phi[nbQuarks]/F");
+	mTree->Branch("bQuark_pdgID", &bQuark_pdgID, "bQuark_pdgID[nbQuarks]/i");
+	mTree->Branch("bQuark_status", &bQuark_status, "bQuark_status[nbQuarks]/i");
+       
+        //Calojets for debugging!!!
+       ///////////////////////////////////////////////
+       // mTree->Branch("nCalo", &nCalo, "nCalo/i");
+       // mTree->Branch("jetCalo_pt_preMatch", &jetCalo_pt_preMatch, "jetCalo_pt_preMatch[nCalo]/F"); 
+       // mTree->Branch("jetCalo_pt_postMatch", &jetCalo_pt_postMatch, "jetCalo_pt_postMatch[njet]/F"); 
+ 
+        
+        // AK7 variables
+	mTree->Branch("njet_ak7", &njet_ak7, "njet_ak7/i");
+	mTree->Branch("jet_pt_ak7", jet_pt_ak7, "jet_pt_ak7[njet_ak7]/F");
+	mTree->Branch("jet_eta_ak7", jet_eta_ak7, "jet_eta_ak7[njet_ak7]/F");
+	mTree->Branch("jet_phi_ak7", jet_phi_ak7, "jet_phi_ak7[njet_ak7]/F");
+	mTree->Branch("jet_E_ak7", jet_E_ak7, "jet_E_ak7[njet_ak7]/F");
+	mTree->Branch("jet_area_ak7", jet_area_ak7, "jet_area_ak7[njet_ak7]/F");
+	mTree->Branch("jet_jes_ak7", jet_jes_ak7, "jet_jes_ak7[njet_ak7]/F");
+	mTree->Branch("ak7_to_ak5", ak7_to_ak5, "ak7_to_ak5[njet_ak7]/I");
+
+       
+
 }
 
 void OpenDataTreeProducerOptimized::endJob() {
@@ -317,18 +333,18 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 	run = event_obj.id().run();
 	lumi = event_obj.luminosityBlock();
 	event = event_obj.id().event();
-	//cout << " ##########################################################################################  " << endl; 
-	//std::cout << " run number: " << run <<std::endl; 
-	//std::cout << " lumi = lumiosityBlock: " << lumi <<std::endl; 
-	cout << " ##########################################################################################  " << endl; 
-	cout << " event number: " << event << endl; 
-	cout << "   " << endl; 
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////  
-	// Test Discriminant 
-	//---------------------------- Jet CSV discriminantor -----------------------
+	//if (verbose)
+        // {
+          cout << " ##########################################################################################  " << endl; 
+	  cout << " event number: " << event << endl; 
+	  cout << "   " << endl; 
+        // }
+	
+        // Discriminants 
+	// ---------------------------- Jet CSV discriminantor -----------------------
 	edm::Handle<reco::JetTagCollection> tagHandle_CSV;
 	event_obj.getByLabel("combinedSecondaryVertexBJetTags", tagHandle_CSV);
-	//const reco::JetTagCollection & tag_CSV = *(tagHandle_CSV.product());
+        //const reco::JetTagCollection & tag_CSV = *(tagHandle_CSV.product());
 	//---------------------------- Jet JBP tag discriminantor -------------------
 	edm::Handle<reco::JetTagCollection> tagHandle_JBP;
 	event_obj.getByLabel("jetBProbabilityBJetTags", tagHandle_JBP); 
@@ -346,8 +362,8 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 	event_obj.getByLabel("trackCountingHighEffBJetTags", tagHandle_TCHE); 
 	//const reco::JetTagCollection & tag_TCHE = *(tagHandle_TCHE.product());
 
-	// Print out the info
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //if (verbose)
+	// {
 	//    std::cout << "event " << event << std::endl;  
 	//    std::cout << "-----------------------------------------------------------------------" << std::endl;    
 	//    std::cout << "-----------------------------------------------------------------------" << std::endl;    
@@ -358,33 +374,37 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 	//     {
 	//     std::cout << "ptCSV   " << tag_CSV[i].first -> pt() << "    etaCSV   " << tag_CSV[i].first -> eta() << "   phiCSV   " << tag_CSV[i].first -> phi() << "    disc1   "<< tag_CSV[i].second << std::endl;   
 	//     } 
+	//    std::cout << "-----------------------------------------------------------------------" << std::endl;    
 	//    std::cout <<      "---------------------------- Jet JBP tag Info -------------------" << std::endl; 
-	//      std::cout << "tag_JBP.size()    " << tag_JBP.size() << std::endl; 
+	//    std::cout << "tag_JBP.size()    " << tag_JBP.size() << std::endl; 
 	//    for (int i = 0; i != (int)tag_JBP.size(); i++)
 	//    { 
 	//      std::cout << "ptJBP   " << tag_JBP[i].first -> pt() << "  etaJBP    " << tag_JBP[i].first -> eta() << "    phiJBP   " << tag_JBP[i].first -> phi() << "    disc1   "<< tag_JBP[i].second << std::endl;   
 	//    }
-	//  //////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////  
-
-	// Test Flavour
-	// Print out the info
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//if (mIsMCarlo){
+	//    std::cout << "-----------------------------------------------------------------------" << std::endl;    
+        // }	
+        
+        
+        //  MC flavours
 	edm::Handle<reco::JetFlavourInfoMatchingCollection> theJetFlavourInfos;
-	//event_obj.getByLabel(mJetFlavourInfos, theJetFlavourInfos );
-	// for ( reco::JetFlavourInfoMatchingCollection::const_iterator j  = theJetFlavourInfos->begin(); j != theJetFlavourInfos->end(); ++j ) 
+        //if (verbose)
 	// {
-	//      std::cout << "-------------------- Jet Flavour Info --------------------" << std::endl;
-	//      const reco::Jet *aJet = (*j).first.get(); 
-	//      reco::JetFlavourInfo aInfo = (*j).second;
-	//      // ----------------------- Hadrons -------------------------------
-	//      std::cout << "                      Hadron-based flavour: " << aInfo.getHadronFlavour() << std::endl;
-	//      // ----------------------- Partons -------------------------------
-	//      std::cout << "                      Parton-based flavour: " << aInfo.getPartonFlavour() << std::endl;
-	// }
-	//}
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //  if (mIsMCarlo){
+	//  event_obj.getByLabel(mJetFlavourInfos, theJetFlavourInfos );
+	//  std::cout << "-------------------- Jet Flavour Info --------------------" << std::endl;
+        //  std::cout << "theJetFlavourInfos.size()  " << theJetFlavourInfos.size() <<std::endl;
+	//  for ( reco::JetFlavourInfoMatchingCollection::const_iterator j  = theJetFlavourInfos->begin(); j != theJetFlavourInfos->end(); ++j ) 
+	//   {
+	//        const reco::Jet *aJet = (*j).first.get();
+        //        
+	//        reco::JetFlavourInfo aInfo = (*j).second;
+	//        // ----------------------- Hadrons -------------------------------
+	//        std::cout << "                      Hadron-based flavour: " << aInfo.getHadronFlavour() << std::endl;
+	//        // ----------------------- Partons -------------------------------
+	//        std::cout << "                      Parton-based flavour: " << aInfo.getPartonFlavour() << std::endl;
+	//   }
+	//  }
+	// }  
 
 	// Triggers
 	edm::Handle<edm::TriggerResults>   triggerResultsHandle_;
@@ -418,7 +438,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 	rho = *rho_handle;
 
 	// PileUp info for mc
-	mcPUinfo = -999;
+	mcPUtrue = -999;
 	if (mIsMCarlo)
 	{
 		edm::Handle<std::vector <PileupSummaryInfo> > PupInfo;
@@ -427,7 +447,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 		for (ipu = PupInfo->begin(); ipu != PupInfo->end(); ++ipu) 
 		{
 			if ( ipu->getBunchCrossing() != 0 ) continue; // storing detailed PU info only for BX=0
-			mcPUinfo = ipu->getTrueNumInteractions();
+			mcPUtrue = ipu->getTrueNumInteractions();
 		}
 	}
 
@@ -474,7 +494,6 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 		ngen = gen_index;
 	}
 
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////  
 	// Secondary Vertex Info
 	edm::Handle<reco::SecondaryVertexTagInfoCollection> svTagInfosHandle;
 	event_obj.getByLabel(secondaryVertexTagInfos_, svTagInfosHandle);
@@ -482,13 +501,11 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 	const reco::SecondaryVertexTagInfoCollection & svTagInfoColl = *(svTagInfosHandle.product());
 	// counter of number of secondary vertex in the event
 	int nSVinEvent_index = 0; 
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////  
-	// print the info
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////  
+        //if (verbose)
+	// {
 	//    for(reco::SecondaryVertexTagInfoCollection::const_iterator iter = svTagInfoColl.begin(); iter != svTagInfoColl.end(); ++iter) 
 	//    {
 	//      // if there are reconstructed vertices in this jet
-	//      nSVertex = iter->nVertices();
 	//      cout << " a jet with   pt = " << iter->jet()->pt() << " eta = " << iter->jet()->eta() << " phi = " << iter->jet()->phi() << '\n';       
 	//      cout << " contains " << iter->nVertices() << " secondary vertices " << endl;
 	//      if(iter->nVertices() > 0 )
@@ -506,7 +523,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 	//         }
 	//       }
 	//    }
-	//    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
+	// }    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
 
 
 
@@ -514,15 +531,15 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
 	edm::ESHandle<TransientTrackBuilder> builder;
 	iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", builder);
 
-
-	// Vertex Info
-	Handle<reco::VertexCollection> recVtxs;
-	event_obj.getByLabel(mOfflineVertices, recVtxs);
-	nPVinEvent = recVtxs->size(); 
-    // use first pv of the collection
-    //   Vertex dummy;
-    //   const Vertex *pv = &dummy
+    // Vertex Info
+    Handle<reco::VertexCollection> recVtxs;
+    event_obj.getByLabel(mOfflineVertices, recVtxs);
+    nPVinEvent = recVtxs->size(); 
     const reco::Vertex *pv;
+    // we always use the first vertex (at the moment)
+    pv = &*recVtxs->begin();
+    //if (verbose) cout << " pv vertex position = " << RecoVertex::convertPos(pv->position()).mag() << endl;
+    //cout << " pv = &*recVtxs[0]->position() " << RecoVertex::convertPos(pv->position()).mag() << endl;
 
     // PF AK5 Jets
 
@@ -568,69 +585,137 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
     int ak5jet_orig_index =0;
 
 
-    //######################################################
-    // My AK5CaloJets reco::Jets
-    //######################################################
-         edm::Handle<edm::View<reco::Jet> > myJets;
-         event_obj.getByLabel(mCaloak5JetsName, myJets);
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////  
-      // print the info
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////
-//    std::cout <<      "---------------------------- mCaloak5JetsName -------------------" << std::endl; 
-//    for (unsigned index = 0; index < myJets -> size(); ++index)
-//     {
-//       edm::RefToBase<reco::Jet> jetRef = myJets->refAt(index);
-//    
-// 
-//       float disc = (*tagHandle_CSV)[myJets->refAt(index)];
-//       //float disc = (*tagHandle_JBP)[jetRef];
-//       cout << " disc_csv = " << disc<< endl; 
-//       cout << " pt = " << (*myJets)[index].pt() << "   eta = "  << (*myJets)[index].eta() <<  "   phi  " << (*myJets)[index].phi() << "  disc2 = " << disc<< endl; 
-//     }
-//    
-//    std::cout <<      "---------------------------- mCaloak5JetsName 2nd way ---------------------" << std::endl; 
-//    for( edm::View<reco::Jet>::const_iterator jet = myJets->begin(); jet != myJets->end(); ++jet )
-//     {
-//      cout << "  mCaloak5JetsName     pt = " << jet->pt() << "   eta = "  << jet->eta() <<  "   phi  " << jet->phi() << endl;
-//     }
-//    std::cout <<      "---------------------------------------------------------------------------" << std::endl; 
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //######################################################
+    // AK5CaloJets Colecction ( reco::Jets )
+    edm::Handle<edm::View<reco::Jet> > myJets;
+    event_obj.getByLabel(mCaloak5JetsName, myJets);
+    edm::View<reco::Jet> caloAK5Jet = *myJets;
+
+    // for debuging !!!!
+    /////////////////////////////////////////////////////////// 
+    /*int ncalo_i = 0; 
+    for (unsigned index = 0; index < myJets -> size(); ++index)
+    {
+     jetCalo_pt_preMatch [index] = (*myJets)[index].pt();
+     ncalo_i ++;  
+    }
+    nCalo = ncalo_i;
+    *////////////////////////////////////////////////////////////
 
 
-    //################################################################
-    // B-tagging selected tracks from TrackIPTagInfoCollection 
-    //################################################################
+    //if (verbose)
+    // {
+    //     std::cout <<      "---------------------------- mCaloak5JetsName -------------------" << std::endl; 
+    //     cout << "Calo: myJets -> size()  " << myJets -> size()<<endl;
+    //     for (unsigned index = 0; index < myJets -> size(); ++index)
+    //      {
+    //        edm::RefToBase<reco::Jet> jetRef = myJets->refAt(index);
+    //     
+    //  
+    //      float disc = (*tagHandle_CSV)[myJets->refAt(index)];
+    //        //float disc = (*tagHandle_JBP)[jetRef];
+    //      cout << " Calo disc_csv = " << disc<< endl; 
+    //      cout << " pt = " << (*myJets)[index].pt() << "   eta = "  << (*myJets)[index].eta() <<  "   phi  " << (*myJets)[index].phi() << "  disc2 = " << disc<< endl; 
+    //      }
+    //     std::cout <<      "---------------------------------------------------------------------------" << std::endl; 
+    //
+    //     std::cout <<      "---------------------------- mCaloak5JetsName 2nd way ---------------------" << std::endl; 
+    //     for( edm::View<reco::Jet>::const_iterator jet = myJets->begin(); jet != myJets->end(); ++jet )
+    //      {
+    //        cout << "  mCaloak5JetsName     pt = " << jet->pt() << "   eta = "  << jet->eta() <<  "   phi  " << jet->phi() << endl;
+    //      }
+    //     std::cout <<      "---------------------------------------------------------------------------" << std::endl; 
+    // }
+
+
+    // TrackIPTagInfoCollection 
      Handle<TrackIPTagInfoCollection> ipHandle;
      event_obj.getByLabel(m_ipassoc, ipHandle);
      const TrackIPTagInfoCollection & ip = *(ipHandle.product());
-     //index for the  track in the event
-     int goodtracks_inEvent_index = 0; 
-     //index for the B-tag(IPTagInfo) selected track in the event
-     int seltracksInEvent_index =0;
-     //################################################################
-
+    //if (verbose)
+    // {
+    // cout <<" ---------------------------- Jet Tag Info Collection -------------------" << endl;
+    // cout <<"Tag Info->size()  " << ip.size() << endl;
+    // TrackIPTagInfoCollection::const_iterator tagit = ip.begin();
+    // for(; tagit != ip.end(); tagit++)
+    //  {
+    //   cout << "  pt = "    << tagit->jet()->pt()  << endl;
+    //   cout << "  eta = : " << tagit->jet()->eta() << endl;
+    //   cout << "  phi =  "  << tagit->jet()->phi() << endl;
+    //   cout << "--------------------------------------------------------------------------- " << endl;  
+    //  }
+    // } 
+    //index for the  track in the event
+    int goodtracks_inEvent_index = 0; 
+    //index for the B-tag(IPTagInfo) selected track in the event
+    int seltracksInEvent_index =0;
+    
+    //########### debuging !!!! #####################################################
     float ak5CaloJet_IndexMatch [kMaxNjet]; // for debuging !!!!!
     float ak5CaloJet_dRminValue [kMaxNjet]; // for debuging !!!!!
     for (UInt_t kk = 0; kk<kMaxNjet; kk++) { ak5CaloJet_IndexMatch [kk] = -999; ak5CaloJet_dRminValue [kk] = -999; } // for debuging !!!!!
+    //################################################################################
+
+      // generated particles
+      nbQuarks = 0;
+      if (mIsMCarlo) {
+                      edm::Handle<reco::GenParticleCollection> genParticles;
+                      event_obj.getByLabel("genParticles", genParticles);
+                      
+                      // Index of the bQuark
+                      int bQuark_index = 0;
+
+                      // loop over generated particles
+                      for (size_t i = 0; i < genParticles->size(); ++i) 
+                       {
+                        const GenParticle & genIt = (*genParticles)[i];
+                        int ID = abs(genIt.pdgId());
+                        unsigned int nDaughters = genIt.numberOfDaughters();
+                        
+                        // b quarks from the end of parton showering and before hadronization 
+                        if (ID == 5)
+                         { 
+                           if ( nDaughters > 0 ) 
+                            {
+                             int nparton_daughters = 0;   
+                             for (unsigned int d=0; d<nDaughters; ++d) 
+                              {
+                                int daughterID = abs(genIt.daughter(d)->pdgId());
+                                if( (daughterID == 1 || daughterID == 2 || daughterID == 3 || daughterID == 4 || daughterID == 5 || daughterID == 6 || daughterID == 21))
+                                 nparton_daughters++;
+                              }         
+                             // only b quarks not decaying into any other quark
+                             if( nparton_daughters == 0 ) 
+                              {
+                               bQuark_pt     [bQuark_index] = genIt.p4().pt();
+                               bQuark_eta    [bQuark_index] = genIt.p4().eta();
+                               bQuark_phi    [bQuark_index] = genIt.p4().phi();
+                               bQuark_pdgID  [bQuark_index] = genIt.pdgId();
+                               bQuark_status [bQuark_index] = genIt.status();
+                               bQuark_index++;
+                              }
+                            }   
+		          }
+                        }
+                      // Number of b quarks in this event
+		      nbQuarks = bQuark_index;
+	            }   
+
 
     for (auto i_ak5jet_orig = ak5_handle->begin(); i_ak5jet_orig != ak5_handle->end(); ++i_ak5jet_orig) {
         
-        /////////////////////////////////////////////////////////////////////////////////////////////
-        // Para chequear la correccion 
-        /////////////////////////////////////////////////////////////////////////////////////////////
-      /*  printf( "\nmi jet sin corregir %i\n", njetNoCORR);
-        printf("  pt = %f\n",                           i_ak5jet_orig->pt());
-        printf("  eta = %f\n",                           i_ak5jet_orig->eta());
-        printf("  phi = %f\n",                           i_ak5jet_orig->phi());
-        printf("  chargedHadronEnergyFraction  = %f\n", i_ak5jet_orig->chargedHadronEnergyFraction());
-        printf("  muonEnergyFraction  = %f\n",          i_ak5jet_orig->muonEnergyFraction());
-        printf("  neutralHadronMultiplicity = %i\n",    i_ak5jet_orig->neutralHadronMultiplicity());
-        printf("  chargedHadronMultiplicity = %i\n",    i_ak5jet_orig->chargedHadronMultiplicity());
-        printf("  chargedMultiplicity       = %i\n",    i_ak5jet_orig->chargedMultiplicity());
-        printf("  neutralMultiplicity       = %i\n",    i_ak5jet_orig->chargedHadronMultiplicity());
-       */ 
-        ////////////////////////////////////////////////////////////////////////////////////////////
+        //if (verbose)
+        // {
+        //  printf( "\nmy jet without energy corrections %i\n", njetNoCORR);
+        //  printf("  pt = %f\n",                            i_ak5jet_orig->pt());
+        //  printf("  eta = %f\n",                           i_ak5jet_orig->eta());
+        //  printf("  phi = %f\n",                           i_ak5jet_orig->phi());
+        //  printf("  chargedHadronEnergyFraction  = %f\n",  i_ak5jet_orig->chargedHadronEnergyFraction());
+        //  printf("  muonEnergyFraction  = %f\n",           i_ak5jet_orig->muonEnergyFraction());
+        //  printf("  neutralHadronMultiplicity = %i\n",     i_ak5jet_orig->neutralHadronMultiplicity());
+        //  printf("  chargedHadronMultiplicity = %i\n",     i_ak5jet_orig->chargedHadronMultiplicity());
+        //  printf("  chargedMultiplicity       = %i\n",     i_ak5jet_orig->chargedMultiplicity());
+        //  printf("  neutralMultiplicity       = %i\n",     i_ak5jet_orig->chargedHadronMultiplicity());
+        // }
 
         // take jet energy correction and get corrected pT
         jec = corrector_ak5->correction(*i_ak5jet_orig, event_obj, iSetup);
@@ -645,7 +730,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
      }
    
     //cout << "the number of NON corrected PF Jets in the event is: " << njetNoCORR << endl; 
-    int njetCORR =0;
+    //int njetCORR =0;
 
 
     // Iterate over the jets (sorted in pT) of the event
@@ -661,22 +746,21 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         // pointer for further use
         const PFJet* i_ak5jet = &corjet;
 
+        //if (verbose)
+        // {
+        //  printf( "\nmy jet without energy corrections %i\n", njetNoCORR);
+        //  printf("\nmi jet  corregido %i\n", njetCORR);
+        //  printf("  pt = %f\n",i_ak5jet->pt());
+        //  printf("  eta = %f\n",i_ak5jet->eta());
+        //  printf("  phi = %f\n",i_ak5jet->phi());
+        //  printf("  chargedHadronEnergyFraction  = %f\n", i_ak5jet->chargedHadronEnergyFraction());
+        //  printf("  muonEnergyFraction  = %f\n",          i_ak5jet->muonEnergyFraction());
+        //  printf("  neutralHadronMultiplicity = %i\n",    i_ak5jet->neutralHadronMultiplicity());
+        //  printf("  chargedHadronMultiplicity = %i\n",    i_ak5jet->chargedHadronMultiplicity());
+        //  printf("  chargedMultiplicity       = %i\n",    i_ak5jet->chargedMultiplicity());
+        //  printf("  neutralMultiplicity       = %i\n",    i_ak5jet->chargedHadronMultiplicity());
+        // } njetCORR ++;
 
-        /////////////////////////////////////////////////////////////////////////////////////////////
-        // Para chequear la correccion 
-        /////////////////////////////////////////////////////////////////////////////////////////////
-        /*printf("\nmi jet  corregido %i\n", njetCORR);
-        printf("  pt = %f\n",i_ak5jet->pt());
-        printf("  eta = %f\n",i_ak5jet->eta());
-        printf("  phi = %f\n",i_ak5jet->phi());
-        printf("  chargedHadronEnergyFraction  = %f\n", i_ak5jet->chargedHadronEnergyFraction());
-        printf("  muonEnergyFraction  = %f\n",          i_ak5jet->muonEnergyFraction());
-        printf("  neutralHadronMultiplicity = %i\n",    i_ak5jet->neutralHadronMultiplicity());
-        printf("  chargedHadronMultiplicity = %i\n",    i_ak5jet->chargedHadronMultiplicity());
-        printf("  chargedMultiplicity       = %i\n",    i_ak5jet->chargedMultiplicity());
-        printf("  neutralMultiplicity       = %i\n",    i_ak5jet->chargedHadronMultiplicity());
-        */njetCORR ++;
-        /////////////////////////////////////////////////////////////////////////////////////////////
  
         // Skip the current iteration if jet is not selected
         if (fabs(i_ak5jet->y()) > mMaxY || 
@@ -703,7 +787,6 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         //  if (abs(it->first-(-1000 * corjet.pt())) < 1) cout <<"    ------------------------------------" << endl; 
         //  cout << "  " << endl; 
         // }
-
         //// jet index in the original collection
         //int indexKey = -1000 * corjet.pt();
         //int jetRefIndex = ak5_handle_index.at(indexKey);
@@ -717,83 +800,11 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         float sumTrkPt(0.0), sumTrkPtBeta(0.0),sumTrkPtBetaStar(0.0);
         beta[ak5_index] = 0.0;
         bstar[ak5_index] = 0.0;
-     
-       // to remove:
-       // ::::::::::::::
-       // tracks_inJet[ak5_index] = 0; 
-       // tracks_inJet[ak5_index] = tracks.size()
-       // int goodtracks_inJet = 0; 
-       // goodtracks_inJet[ak5_index] = 0; 
-       // ::::::::::::::
-
 
         // Loop over tracks of the jet
-        //cout << " -------------------------- No selected tracks --------------------------------" << endl;  
         for(auto i_trk = tracks.begin(); i_trk != tracks.end(); i_trk++) {
-          
-             
-            //bool goodtracks = false; 
-            //bool plot_tracknrPixelHits_sel = false;
-            //bool plot_trackPt_sel = false;
-            //bool plot_distToJetAxis_sel = false;
 
             if (recVtxs->size() == 0) break;
-            //cout << "The track number " << tracks_inEvent_index << " in jet number  " << ak5_index << "  has : " << endl; 
-
-            //cout << "  pt = " << (*i_trk)->pt() << endl;              
-            //cout << "  normalized chi2 = " << (*i_trk)->normalizedChi2()<< endl;              
-            //cout << "  numberOfValidPixelHits = " << (*i_trk)->hitPattern().numberOfValidPixelHits() << endl;
-            //cout << "  numberOfValidTrackerHits = "   << (*i_trk)->hitPattern().numberOfValidTrackerHits() << endl;    
-            //tracks_nValidTrackerHits[tracks_inEvent_index] = (*i_trk)->hitPattern().numberOfValidTrackerHits();
-            //tracks_chi2[tracks_inEvent_index] = (*i_trk)->normalizedChi2();          
-   
-            float tracks_chi2 = -999;
-            tracks_chi2 = (*i_trk)->normalizedChi2();
-            int tracks_nValidTrackerHits = -999;
-            tracks_nValidTrackerHits =  (*i_trk)->hitPattern().numberOfValidTrackerHits();
-
-
-            //Extract the IP Info
-            // we always use the first vertex (at the moment)
-            pv = &*recVtxs->begin();
-            //cout << "  transverse impact parameter 2d (xy) = " << (*i_trk)->dxy(pv->position()) << endl; 
-            //cout << "  longitudinal impact parameter (z)   = " << (*i_trk)->dz(pv->position()) << endl; 
-            //tracks_IPz [tracks_inEvent_index] = (*i_trk)->dz(pv->position());
-            float tracks_IPz = -999; 
-            tracks_IPz = (*i_trk)->dz(pv->position()); 
-
-            //TrackIPTagInfo::TrackIPData trackIP; 
-            const reco::TransientTrack transientTrack = builder->build(*i_trk); 
-            const GlobalVector direction(i_ak5jet->px(), i_ak5jet->py(), i_ak5jet->pz()); //!!!!!!!
-            Double_t distanceToJetAxis =  IPTools::jetTrackDistance(transientTrack, direction, *pv).second.value();
-            //cout << "  distance to the jet = " << distanceToJetAxis << endl;
-           
-            Double_t IP2d = -999;
-            bool ipPass = IPTools::signedTransverseImpactParameter(transientTrack, direction, *pv).first;
-            if (ipPass) 
-             {
-              IP2d = IPTools::signedTransverseImpactParameter(transientTrack, direction, *pv).second.value();
-              //cout << "  if (ip2d) signedimpactparameter = " << IP2d <<endl;       
-              //tracks_IP2D [tracks_inEvent_index] = IP2d;
-             }
-            Double_t decayLength= -999;
-            TrajectoryStateOnSurface closest = IPTools::closestApproachToJet(transientTrack.impactPointState(), *pv, direction,transientTrack.field());
-            if (closest.isValid()) 
-             {
-              decayLength = (closest.globalPosition() - RecoVertex::convertPos(pv->position())).mag();
-              //cout << "  decay lenght = " << decayLength << endl;
-              //tracks_decayLength[tracks_inEvent_index] = decayLength; 
-             }
- 
-            // set the ordinary tracks cuts
-            if (tracks_nValidTrackerHits >=8 && tracks_chi2 <5 && fabs(tracks_IPz) <17 && fabs(IP2d) <0.2 && decayLength <5)
-             { 
-              goodtracks_jetIndex [goodtracks_inEvent_index] = ak5_index;
-              goodtracks_nValidPixelHits[goodtracks_inEvent_index] = (*i_trk)->hitPattern().numberOfValidPixelHits();
-              goodtracks_pt[goodtracks_inEvent_index] = (*i_trk)->pt();
-              goodtracks_distToJetAxis[goodtracks_inEvent_index] = distanceToJetAxis;
-              goodtracks_inEvent_index ++; 
-             }
            // Sum pT
             sumTrkPt += (*i_trk)->pt();
             
@@ -830,7 +841,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
             }
         }
         
-    
+ 
         if (sumTrkPt > 0) 
           {
             beta[ak5_index]   = sumTrkPtBeta/sumTrkPt;
@@ -877,7 +888,7 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         chemfJet[ak5_index] = i_ak5jet->chargedEmEnergyFraction() * jec;
         chmJet[ak5_index]   = i_ak5jet->chargedMultiplicity (); 
         // Loose WP
-       bool looseID = i_ak5jet->pt() > 10.0 && fabs(i_ak5jet->eta()) < 2.4 && chf[ak5_index] > 0.0 &&  nhfJet[ak5_index] < 1.00 && chmJet[ak5_index] > 0.0 && nemfJet[ak5_index] < 1.00 &&  chemfJet[ak5_index] <1.00 && npr > 1; // Caroline cut
+       bool looseID = i_ak5jet->pt() > 10.0 && fabs(i_ak5jet->eta()) < 2.4 && chf[ak5_index] > 0.0 && nhfJet[ak5_index] < 1.00 && chmJet[ak5_index] > 0.0 && nemfJet[ak5_index] < 1.00 &&  chemfJet[ak5_index] <1.00 && npr > 1; // Caroline cut
         //bool looseID = i_ak5jet->pt() > 10.0 && fabs(i_ak5jet->eta()) < 2.4 && chf[ak5_index] > 0.0 &&  nhfJet[ak5_index] < 0.99 && chmJet[ak5_index] > 0.0 && nemfJet[ak5_index] < 0.99 &&  chemfJet[ak5_index] < 0.99 && npr > 1; //Original cut
         jet_looseID[ak5_index] = looseID; 
         
@@ -919,8 +930,11 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
    //  Flavour Info only available for mc
    // ##################################################################################################
     HadronF[ak5_index] = -999; PartonF[ak5_index] = -999; nBHadrons [ak5_index] = -999;
+    
     if (mIsMCarlo){
-      
+     
+
+      // flavour information 
       //edm::Handle<reco::JetFlavourInfoMatchingCollection> theJetFlavourInfos;
       event_obj.getByLabel(mJetFlavourInfos, theJetFlavourInfos );
      
@@ -987,7 +1001,6 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         }
                   
      }
-   // ##################################################################################################
     //################################################################
     // B-discriminants from JetTagCollection
     //  negative vaules means not enough information 
@@ -1012,11 +1025,15 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
        }
       }
       dRmin_matching[ak5_index] = sqrt(dR2min);
-      if (sqrt(dR2min) < 0.3) 
+      
+     if (sqrt(dR2min) < 0.3) 
       {
+      //jetCalo_pt_postMatch[ak5_index] = (*myJets)[indexmin].pt(); //for debugging!!!
+      cout <<"---  " << endl; 
       cout <<" Matching between : "<<endl; // for debuging !!!!! 
       cout <<" PFJet  " << ak5_index <<endl; // for debuging !!!!!
       cout <<" CaloJet  " << indexmin << endl; // for debuging !!!!!  
+      cout <<"---  " << endl; 
       ak5CaloJet_IndexMatch[ak5_index] = indexmin; // for debuging !!!!!
       ak5CaloJet_dRminValue[ak5_index] = sqrt(dR2min); //for debuging !!!!!
       //cout <<"####################### Matching for bDiscriminators #######################"<<endl;  // for debuging !!!!!
@@ -1024,31 +1041,27 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
       //cout <<"###########################################################################"<<endl;  // for debuging !!!!!
        //cout <<" PFindex " << ak5_index << "  caloJet " << indexmin << endl; 
        jet_CSV[ak5_index]  =  (*tagHandle_CSV)[myJets->refAt(indexmin)];
-       //cout << "Jet_CSV disc =  " << jet_CSV[ak5_index]<<endl;; 
+       if (jet_CSV[ak5_index] != (*tagHandle_CSV)[indexmin].second ) cout << " (*tagHandle_CSV)[indexmin].second = " << (*tagHandle_CSV)[indexmin].second << endl; //for debuging !!!
        jet_JBP[ak5_index]  =  (*tagHandle_JBP)[myJets->refAt(indexmin)];
+       if (jet_JBP[ak5_index] != (*tagHandle_JBP)[indexmin].second ) cout << " (*tagHandle_JBP)[indexmin].second = " << (*tagHandle_JBP)[indexmin].second << endl; //for debuging !!! 
        jet_JP[ak5_index]   =  (*tagHandle_JP)[myJets->refAt(indexmin)];
-       //cout << "Jet_JP disc =  " << jet_JP[ak5_index]<<endl;
+       if (jet_JP[ak5_index] != (*tagHandle_JP)[indexmin].second ) cout << " (*tagHandle_JP)[indexmin].second = " << (*tagHandle_JP)[indexmin].second << endl; //for debuging !!! 
        jet_TCHP[ak5_index] =  (*tagHandle_TCHP)[myJets->refAt(indexmin)];
-       //cout << "Jet_TCHP disc =  " << jet_TCHP[ak5_index]<<endl; 
+       if (jet_TCHP[ak5_index] != (*tagHandle_TCHP)[indexmin].second ) cout << " (*tagHandle_TCHP)[indexmin].second = " << (*tagHandle_TCHP)[indexmin].second << endl; //for debuging !!! 
        jet_TCHE[ak5_index] =  (*tagHandle_TCHE)[myJets->refAt(indexmin)];
-       //cout << "Jet_TCHE disc =  " << jet_TCHE[ak5_index] << endl; 
+       if (jet_TCHE[ak5_index] != (*tagHandle_TCHE)[indexmin].second ) cout << " (*tagHandle_TCHE)[indexmin].second = " << (*tagHandle_TCHE)[indexmin].second << endl; //for debuging !!! 
       } else 
         {
-         cout <<"  " << endl; 
+         cout <<"---  " << endl; 
          cout <<" WarningTAGGER !! There is not matching between ak5CaloJets and the current ak5PFJets "<< ak5_index << "  => No b-tagging info available for the original PFJet " << endl;
          cout <<"                  best matching:   PFJet  " << ak5_index << " ; " << " CaloJet  "<< indexmin <<"; with  sqrt(dR2min) =  " << sqrt(dR2min) <<endl; 
-         cout <<"  " << endl; 
+         cout <<"---  " << endl; 
         }  
 
-    //################################################################
-    // B-tagging selected tracks from TrackIPTagInfoCollection 
-    //################################################################
-     /*cout << " JETS FROM TrackIPTagInfoCollection " << endl; 
-     cout << " " << endl; 
-     cout << "Found " << ip.size() << " TagInfo" << endl;
-     cout << " " << endl; 
-     */
-     seltracksInJet[ak5_index] = 99999999; // 9e8
+     //################################################################
+     // Tracks info 
+     //################################################################
+     // Matching between TrackIPTagInfoCollection jets and the current PFJet 
      unsigned tagindex_test = 0; 
      float dR2min_test = 999; 
      unsigned indexmin_test = 999;
@@ -1063,60 +1076,114 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
         dR2min_test = dR2_test;
         indexmin_test = tagindex_test;
        }
-    /*cout << "TagInfoCollection Jet number: "<< TagInfoJet_index << endl;  
-      cout << "  pt = "  << it->jet()->pt() << endl;
-      cout << "  eta = : " << it->jet()->eta() << endl;
-      cout << "  phi =  " << it->jet()->phi() << endl;
-      cout << " " << endl;  
-      */
+      
       tagindex_test ++; 
      }
+     seltracksInJet[ak5_index] = -999; // not matching 
      if (sqrt(dR2min_test) < 0.3) 
       { 
-       tagindexmin = indexmin_test; 
-       TrackRefVector selTracks = (*ipHandle)[tagindexmin].selectedTracks();
-       int n=selTracks.size();
-       seltracksInJet[ak5_index] = n;
-       if (n > 0)
+       tagindexmin = indexmin_test;
+       const reco::TrackRefVector selTracks = (*ipHandle)[tagindexmin].selectedTracks();
+       const reco::TrackRefVector genelTracks = (*ipHandle)[tagindexmin].tracks();
+       int seltrackSize   = selTracks.size(); cout << " * selected tracks = " << seltrackSize << endl; 
+       int geneltrackSize = genelTracks.size(); cout << " * general tracks = " << geneltrackSize << endl; 
+       // loop over selected tracks
+       if (seltrackSize > 0)
         {
-         //cout << " -------------------------- Selected tracks --------------------" << endl; 
-         for(int j=0;j< n;j++)
+         seltracksInJet[ak5_index] = 0; // init with 0 selected tracks
+         for(int sel=0; sel< seltrackSize; sel++)
          {
-          jetSeltrackIndex [seltracksInEvent_index] = ak5_index;
-          //cout << " track number in the event  " << seltracksInEvent_index << " associated to the selected jet number  " << jetSeltrackIndex [seltracksInEvent_index] << " has : " << endl;  
-          //cout << " pt = " << selTracks[j]->pt() << "\n";
-          seltrack_pt [seltracksInEvent_index] = selTracks[j]->pt();
-          // Extract the Impact paramenter info for this track
-          TrackIPTagInfo::TrackIPData data = (*ipHandle)[tagindexmin].impactParameterData()[j];  
-          // Hit pattern of the track
-          const reco::HitPattern& p = selTracks[j]->hitPattern();
-          //const reco::HitPattern& p = (*i_trk)->hitPattern();
-          // Loop over the hits of the track
-          //for (int i=0; i<p.numberOfHits(); i++) {
-          seltrack_nValidPixelHits[seltracksInEvent_index] = p.numberOfValidPixelHits() ;
-          seltrack_nValidTrackerHits [seltracksInEvent_index] = p.numberOfValidTrackerHits() ;
-          //}
-          //cout << " numberOfValidPixelHits = "  << p.numberOfValidPixelHits() << "\n";    
-          //cout << " numberOfValidTrackerHits = " << p.numberOfValidTrackerHits() << "\n";    
-          //cout << " ip3d.value = " << data.ip3d.value() << "\n";
-          //cout << " ip3d.significance = " << data.ip3d.significance() << "\n";
-          //cout << " distanceToJetAxis.value = " << data.distanceToJetAxis.value() << "\n";
-          //cout << " distanceToJetAxis.significance = " << data.distanceToJetAxis.significance() << "\n";
-          // cout << data.distanceToGhostTrack.value() << "\t";
-          // cout << data.distanceToGhostTrack.significance() << "\t";
-          // cout << data.closestToJetAxis << "\t";
-          // cout << (data.closestToJetAxis - pv).mag() << "\t";
-          // cout << data.closestToGhostTrack << "\t";
-          // cout << (data.closestToGhostTrack - pv).mag() << "\t";
-          //cout <<  " ip2d.value = " << data.ip2d.value() << "\n";
-          //cout <<  " ip2d.significance = " << data.ip2d.significance() <<  endl;     
-          seltrack_IP2D [seltracksInEvent_index] = data.ip2d.value();  
-          seltrack_IP2Dsig [seltracksInEvent_index] = data.ip2d.significance();  
-          seltrack_IP3D [seltracksInEvent_index] = data.ip3d.value();  
-          seltrack_IP3Dsig [seltracksInEvent_index] = data.ip3d.significance();
-          seltrack_distToJetAxis [seltracksInEvent_index] = data.distanceToJetAxis.value();  
-          //track_IPz [trackPV_index] = ???;
-          seltracksInEvent_index ++; 
+          
+          reco::Track seltrack = *(selTracks[sel]);
+          
+          // selection variables
+          float seltrck_pt = seltrack.pt();
+          //float seltrck_pt = selTracks[sel]->pt();
+          float seltrck_normChi2 = seltrack.normalizedChi2();          
+          //float seltrck_normChi2 = selTracks[sel]->normalizedChi2();          
+          float seltrck_IPz = seltrack.dz(pv->position());
+          //float seltrck_IPz = selTracks[sel]->dz(pv->position());
+          int seltrck_nrOfValidHits = seltrack.numberOfValidHits();
+          //int seltrck_nrOfValidHits = selTracks[sel]->numberOfValidHits();
+          
+          const reco::HitPattern& p = seltrack.hitPattern();
+          //const reco::HitPattern& p = selTracks[sel]->hitPattern();
+          int seltrck_nrOfValidPixHits = p.numberOfValidPixelHits();
+          
+          TrackIPTagInfo::TrackIPData data = (*ipHandle)[tagindexmin].impactParameterData()[sel];  
+          float seltrck_IP2D = data.ip2d.value();
+       
+          TransientTrack transientTrack = builder->build(seltrack);
+          //TransientTrack transientTrack = builder->build(selTracks[sel]);
+          GlobalVector direction((caloAK5Jet.at(tagindexmin)).px(), (caloAK5Jet.at(tagindexmin)).py(), (caloAK5Jet.at(tagindexmin)).pz()); //!!!!!!!
+          Double_t seltrck_distJetAxis = IPTools::jetTrackDistance(transientTrack, direction, *pv).second.value();
+          Double_t seltrck_decayLength= -999;
+          TrajectoryStateOnSurface closest = IPTools::closestApproachToJet(transientTrack.impactPointState(), *pv, direction,transientTrack.field());
+          if (closest.isValid()) seltrck_decayLength = (closest.globalPosition() - RecoVertex::convertPos(pv->position())).mag();
+         
+          // Check the selection by hand
+          if (seltrck_pt >1 && seltrck_normChi2 <5 && fabs(seltrck_IPz) <17 && seltrck_nrOfValidHits >=8 && seltrck_nrOfValidPixHits >=2 && fabs(seltrck_IP2D) <0.2 && fabs(seltrck_distJetAxis) <0.07 && seltrck_decayLength < 5)
+          {
+           // save the jet index
+           jetSeltrackIndex [seltracksInEvent_index] = ak5_index;
+           // save the variables 
+           seltrack_IP3D [seltracksInEvent_index] = data.ip3d.value();  
+           seltrack_IP3Dsig [seltracksInEvent_index] = data.ip3d.significance();
+           seltracksInJet[ak5_index] =+ 1;  
+           seltracksInEvent_index ++; 
+          }
+         }
+        }
+       // loop over selected tracks
+       if (geneltrackSize > 0)
+        {
+         for(int genl=0; genl< geneltrackSize; genl++)
+         {
+         
+          reco::Track geneltrack = *(genelTracks[genl]);
+       
+          // selection variables
+          float tracks_chi2 = geneltrack.normalizedChi2();
+          //float tracks_chi2 = genelTracks[genl]->normalizedChi2();
+          float tracks_IPz = geneltrack.dz(pv->position()); 
+          //float tracks_IPz = genelTracks[genl]->dz(pv->position()); 
+          
+          //const reco::HitPattern& p = selTracks[sel]->hitPattern();
+          float tracks_nrOfValidHits = geneltrack.hitPattern().numberOfValidHits();
+          //float tracks_nrOfValidHits = genelTracks[genl]->hitPattern().numberOfValidHits();
+          
+          const reco::TransientTrack transientTrack = builder->build(geneltrack); 
+          //const reco::TransientTrack transientTrack = builder->build(genelTracks[genl]); 
+          ////const GlobalVector direction(i_ak5jet->px(), i_ak5jet->py(), i_ak5jet->pz()); //!!!!!!!
+          const GlobalVector direction((caloAK5Jet.at(tagindexmin)).px(), (caloAK5Jet.at(tagindexmin)).py(), (caloAK5Jet.at(tagindexmin)).pz()); //!!!!!!!
+          Double_t tracks_distanceToJetAxis =  IPTools::jetTrackDistance(transientTrack, direction, *pv).second.value();
+          
+          Double_t tracks_decayLength= -999;
+          TrajectoryStateOnSurface closest = IPTools::closestApproachToJet(transientTrack.impactPointState(), *pv, direction,transientTrack.field());
+          if (closest.isValid()) tracks_decayLength = (closest.globalPosition() - RecoVertex::convertPos(pv->position())).mag();
+          
+          Measurement1D ip2d = IPTools::signedTransverseImpactParameter(transientTrack, direction, *pv).second; 
+          Double_t tracks_IP2d = ip2d.value();
+          //  Double_t IP2d = -999;
+          //  bool ipPass = IPTools::signedTransverseImpactParameter(transientTrack, direction, *pv).first;
+          //  if (ipPass) 
+          //   {
+          //    IP2d = IPTools::signedTransverseImpactParameter(transientTrack, direction, *pv).second.value();
+          //    //cout << "  if (ip2d) signedimpactparameter = " << IP2d <<endl;       
+          //    //tracks_IP2D [tracks_inEvent_index] = IP2d;
+          //   }
+ 
+          // set the ordinary tracks cuts
+          if (tracks_nrOfValidHits >=8 && tracks_chi2 <5 && fabs(tracks_IPz) <17 && fabs(tracks_IP2d) <0.2 && tracks_decayLength <5)
+           { 
+            goodtracks_jetIndex [goodtracks_inEvent_index] = ak5_index;
+            goodtracks_nValidPixelHits[goodtracks_inEvent_index] = geneltrack.hitPattern().numberOfValidPixelHits();
+            //goodtracks_nValidPixelHits[goodtracks_inEvent_index] = genelTracks[genl]->hitPattern().numberOfValidPixelHits();
+            goodtracks_pt[goodtracks_inEvent_index] = genelTracks[genl]->pt();
+            cout << "    goodtracks_pt = " << goodtracks_pt[goodtracks_inEvent_index] <<endl; 
+            goodtracks_distToJetAxis[goodtracks_inEvent_index] = tracks_distanceToJetAxis;
+            goodtracks_inEvent_index ++; 
+           }
          }
         }
        if (sqrt(dR2min) < 0.3 && tagindexmin != indexmin) 
@@ -1144,7 +1211,10 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
      unsigned svindexmin_test = 999;
      float svindexmin = 999;
 
-     nSVinJet[ak5_index] = 99999999;  // loop over the SecondaryVertexTagInfoCollection and match the ak5CaloJets with at least one secondary vertex
+     nSVinJet[ak5_index] = -999;  // loop over the SecondaryVertexTagInfoCollection and match the ak5CaloJets with at least one secondary vertex
+     svmass_1stVtx[ak5_index] = -999;
+     flight3DSignificance_oldCode[nSVinEvent_index] = -999; 
+
      for(reco::SecondaryVertexTagInfoCollection::const_iterator iter = svTagInfoColl.begin(); iter != svTagInfoColl.end(); ++iter) 
      {
       // if(iter->nVertices() > 0 )
@@ -1169,10 +1239,21 @@ void OpenDataTreeProducerOptimized::analyze(edm::Event const &event_obj,
       //cout<< "the selected jet number " << ak5_index << " with   pt = " << jet_pt[ak5_index] << "  eta = " << jet_eta[ak5_index] << "  phi = " <<jet_phi[ak5_index]<< endl; 
       //cout<< "that matches with the calo jet number " << svindexmin << " with  pt = " << (*svTagInfosHandle)[svindexmin].jet() ->pt() << " eta = " << (*svTagInfosHandle)[svindexmin].jet() ->eta() << "  phi = " << (*svTagInfosHandle)[svindexmin].jet() ->phi() <<endl;  
       //cout<<" has " << nSVinJet[ak5_index]  << " secondary vertices " << endl;   
+      if (nVertices > 0) 
+       {
+        float flight3D = (*svTagInfosHandle)[svindexmin].flightDistance(0).value();
+        float flight3D_err = (*svTagInfosHandle)[svindexmin].flightDistance(0).error();
+        if (flight3D_err != 0) flight3DSignificance_oldCode[nSVinEvent_index] = flight3D/flight3D_err; 
+        svmass_1stVtx[ak5_index] = (*svTagInfosHandle)[svindexmin].secondaryVertex(0).p4().mass(); 
+       }
+           
+
       for (unsigned int vtx = 0; vtx < nVertices; ++vtx)
          {
           jetSVIndex[nSVinEvent_index] = ak5_index;  
+
           flight3DSignificance[nSVinEvent_index] = (*svTagInfosHandle)[svindexmin].flightDistance(vtx,false).significance();
+
           const Vertex &vertex = (*svTagInfosHandle)[svindexmin].secondaryVertex(vtx); 
           svmass[nSVinEvent_index] = vertex.p4().mass(); 
          // std::cout<<"with" << endl;  
