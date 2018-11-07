@@ -158,9 +158,9 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     // Secondary Vertex
     ///////////////////////////
     UInt_t nSVinEvent;
-    Int_t  nSVinJet              [kMaxNjet];
-    Float_t flight3DSignificance_oldCode [kMaxNjet];
-    Float_t svmass_1stVtx [kMaxNjet];
+    Int_t  nSVinJet                     [kMaxNjet];
+    Float_t flight3DSignificance_1stVtx [kMaxNjet];
+    Float_t svmass_1stVtx               [kMaxNjet];
     Int_t  jetSVIndex            [kMaxNsv];  
     Float_t svmass               [kMaxNsv];
     Float_t flight3DSignificance [kMaxNsv];
@@ -225,7 +225,7 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     Float_t bQuark_pt     [kMaxNbQ];
     Float_t bQuark_eta    [kMaxNbQ];
     Float_t bQuark_phi    [kMaxNbQ];
-    Int_t bQuark_pdgID  [kMaxNbQ];
+    Float_t bQuark_pdgID  [kMaxNbQ];
     Int_t bQuark_status [kMaxNbQ];
     
 
@@ -234,7 +234,7 @@ class OpenDataTreeProducerOptimized : public edm::EDAnalyzer
     UInt_t lumi;
     ULong64_t event;
     // PileUp info
-    Int_t mcPUtrue;
+    Float_t mcPUtrue;
     // number of PV
     Int_t nPVinEvent;
    

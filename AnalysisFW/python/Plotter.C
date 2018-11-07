@@ -72,62 +72,88 @@ TLegend *myLegend ( )
 //     bin = nbins+1; overflow bin
 //
 //-----------------------------------------------------
-void MoveOverflows(TH1F* hist, Float_t xmin, Float_t xmax)
+void MoveOverflows(TH1F* hist, Float_t xmin, Float_t xmax, bool under, bool over)
 {
-  int nentries = hist->GetEntries();
   int nbins    = hist->GetNbinsX();
   
   TAxis* xaxis = (TAxis*)hist->GetXaxis();
   // Underflow
-  //---------------------------------------------------------------------------- 
-   if (xmin != -999)
-    {
+  //----------------------------------------------------------------------------
+  if (under)
+   { 
+    if (xmin != -999)
+     {
       Int_t   firstBin = -1;
       Float_t firstVal = 0;
       Float_t firstErr = 0;
       
       for (Int_t i=0; i<=nbins+1; i++)
 	{
-	  if (xaxis->GetBinLowEdge(i) < xmin)
+         Float_t lowEdge = xaxis->GetBinLowEdge(i);
+   
+         if (lowEdge < xmin)
+          {
+           // default value of Discriminants[njet], svmass_1stVtx[njet], and flight3DSignificance_1stVtx[njet] when there is not matching
+           if (lowEdge <= -999)
+            {
+             hist->SetBinContent(i, 0);
+             hist->SetBinError  (i, 0);
+            }
+           // when there is matching
+           if (lowEdge > -999) 
 	    {
 	      firstVal += hist->GetBinContent(i);
 	      firstErr += (hist->GetBinError(i)*hist->GetBinError(i));
 	      hist->SetBinContent(i, 0);
 	      hist->SetBinError  (i, 0);
 	    }
+          }
 	  else if (firstBin == -1)
 	    {
 	      firstVal += hist->GetBinContent(i);
 	      firstErr += (hist->GetBinError(i)*hist->GetBinError(i));
 	      firstBin = i;
 	    }
-	}
+         }
+       
 
       firstErr = sqrt(firstErr);
   
       hist->SetBinContent(firstBin, firstVal);
       hist->SetBinError  (firstBin, firstErr);
-    }
-
+     }
+   }
    // Overflow
    //----------------------------------------------------------------------------
-   if (xmax != -999)
+   if (over)
     {
-      Int_t   lastBin = -1;
-      Float_t lastVal = 0;
-      Float_t lastErr = 0;
+     if (xmax != -999)
+      {
+       Int_t   lastBin = -1;
+       Float_t lastVal = 0;
+       Float_t lastErr = 0;
       
-      for (Int_t i=nbins+1; i>=0; i--)
+       for (Int_t i=nbins+1; i>=0; i--)
 	{
 	  Float_t lowEdge = xaxis->GetBinLowEdge(i);
       
 	  if (lowEdge >= xmax)
-	    {
+           {
+            // default value of seltracksInJet[njet] nSVinJet[njet] when there is not matching
+            if (lowEdge >= 999999999) 
+             {
+              hist->SetBinContent(i, 0);
+              hist->SetBinError  (i, 0);
+             } 
+            // when there is matching
+            if (lowEdge < 999999999) 
+	     {
 	      lastVal += hist->GetBinContent(i);
 	      lastErr += (hist->GetBinError(i)*hist->GetBinError(i));
 	      hist->SetBinContent(i, 0);
 	      hist->SetBinError  (i, 0);
-	    }
+	     }
+           }
 	  else if (lastBin == -1)
 	    {
 	      lastVal += hist->GetBinContent(i);
@@ -136,12 +162,13 @@ void MoveOverflows(TH1F* hist, Float_t xmin, Float_t xmax)
 	    }
 	}
 
-      lastErr = sqrt(lastErr);
+        lastErr = sqrt(lastErr);
   
-      hist->SetBinContent(lastBin, lastVal);
-      hist->SetBinError  (lastBin, lastErr);
+       hist->SetBinContent(lastBin, lastVal);
+       hist->SetBinError  (lastBin, lastErr);
+      }
     }
- 
+ int nentries = hist->GetEntries();
  hist->SetEntries(nentries);
 
 } 
@@ -309,9 +336,9 @@ void Plotter(TString inFolder, TString outFolder)
   float efflumipb = 0.287; // (0.287/pb)  HlT_jet60v* of 2011 legacy runA 
   TString sefflumipb = 0.287;  
  
-  bool effLumiNorm  = true;
-  bool dataNorm  = false;
-  bool moveoverflow = true;
+  bool effLumiNorm  = false;
+  bool dataNorm  = true;
+  bool moveoverflow = false;
   
   bool setLinY = false; //massSV is a linear plot 
   bool adjustXlimits = false;
@@ -320,32 +347,31 @@ void Plotter(TString inFolder, TString outFolder)
   //bool UnityNorm = false; 
   
 // Number of variables to plot
-  const int nplot =18;
-  //const int nplot =20;
+  const int nplot =20;
 
   // Name of variables to plot
   TString vname [nplot] = { //"nPV_puRew"           ,  "nPV"                     ,
-                            "jet_pt"              ,  "jet_phi"                 ,  "jet_eta"           , 
+                            "jet_pt"              ,  "jet_phi"                 ,  "jet_eta"              , 
                             "seltrack_IP3Dsignif" ,  "seltrack_IP3D"           , 
-                            "nrSV"                ,  "flight3Dsignif"          ,  "massSV"            ,
-                            "jet_CSV"             ,  "jet_JBP"                 ,  "jet_JP"            , "jet_TCHP" , "jet_TCHE" ,
-                            "tracks_Pt"           ,  "tracks_distanceToJetAxis",  "tracks_nrPixelHits",            
+                            "jet_CSV"             ,  "jet_JBP"                 ,  "jet_JP"               , "jet_TCHP" , "jet_TCHE"      ,
+                            "tracks_Pt"           ,  "tracks_distanceToJetAxis",  "tracks_nrPixelHits"   ,            
+                            "nrSV"                ,  "flight3Dsignif"          ,  "flight3Dsignif_1stVtx",  "massSV"  , "massSV_1stVtx" ,
                             "avgTrackMultiplicity",  "dRmin_matching" };
 
   TString xname [nplot] = {//"#bf{nPV after PUreweigth}",   "#bf{nPV}"                   ,   
-                           "#bf{jet p_{T}}"           ,   "#bf{jet #phi}"              , "#bf{jet #eta}"         , 
+                           "#bf{jet p_{T}}"           ,   "#bf{jet #phi}"              , "#bf{jet #eta}"                     , 
                            "#bf{3D IP significance}"  ,   "#bf{3D IP}"                 , 
-                           "#bf{nr.of SV}"            ,   "#bf{3D flight significance}", "#bf{SV mass}"          ,  
-                           "#bf{CSV discriminator}"   ,   "#bf{JBP discriminator}"     , "#bf{JP discriminator}" , "#bf{TCHP discriminator}", "#bf{TCHE discriminator}",
-                           "#bf{track p_{T}}"         ,   "#bf{distance to jet axis}"  , "#bf{nr. of pixel hits}",
+                           "#bf{CSV discriminator}"   ,   "#bf{JBP discriminator}"     , "#bf{JP discriminator}"             , "#bf{TCHP discriminator}", "#bf{TCHE discriminator}",
+                           "#bf{track p_{T}}"         ,   "#bf{distance to jet axis}"  , "#bf{nr. of pixel hits}"            ,
+                           "#bf{nr.of SV}"            ,   "#bf{3D flight significance}", "#bf{3D flight significance 1stVtx}", "#bf{SV mass}"           ,  "#bf{SV mass 1stVtx}"   , 
                            "#bf{jet p_{T}}"           ,    "dRminak5(CalovsPF)"};
 
   TString units [nplot] = { //""            ,    ""          ,
                             "#bf{[GeV/c]}",    "#bf{[rad]}",          ""       ,        
                               ""          ,    "#bf{[cm]}" , 
-                              ""          ,       ""       ,     "#bf{[GeV/c]}",
-                              ""          ,       ""       ,          ""       ,    ""  ,   "" ,
+                              ""          ,       ""       ,          ""       ,          ""      ,        ""       ,
                             "#bf{[GeV/c]}",    "#bf{[cm]}" ,          ""       , 
+                              ""          ,       ""       ,     "#bf{[GeV/c]}",    "#bf{[GeV/c]}",   "#bf{[GeV/c]}",  "#bf{[GeV/c]}", 
                             "#bf{[GeV/c]}"        ""};
  
   // Name of saved MC histograms to plot from each file
@@ -452,10 +478,10 @@ void Plotter(TString inFolder, TString outFolder)
        if (myHistoMC[j]->GetMinimum()> 1.e-1 && myHistoMC[j]->GetMinimum() < myHistoData->GetMinimum()) ymin = myHistoMC[j]->GetMinimum();
        if (myHistoMC[j]->GetMaximum() > ymax) ymax = myHistoMC[j]->GetMaximum();
       }
-     if (setLinY) ymax = myHistoData->GetMaximum() + 100.;       
-     if (setLinY && vname[i] == "massSV") ymax = myHistoData->GetMaximum() + 5000.;      
-     if (setLinY && vname[i] == "avgTrackMultiplicity") { ymax = myHistoData->GetMaximum() + 10; ymin = 0;}  
-     setLinY = false;     
+     if (setLinY) ymax = myHistoData->GetMaximum() + 10000.;       
+     if (setLinY && vname[i] == "massSV") { ymax = myHistoData->GetMaximum() + 5000.; /*setLinY = false;*/}     
+     if (setLinY && vname[i] == "avgTrackMultiplicity") { ymax = myHistoData->GetMaximum() + 10; ymin = 0; /*setLinY = false;*/}  
+     //setLinY = false;     
      //Set the range user on the x axis
      int nxbins = myHistoData->GetNbinsX();
      float xmin = myHistoData->GetBinLowEdge(1); 
@@ -489,7 +515,7 @@ void Plotter(TString inFolder, TString outFolder)
      myHistoMC[2] -> SetFillColor(kBlue+2);
      myHistoMC[3] -> SetFillColor(kAzure+6);
     }
-     if (moveoverflow)
+     if (moveoverflow && (vname[i] != "avgTrackMultiplicity" || vname[i] != "dRmin_matching"))
      {
        MoveOverflows(myHistoData, xmin, xmax);     
        MoveOverflows(myHistoMC[0], xmin, xmax);     
@@ -606,9 +632,11 @@ void Plotter(TString inFolder, TString outFolder)
      currentCanvas->Modified();
      currentCanvas->Update();
      // Save the canvas
-     currentCanvas -> Print(outFolder+"/"+ vname[i] + ".png");
-     currentCanvas -> Print(outFolder+"/"+ vname[i] + ".jpg");
-     currentCanvas -> Print(outFolder+"/"+ vname[i] + ".pdf");
+     TString suffix = ""; 
+     if (setLinY) suffix = "_Lineal";
+     currentCanvas -> Print(outFolder+"/"+ vname[i] + suffix + ".png");
+     currentCanvas -> Print(outFolder+"/"+ vname[i] + suffix + ".jpg");
+     currentCanvas -> Print(outFolder+"/"+ vname[i] + suffix + ".pdf");
   }
 }     
 

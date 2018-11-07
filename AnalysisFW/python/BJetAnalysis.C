@@ -106,7 +106,7 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
                eventw = (mcweight)/ngen; //for mc -> mcweigth is the xs (pb)
                if (applyPUtrue) 
                {
-                int mcPUbin = dummy->FindBin(mcPUinfo);
+                int mcPUbin = dummy->FindBin(mcPUtrue);
                 eventw *= dummy->GetBinContent(mcPUbin);
                }      
              }
@@ -132,10 +132,10 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
   for (int j = 0; j < njet; j++)
   {
    // baseline selection
-   if (jet_pt[j] < 80 || jet_pt[j] > 470) continue;
-   //if (jet_pt[j] <= 60) continue;
-   if (fabs(jet_eta[j]) > 2.4) continue;
-   //if (jet_eta[j] > 2.4 || jet_eta[j] < -2.4) continue;
+   //if (jet_pt[j] < 80 || jet_pt[j] > 470) continue;
+   if (jet_pt[j] < 60) continue;
+   //if (fabs(jet_eta[j]) > 2.4) continue;
+   if (jet_eta[j] > 2.4 || jet_eta[j] < -2.4) continue;
    if (jet_looseID[j] == false) continue; // 
    //if (jet_tightID[j] == false) continue; // check with the loose 
 
@@ -193,7 +193,8 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
      // calculate the input of the selected-track-multiplicity per jet-pt histogram
      int ptbin = avgTrackMultiplicity[0]->FindBin(jet_pt[j]);
      njet_ptCounter[0][ptbin] += 1*eventw;
-     ntracksxjet_ptCounter[0][ptbin] += seltracksInJet[j]*eventw;
+     //ntracksxjet_ptCounter[0][ptbin] += seltracksInJet[j]*eventw ? seltracksInJet[j] < 999999999 : 0;
+     ntracksxjet_ptCounter[0][ptbin] += 1*eventw;
      // Fill 3D-IP histograms
      IP3D [0] -> Fill(seltrack_IP3D[k], eventw);
      IP3Dsignif [0] -> Fill(seltrack_IP3Dsig[k], eventw);
@@ -201,20 +202,25 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
    }
  
   // selected secondary vertices variables
-    nrSV [0] -> Fill(nSVinJet[j], eventw); // the nr.of SV in this jet
-   if (nSVinJet[j] > 0)
-   {
-    for (int i =0; i < nSVinEvent; i++)
-    { 
-     //get the SV info of the selected jet
-     if (jetSVIndex[i]==j)
-     {
-      massSV[0] -> Fill(svmass[i], eventw);
-      flight3Dsignif[0] -> Fill(flight3DSignificance[i], eventw);
-     } 
+   if (nSVinJet[j] < 999999999 ) 
+    {
+     nrSV [0] -> Fill(nSVinJet[j], eventw); // the nr.of SV in this jet
+     if (nSVinJet[j] > 0)
+      {
+       massSV_1stVtx[0] -> Fill(svmass_1stVtx[j], eventw);
+       flight3Dsignif_1stVtx[0] -> Fill(flight3DSignificance_1stVtx[j], eventw);
+       
+       for (int i =0; i < nSVinEvent; i++)
+        { 
+         //get the SV info of the selected jet
+         if (jetSVIndex[i]==j)
+          {
+           massSV[0] -> Fill(svmass[i], eventw);
+           flight3Dsignif[0] -> Fill(flight3DSignificance[i], eventw);
+          } 
+         }
+       }   
     }
-   }
-
    
     // set the ordinary tracks cuts 
    for (int p = 0; p < goodtracks_inEvent; p++)
@@ -238,12 +244,35 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
    // --------------------- 
    if (ismc)
    {
+    
     int jetFlavour = -999; 
+    
+    // b fron gluon splitting
+      isGluonSplit=false;
+      float dR=99999;
+      if (fabs(PartonF[j]) == 5) 
+       {
+        for (int k = 0; k < nbQuarks-1; k++) 
+         {
+          if (bQuark_status[k] != 2) continue;
+          dR = DeltaR(jet_eta[j], jet_phi[j], bQuark_eta[k], bQuark_phi[k]);
+          if ( dR > 0.5 ) continue;
+          for (int l = k+1; l < nbQuarks; l++) 
+           {
+            if ( bQuark_status[l] != 2 ) continue;
+            if ( bQuark_pdgID[k] * bQuark_pdgID[l] > 0 ) continue;
+            dR = DeltaR( jet_eta[j], jet_phi[j], bQuark_eta[l], bQuark_phi[l] );
+            if ( dR < 0.5 ) isGluonSplit = true;
+           }
+         } 
+       }
+
     if (fabs(PartonF[j]) == 5) jetFlavour = 1; // "b_quark"
     if (fabs(PartonF[j]) == 4) jetFlavour = 2; // "c_quark"
     if (fabs(PartonF[j]) < 4 || fabs(PartonF[j]) == 21) jetFlavour = 3; // "lgluon"
-    if (fabs(PartonF[j]) == 5 && nBHadrons[j] == 2) jetFlavour = 4;// "b_gsplitting"
+    if (isGluonSplit) jetFlavour = 4;// "b_gsplitting"
     if (jetFlavour < 0 ) cout << " Warning! jetFlavour = " << jetFlavour << " => this does not work! " << endl;      
+
 
     dRmin  [jetFlavour] -> Fill (dRmin_matching[j], eventw);
 
@@ -266,27 +295,34 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
       // calculate the input of the selected-track-multiplicity per jet-pt histogram
       int ptbin = avgTrackMultiplicity[jetFlavour]->FindBin(jet_pt[j]); 
       njet_ptCounter[jetFlavour][ptbin] += 1*eventw;
-      ntracksxjet_ptCounter[jetFlavour][ptbin] += seltracksInJet[j]*eventw;
+      //ntracksxjet_ptCounter[jetFlavour][ptbin] += seltracksInJet[j]*eventw ? seltracksInJet[j] < 999999999 : 0;
+      ntracksxjet_ptCounter[jetFlavour][ptbin] += 1*eventw;
       // Fill 3D-IP histograms
       IP3D [jetFlavour] -> Fill(seltrack_IP3D[k], eventw);
       IP3Dsignif [jetFlavour] -> Fill(seltrack_IP3Dsig[k], eventw);
      }
     }
 
-   // selected secondary vertices variables
-    nrSV [jetFlavour] -> Fill(nSVinJet[j], eventw); // the nr.of SV in this jet
-    if (nSVinJet[j] > 0)
+  // selected secondary vertices variables
+   if (nSVinJet[j] < 999999999 ) 
     {
-     for (int i = 0; i < nSVinEvent; i++)
-     { 
-      //get the SV info of the selected jet
-      if (jetSVIndex[i]==j)
+     nrSV [jetFlavour] -> Fill(nSVinJet[j], eventw); // the nr.of SV in this jet
+     if (nSVinJet[j] > 0)
       {
-       massSV[jetFlavour] -> Fill(svmass[i], eventw);
-       flight3Dsignif[jetFlavour] -> Fill(flight3DSignificance[i], eventw);
-      }
+       massSV_1stVtx[jetFlavour]         -> Fill(svmass_1stVtx[j], eventw);
+       flight3Dsignif_1stVtx[jetFlavour] -> Fill(flight3DSignificance_1stVtx[j], eventw);
+       
+       for (int i =0; i < nSVinEvent; i++)
+        { 
+         //get the SV info of the selected jet
+         if (jetSVIndex[i]==j)
+          {
+           massSV[jetFlavour] -> Fill(svmass[i], eventw);
+           flight3Dsignif[jetFlavour] -> Fill(flight3DSignificance[i], eventw);
+          } 
+         }
+       }   
      }
-    }
     
    for (int p = 0; p < goodtracks_inEvent; p++)
    {
@@ -351,6 +387,9 @@ void BJetAnalysis::Loop (TString _dataPath, bool _ismc, TString _ptRange)
       SaveHistograms (flight3Dsignif[fv], "flight3Dsignif", _ptRange);  
       SaveHistograms (massSV[fv],         "massSV",         _ptRange);  
       SaveHistograms (nrSV[fv],           "nrSV",           _ptRange);
+      
+      SaveHistograms (massSV_1stVtx[fv],         "massSV_1stVtx",         _ptRange);  
+      SaveHistograms (flight3Dsignif_1stVtx[fv], "flight3Dsignif_1stVtx", _ptRange);  
    
     }
  cout << " End Job " << endl;   
@@ -403,6 +442,8 @@ void BJetAnalysis::DefineHistograms(int iflv, int sflv)
   flight3Dsignif[iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 80); 
   massSV        [iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 8); 
   nrSV          [iflv] = new TH1F (sflavour[sflv], " ", 6, 0, 6); 
+  massSV_1stVtx [iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 8); 
+  flight3Dsignif_1stVtx [iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 80); 
   // b-discriminants
   TCHE[iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 30);  
   TCHP[iflv] = new TH1F (sflavour[sflv], " ", 50, 0, 30);

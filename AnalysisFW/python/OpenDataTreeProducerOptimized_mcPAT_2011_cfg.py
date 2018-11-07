@@ -45,10 +45,10 @@ runOnVM = False
 # Local input
 ######################################################
 # run with the bash script Full dataset
-fileList = FileUtils.loadListFromFile(NAMEOFINPUTFILE)
+#fileList = FileUtils.loadListFromFile(NAMEOFINPUTFILE)
 #####################################################
 #run partial dataset in local
-#fileList = FileUtils.loadListFromFile('CMS_MonteCarlo2011_Summer11LegDR_QCD_Pt-50to80_TuneZ2_7TeV_pythia6_AODSIM_PU_S13_START53_LV6-v1_00000_file_index.txt')
+fileList = FileUtils.loadListFromFile('CMS_MonteCarlo2011_Summer11LegDR_QCD_Pt-50to80_TuneZ2_7TeV_pythia6_AODSIM_PU_S13_START53_LV6-v1_00000_file_index.txt')
 #####################################################
 # the next line is always uncommented
 process.source.fileNames = cms.untracked.vstring(*fileList)
@@ -65,7 +65,8 @@ process.goodOfflinePrimaryVertices = cms.EDFilter(
     "VertexSelector",
     filter = cms.bool(False),
     src = cms.InputTag("offlinePrimaryVertices"),
-    cut = cms.string("!isFake && ndof > 4 && abs(z) <= 24 && position.rho < 2")
+    cut = cms.string("!isFake && ndof > 4 && abs(z) <= 24 && position.rho < 2") #Original cut
+    #cut = cms.string("!isFake && ndof > 4 && abs(z) <= 24 && position.rho <= 2") # Caroline cut
     )
 
 # -------- The Tracking failure filter ------#
@@ -84,7 +85,8 @@ process.ak5ak7 = cms.EDAnalyzer('OpenDataTreeProducerOptimized',
     caloak5jets        = cms.InputTag('ak5CaloJets'),
     
     ## MET collection ####
-    pfmet           = cms.InputTag('pfMET7'),
+    pfmet           = cms.InputTag('pfMET5'),
+    #pfmet           = cms.InputTag('pfMET7'),
     ## database entry for the uncertainties ######
     PFPayloadName   = cms.string('AK7PF'),
 
@@ -96,12 +98,13 @@ process.ak5ak7 = cms.EDAnalyzer('OpenDataTreeProducerOptimized',
     srcPFRho        = cms.InputTag('kt6PFJets','rho'),
     ## preselection cuts #########################
     maxY            = cms.double(5.0), 
-    minPFPt         = cms.double(30),
+    minPFPt         = cms.double(20),
     minNPFJets      = cms.int32(1),
-    minGenPt        = cms.untracked.double(30),
+    minGenPt        = cms.untracked.double(20),
     minJJMass       = cms.double(-1),
     isMCarlo        = cms.untracked.bool(True),
-    genjets         = cms.untracked.InputTag('ak7GenJets'),
+    genjets         = cms.untracked.InputTag('ak5GenJets'),
+    #genjets         = cms.untracked.InputTag('ak7GenJets'),
     useGenInfo      = cms.untracked.bool(True),
     ## trigger ###################################
     printTriggerMenu = cms.untracked.bool(True),
@@ -156,8 +159,8 @@ process.p = cms.Path(
 
 # Change number of events here:
 
-#process.maxEvents.input = 300
-process.maxEvents.input = -1
+process.maxEvents.input = 100
+#process.maxEvents.input = -1
 
 process.MessageLogger.cerr.FwkReport.reportEvery = 500
 #process.MessageLogger.cerr.FwkReport.reportEvery = 5000
@@ -165,9 +168,9 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 500
 # Output file
 #######################################################################################################################################
 #run partial dataset in local
-#process.TFileService = cms.Service("TFileService", fileName = cms.string("variablesTest/QCD_Pt-50to80.root"))
+process.TFileService = cms.Service("TFileService", fileName = cms.string("OpenDataTree_QCD_Pt-50to80_3.root"))
 # run with the bash script Full dataset
-process.TFileService = cms.Service("TFileService", fileName = cms.string("/eos/user/b/bchazinq/QCDPt15to30_10003/" + NAMEROOTOFOUTPUTROOT ))
+#process.TFileService = cms.Service("TFileService", fileName = cms.string("/eos/user/b/bchazinq/QCDPt15to30_10003/" + NAMEROOTOFOUTPUTROOT ))
 ########################################################################################################################################
 
 # To suppress long output at the end of the job

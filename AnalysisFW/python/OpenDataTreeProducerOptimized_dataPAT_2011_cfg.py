@@ -19,11 +19,11 @@ runOnVM = False
 # Local input
 ######################################################
 # run with the bash script Full dataset
-#files2011data = FileUtils.loadListFromFile(NAMEOFINPUTFILE) 
+files2011data = FileUtils.loadListFromFile(NAMEOFINPUTFILE) 
 ######################################################
 #run partial dataset in local
 #files2011data = FileUtils.loadListFromFile('CMS_Run2011A_Jet_AOD_12Oct2013-v1_20001_file_index.txt') 
-files2011data = FileUtils.loadListFromFile('CMS_Run2011A_Jet_AOD_12Oct2013-v1_20000_file_index.txt') 
+#files2011data = FileUtils.loadListFromFile('CMS_Run2011A_Jet_AOD_12Oct2013-v1_20000_file_index.txt') 
 ######################################################
 # the next line is always uncommented
 process.source.fileNames = cms.untracked.vstring(*files2011data)
@@ -51,7 +51,8 @@ process.goodOfflinePrimaryVertices = cms.EDFilter(
     "VertexSelector",
     filter = cms.bool(False),
     src = cms.InputTag("offlinePrimaryVertices"),
-    cut = cms.string("!isFake && ndof > 4 && abs(z) <= 24 && position.rho < 2")
+    cut = cms.string("!isFake && ndof > 4 && abs(z) <= 24 && position.rho < 2") # Original cut
+#    cut = cms.string("!isFake && ndof > 4 && abs(z) <= 24 && position.rho <= 2")  # Caroline cut
     )
 
 #############################################################
@@ -98,7 +99,7 @@ process.ak5ak7 = cms.EDAnalyzer('OpenDataTreeProducerOptimized',
     srcPFRho        = cms.InputTag('kt6PFJets','rho'),
     ## preselection cuts #########################
     maxY            = cms.double(5.0), 
-    minPFPt         = cms.double(15),
+    minPFPt         = cms.double(20),
     minNPFJets      = cms.int32(1),
     minJJMass       = cms.double(-1),
     isMCarlo        = cms.untracked.bool(False),
@@ -152,18 +153,18 @@ process.p = cms.Path(
 # 50000 events per 1 hour (both for DATA and MC)
 
 # Change number of events here:
-#process.maxEvents.input = -1
-process.maxEvents.input = 100000
+process.maxEvents.input = -1
+#process.maxEvents.input = 100000
 
 process.MessageLogger.cerr.FwkReport.reportEvery = 5000
 
 # Output file
 #######################################################################################################################################
 #run partial dataset in local
-process.TFileService = cms.Service("TFileService", fileName = cms.string('OpenDataTree_data20000.root'))
+#process.TFileService = cms.Service("TFileService", fileName = cms.string('OpenDataTree_data20000_recorcholisTest_CalojetBranches.root'))
 #process.TFileService = cms.Service("TFileService", fileName = cms.string('OpenDataTree_data.root'))
 # run with the bash script Full dataset
-#process.TFileService = cms.Service("TFileService", fileName = cms.string("/eos/user/b/bchazinq/Data10000/" + NAMEROOTOFOUTPUTROOT))
+process.TFileService = cms.Service("TFileService", fileName = cms.string("/eos/user/b/bchazinq/Data10000/" + NAMEROOTOFOUTPUTROOT))
 ########################################################################################################################################
 
 # To suppress long output at the end of the job

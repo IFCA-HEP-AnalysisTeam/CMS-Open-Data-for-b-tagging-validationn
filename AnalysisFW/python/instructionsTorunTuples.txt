@@ -6,7 +6,7 @@
 
 	prepare_jobs.py && bashscript.sh && (OpenDataTreeProducerOptimized_dataPAT_2011_cfg.py || OpenDataTreeProducerOptimized_mcPAT_2011_cfg.py)
 
-	type:  python prepare_jobs.py -> generates the job folders with the content to submit and the run.sh file
+	type:  python prepare_jobs.py -> this script generates the job folders with the content to submit and the run.sh file
         print out: [JOB_MANAGER] Usage: python prepare_jobs.py name_of_the_template name_of_the_bash_template name_of_the_samplefile number_of_jobs queue
        
         	name_of_the_template      == OpenDataTreeProducerOptimized_*_2011_cfg.py 

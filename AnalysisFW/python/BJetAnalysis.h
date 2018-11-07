@@ -102,6 +102,8 @@ class BJetAnalysis : public ChainClass
   TH1F* flight3Dsignif[nflavour]; 
   TH1F* massSV        [nflavour];
   TH1F* nrSV          [nflavour];
+  TH1F* massSV_1stVtx [nflavour];
+  TH1F* flight3Dsignif_1stVtx[nflavour]; 
 
  // b-discriminants
   TH1F* TCHE[nflavour]; 
